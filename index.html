@@ -82,17 +82,17 @@ nav a{transition:background .15s}
 /* ===== CONFIG – edit these ===== */
 const CONFIG = {
   SUPABASE_URL: "",       // e.g. https://xxxx.supabase.co
-  SUPABASE_ANON_KEY: "",  // anon public key (safe for browsers; protect data with RLS)
+  SUPABASE_ANON_KEY: "",  // anon public key only (never the service_role key)
   contact: {
     address: "Barangay Hall, Barangay Anos, Los Baños, Laguna",
     hours: "Monday–Friday, 8:00 AM – 5:00 PM",
     phone: "0917 146 9167",
-    email: "barangayanoslupon@gmail.com",
+    email: "lupon.anos@example.com",
     mapQuery: "Barangay Anos Los Baños Laguna"
   }
 };
 
-/* ===== DEFAULT CONTENT (used until Supabase returns data) ===== */
+/* ===== DEFAULT CONTENT (used until the database returns data) ===== */
 let DB = {
 news:[
  {id:1,category:"Lupon Activities",title:"Welcome to LuponConnect",created_at:"2026-10-08",body:"LuponConnect is the new digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos. News and updates will be posted here."}
@@ -140,21 +140,21 @@ laws:[
 ]};
 
 /* ===== SUPABASE ===== */
-let sb=null;
-if(CONFIG.SUPABASE_URL&&CONFIG.SUPABASE_ANON_KEY&&window.supabase){
-  sb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
-}
+const sb=(CONFIG.SUPABASE_URL&&CONFIG.SUPABASE_ANON_KEY&&window.supabase)?window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY):null;
 async function loadRemote(){
   if(!sb)return;
-  const jobs=[
-    ["news",sb.from("news_posts").select("*").eq("published",true).order("created_at",{ascending:false})],
-    ["articles",sb.from("articles").select("*").eq("published",true).order("created_at",{ascending:false})],
-    ["faqs",sb.from("faqs").select("*").eq("published",true).order("sort_order")],
-    ["laws",sb.from("laws").select("*").eq("published",true).order("sort_order")]
-  ];
-  for(const [k,q] of jobs){
-    try{const {data,error}=await q;if(!error&&data&&data.length)DB[k]=data;else if(error)console.warn(k,error.message)}catch(e){console.warn(k,e)}
-  }
+  const get=async(q,fn)=>{try{const {data,error}=await q;if(error)return console.warn(error.message);if(data&&data.length)fn(data)}catch(e){console.warn(e)}};
+  await Promise.all([
+    get(sb.from("posts").select("id,title,slug,excerpt,content,category,created_at").eq("published",true).order("created_at",{ascending:false}).limit(50),
+      d=>DB.news=d.map(x=>({id:x.id,title:x.title,category:x.category,created_at:x.created_at,summary:x.excerpt,body:x.content}))),
+    get(sb.from("ating_alamin").select("*").eq("published",true).order("created_at",{ascending:false}),
+      d=>DB.articles=d.map(x=>({slug:x.slug,title:x.title,summary:x.summary,body:x.content,featured:x.featured}))),
+    get(sb.from("faqs").select("*").eq("active",true).order("display_order"),d=>DB.faqs=d),
+    get(sb.from("legal_library").select("*").eq("published",true).order("sort_order").order("title"),
+      d=>DB.laws=d.map(x=>({slug:x.slug||x.id,category:x.category||"Other",title:x.title,ref:x.reference_number,overview:x.overview,provisions:x.key_provisions,faq:x.faq,related:x.related,content:x.content,pdf:x.pdf_url}))),
+    get(sb.from("contact_info").select("*").limit(1),
+      d=>{const c=d[0];DB.contact={address:c.address,hours:c.office_hours,phone:c.phone,email:c.email,mapUrl:c.map_url,name:c.office_name}})
+  ]);
 }
 
 /* ===== HELPERS ===== */
@@ -168,7 +168,7 @@ function rich(t){ // blank-line paragraphs, "- " bullets
 }
 const fmt=d=>d?new Date(d).toLocaleDateString("en-PH",{year:"numeric",month:"long",day:"numeric"}):"";
 const NAV=[["#/","🏠 Home"],["#/news","📢 News"],["#/alamin","📚 Ating Alamin"],["#/laws","⚖️ Legal Library"],["#/faq","❓ FAQ"],["#/about","🏛 About"],["#/contact","📞 Contact"]];
-const newsCard=n=>`<div class="card"><span class="tag">${esc(n.category||"Update")}</span><h3>${esc(n.title)}</h3><div class="date">${fmt(n.created_at)}</div><p>${esc((n.body||"").slice(0,140))}${(n.body||"").length>140?"…":""}</p></div>`;
+const newsCard=n=>{const t=n.summary||n.body||"";return `<a class="card" href="#/news/${esc(n.id)}"><span class="tag">${esc(n.category||"Update")}</span><h3>${esc(n.title)}</h3><div class="date">${fmt(n.created_at)}</div><p>${esc(t.slice(0,140))}${t.length>140?"…":""}</p></a>`};
 const artCard=a=>`<a class="card" href="#/alamin/${esc(a.slug)}"><h3>${esc(a.title)}</h3><p>${esc(a.summary)}</p></a>`;
 
 /* ===== VIEWS ===== */
@@ -184,6 +184,8 @@ home(){
 },
 news(){return `<h1>📢 News &amp; Updates</h1><p class="date">Lupon activities · Training highlights · Community announcements · Legal and policy updates</p>
   <div class="grid">${DB.news.map(newsCard).join("")}</div>`},
+post(id){const n=DB.news.find(x=>String(x.id)===String(id));if(!n)return V.nf();
+  return `<p class="crumb"><a href="#/news">← News &amp; Updates</a></p><span class="tag">${esc(n.category||"Update")}</span><h1>${esc(n.title)}</h1><div class="date">${fmt(n.created_at)}</div><div class="body">${rich(n.body||n.summary)}</div>`},
 alamin(){return `<h1>📚 Ating Alamin</h1><input type="search" id="q" placeholder="Search articles…">
   <div class="grid" id="list">${DB.articles.map(artCard).join("")}</div>`},
 article(slug){
@@ -197,10 +199,10 @@ law(slug){
   const l=DB.laws.find(x=>x.slug===slug);if(!l)return V.nf();
   const rel=String(l.related||"").split(",").map(s=>DB.articles.find(a=>a.slug===s.trim())).filter(Boolean);
   const li=t=>"<ul>"+String(t||"").split("\n").filter(Boolean).map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>";
-  return `<p class="crumb"><a href="#/laws">← Legal Library</a></p><h1>${esc(l.title)}</h1><div class="body">
-  <h2>Overview</h2><p>${esc(l.overview)}</p><h2>Key Provisions</h2>${li(l.provisions)}
-  <h2>Frequently Asked Questions</h2>${rich(l.faq)}
-  <h2>Related Ating Alamin Articles</h2>${rel.length?`<div class="grid">${rel.map(artCard).join("")}</div>`:"<p>None yet.</p>"}</div>`},
+  return `<p class="crumb"><a href="#/laws">← Legal Library</a></p><h1>${esc(l.title)}</h1>${l.ref?`<div class="date">${esc(l.ref)}</div>`:""}<div class="body">
+  <h2>Overview</h2><p>${esc(l.overview)}</p><h2>Key Provisions</h2>${l.provisions?li(l.provisions):rich(l.content)}
+  <h2>Frequently Asked Questions</h2>${l.faq?rich(l.faq):"<p>None yet.</p>"}
+  <h2>Related Ating Alamin Articles</h2>${rel.length?`<div class="grid">${rel.map(artCard).join("")}</div>`:"<p>None yet.</p>"}${l.pdf?`<p><a class="btn" href="${esc(l.pdf)}" target="_blank" rel="noopener">📄 Download PDF</a></p>`:""}</div>`},
 faq(){return `<h1>❓ Frequently Asked Questions</h1>`+DB.faqs.map(f=>`<details><summary>${esc(f.question)}</summary><div class="body">${rich(f.answer)}</div></details>`).join("")},
 about(){return `<h1>🏛 About the Lupon</h1><div class="body">
   <h2>Role of the Lupong Tagapamayapa</h2><p>The Lupon is a body of respected community members organized in every barangay to help settle disputes amicably, keeping peace and order and reducing court congestion.</p>
@@ -208,12 +210,12 @@ about(){return `<h1>🏛 About the Lupon</h1><div class="body">
   <h2>Mediation Process</h2><p>The complainant files a complaint with the Punong Barangay, who summons the respondent and mediates within fifteen (15) days of the first meeting.</p>
   <h2>Conciliation Process</h2><p>If mediation fails, a Pangkat ng Tagapagkasundo of three Lupon members is constituted. It hears the parties and tries to settle within fifteen (15) days, extendable by another fifteen (15) days.</p>
   <h2>Arbitration</h2><p>If conciliation fails, the parties may agree in writing to submit the dispute to arbitration by the Punong Barangay or Pangkat. The award is final after ten (10) days, unless a petition to nullify it is filed.</p></div>`},
-contact(){const c=CONFIG.contact;return `<h1>📞 Contact Information</h1><div class="grid">
+contact(){const c=Object.assign({},CONFIG.contact,Object.fromEntries(Object.entries(DB.contact||{}).filter(([,v])=>v)));const map=/embed/.test(c.mapUrl||"")?c.mapUrl:"https://www.google.com/maps?q="+encodeURIComponent(c.mapQuery)+"&output=embed";return `<h1>📞 Contact Information</h1><div class="grid">
   <div class="card"><h3>📍 Barangay Address</h3><p>${esc(c.address)}</p></div>
   <div class="card"><h3>🕗 Office Hours</h3><p>${esc(c.hours)}</p></div>
   <div class="card"><h3>☎️ Contact Number</h3><p>${esc(c.phone)}</p></div>
   <div class="card"><h3>✉️ Email</h3><p><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p></div></div>
-  <h2>Location Map</h2><iframe loading="lazy" title="Map" src="https://www.google.com/maps?q=${encodeURIComponent(c.mapQuery)}&output=embed"></iframe>`},
+  <h2>Location Map</h2><iframe loading="lazy" title="Map" src="${esc(map)}"></iframe>`},
 nf(){return `<h1>Page not found</h1><p><a class="btn" href="#/">Go home</a></p>`}
 };
 
@@ -222,7 +224,7 @@ function route(){
   const [,p="",id]=(location.hash||"#/").slice(1).split("/");
   let h;
   if(p==="")h=V.home();else if(p==="alamin")h=id?V.article(id):V.alamin();
-  else if(p==="laws")h=id?V.law(id):V.laws();else h=(V[p]&&p!=="nf")?V[p]():V.nf();
+  else if(p==="laws")h=id?V.law(id):V.laws();else if(p==="news"&&id)h=V.post(id);else h=(V[p]&&p!=="nf")?V[p]():V.nf();
   document.getElementById("app").innerHTML=h;
   document.getElementById("nav").innerHTML=NAV.map(([href,l])=>`<a href="${href}" class="${"#/"+p===href||(href==="#/"&&!p)?"on":""}">${l}</a>`).join("");
   const q=document.getElementById("q");
