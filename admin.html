@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>LuponConnect Admin</title>
+<style>
+:root{--g:#143f3c;--a:#c8892b;--bg:#f4f2eb;--l:#ddd8c8}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:#1d2a2f}
+header{background:var(--g);color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+header b{font-size:1.1rem}header span{font-size:.85rem;opacity:.85}
+.w{max-width:900px;margin:0 auto;padding:16px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--l);background:#fff;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:.9rem}
+.tabs button.on{background:var(--g);color:#fff;border-color:var(--g)}
+.box{background:#fff;border:1px solid var(--l);border-radius:12px;padding:16px;margin-bottom:14px}
+label{display:block;font-weight:600;margin:12px 0 4px;font-size:.88rem}
+input[type=text],input[type=email],input[type=password],input[type=number],select,textarea{width:100%;padding:9px 10px;border:1px solid var(--l);border-radius:8px;font:inherit}
+textarea{min-height:110px;resize:vertical}.hint{font-weight:400;color:#6a777b;font-size:.78rem}
+.btn{background:var(--a);color:#fff;border:0;padding:9px 16px;border-radius:8px;font-weight:600;cursor:pointer}
+.btn.s{background:#fff;color:#1d2a2f;border:1px solid var(--l)}.btn.d{background:#b3382c}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--l)}
+.row:last-child{border:0}.row small{color:#6a777b}.pill{font-size:.7rem;padding:1px 8px;border-radius:99px;background:#d9e8e6;margin-left:6px}
+.pill.draft{background:#f3dcc0}.msg{padding:10px 14px;border-radius:8px;margin-bottom:12px;background:#d9e8e6}.msg.err{background:#f6d4cf}
+.ck{display:flex;gap:8px;align-items:center;margin-top:14px}.ck label{margin:0}.acts{display:flex;gap:6px;flex-shrink:0}
+</style></head><body>
+<header><b>⚖️ LuponConnect Admin</b><span id="who"></span></header>
+<div class="w" id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL="", SUPABASE_ANON_KEY="";   // same values as index.html (anon key only)
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=s=>document.querySelector(s);
+const slugify=t=>t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const BODY='Blank line = new paragraph. Start a line with "- " for bullets.';
+const T={
+ posts:{label:"📢 News",table:"posts",title:"title",order:"created_at",upd:1,fields:[
+  ["title","text","Title",1],["category","select","Category",1,["Lupon Activities","Training Highlights","Community Announcements","Legal and Policy Updates"]],
+  ["excerpt","textarea","Short summary (shown on cards)"],["content","textarea","Full content",1,BODY],["cover_image","text","Cover image URL"],["slug","text","Slug (auto if blank)"],["published","check","Published"]]},
+ ating_alamin:{label:"📚 Ating Alamin",table:"ating_alamin",title:"title",order:"created_at",upd:1,fields:[
+  ["title","text","Title",1],["summary","textarea","Short summary"],["content","textarea","Article content",1,BODY],["slug","text","Slug (auto if blank)"],
+  ["featured_image","text","Image URL"],["featured","check","Featured on Home page"],["published","check","Published"]]},
+ faqs:{label:"❓ FAQs",table:"faqs",title:"question",order:"display_order",asc:1,fields:[
+  ["question","text","Question",1],["answer","textarea","Answer",1,BODY],["display_order","number","Display order (1 = first)"],["active","check","Active"]]},
+ legal_library:{label:"⚖️ Legal Library",table:"legal_library",title:"title",order:"sort_order",asc:1,fields:[
+  ["title","text","Law title",1],["reference_number","text","Reference number (e.g. RA 9262)"],
+  ["category","select","Category",1,["Katarungang Pambarangay","Family and Community Protection","Safe Spaces","Other"]],["slug","text","Slug (auto if blank)"],
+  ["overview","textarea","Overview"],["key_provisions","textarea","Key provisions (one per line)"],["faq","textarea","FAQ",0,BODY],
+  ["related","text","Related Ating Alamin slugs (comma-separated)"],["content","textarea","Full text (optional)"],["pdf_url","text","PDF link"],
+  ["sort_order","number","Sort order"],["published","check","Published"]]},
+ contact_info:{label:"📞 Contact",table:"contact_info",single:1,fields:[
+  ["office_name","text","Office name"],["address","text","Address"],["office_hours","text","Office hours"],["phone","text","Contact number"],
+  ["email","text","Email"],["map_url","text","Google Maps EMBED link (src of the embed code)"]]}
+};
+let me=null,cur="posts",rows=[],ed=null;
+
+function login(m){ $("#who").textContent="";
+ $("#app").innerHTML=`<div class="box" style="max-width:380px;margin:40px auto"><h2 style="margin-top:0">Staff Login</h2>${m?`<div class="msg err">${esc(m)}</div>`:""}
+ <label>Email</label><input type="email" id="em" autocomplete="username"><label>Password</label><input type="password" id="pw" autocomplete="current-password">
+ <p><button class="btn" id="go">Log in</button></p></div>`;
+ const go=async()=>{const {error}=await sb.auth.signInWithPassword({email:$("#em").value.trim(),password:$("#pw").value});
+  error?login("Wrong email or password."):start()};
+ $("#go").onclick=go;$("#pw").onkeydown=e=>e.key==="Enter"&&go();
+}
+async function start(){
+ const {data:{session}}=await sb.auth.getSession(); if(!session)return login();
+ const {data}=await sb.from("profiles").select("full_name,role").eq("id",session.user.id).maybeSingle();
+ if(!data||!["admin","editor"].includes(data.role)){await sb.auth.signOut();return login("This account has no staff access. Ask the administrator.")}
+ me=data;$("#who").innerHTML=`${esc(data.full_name||session.user.email)} (${esc(data.role)}) · <a href="#" id="lo" style="color:#f2c879">Log out</a>`;
+ $("#lo").onclick=async e=>{e.preventDefault();await sb.auth.signOut();login()};
+ show(cur);
+}
+async function show(k,msg,isErr){
+ cur=k;ed=null;const t=T[k];
+ const tabs=Object.entries(T).map(([id,x])=>`<button class="${id===k?"on":""}" data-k="${id}">${x.label}</button>`).join("");
+ $("#app").innerHTML=`<div class="tabs">${tabs}</div>${msg?`<div class="msg ${isErr?"err":""}">${esc(msg)}</div>`:""}<div id="panel">Loading…</div>`;
+ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>show(b.dataset.k));
+ let q=sb.from(t.table).select("*"); if(t.order)q=q.order(t.order,{ascending:!!t.asc});
+ const {data,error}=await q; if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}</div>`;
+ rows=data||[];
+ if(t.single)return form(rows[0]||{});
+ $("#panel").innerHTML=`<p><button class="btn" id="new">+ Add new</button></p><div class="box">${rows.length?rows.map((r,i)=>{
+  const on=r.published??r.active;
+  return `<div class="row"><div><b>${esc(r[t.title])}</b>${on===undefined?"":`<span class="pill ${on?"":"draft"}">${on?"Published":"Draft"}</span>`}<br><small>${esc(r.category||r.reference_number||"")}</small></div>
+  <div class="acts"><button class="btn s" data-e="${i}">Edit</button>${me.role==="admin"?`<button class="btn d" data-d="${i}">Delete</button>`:""}</div></div>`}).join(""):"<p>Nothing here yet.</p>"}</div>`;
+ $("#new").onclick=()=>form({published:true,active:true});
+ document.querySelectorAll("[data-e]").forEach(b=>b.onclick=()=>form(rows[b.dataset.e]));
+ document.querySelectorAll("[data-d]").forEach(b=>b.onclick=async()=>{const r=rows[b.dataset.d];
+  if(!confirm('Delete "'+r[t.title]+'"? This cannot be undone.'))return;
+  const {error}=await sb.from(t.table).delete().eq("id",r.id);show(k,error?error.message:"Deleted.",!!error)});
+}
+function form(r){
+ const t=T[cur];ed=r;
+ const f=t.fields.map(([n,ty,lb,req,x])=>{const v=r[n];
+  if(ty==="check")return `<div class="ck"><input type="checkbox" id="f_${n}" ${v?"checked":""}><label for="f_${n}">${lb}</label></div>`;
+  const h=`<label>${lb}${req?" *":""} ${ty==="textarea"&&x?`<span class="hint">${esc(x)}</span>`:""}</label>`;
+  if(ty==="select")return h+`<select id="f_${n}">${x.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+  if(ty==="textarea")return h+`<textarea id="f_${n}">${esc(v)}</textarea>`;
+  return h+`<input type="${ty==="number"?"number":"text"}" id="f_${n}" value="${esc(v)}">`}).join("");
+ $("#panel").innerHTML=`<div class="box"><h3 style="margin-top:0">${t.single?t.label:(r.id?"Edit":"Add new")}</h3>${f}
+  <p style="margin-top:18px"><button class="btn" id="save">Save</button> ${t.single?"":'<button class="btn s" id="cancel">Cancel</button>'}</p></div>`;
+ if(!t.single)$("#cancel").onclick=()=>show(cur);
+ $("#save").onclick=async()=>{
+  const o={};
+  for(const [n,ty,lb,req] of t.fields){const e=$("#f_"+n);let v=ty==="check"?e.checked:e.value.trim();
+   if(ty==="number")v=v===""?null:parseInt(v,10);
+   if(req&&(v===""||v===null))return alert(lb+" is required.");
+   if(v==="")v=null;o[n]=v}
+  if(t.fields.some(x=>x[0]==="slug"&&!o.slug))o.slug=slugify(o[t.title]||"")+(r.id?"":"-"+Date.now().toString(36).slice(-4));
+  if(t.upd)o.updated_at=new Date().toISOString();
+  if(t.single&&!r.id)o.id=1;
+  const q=r.id?sb.from(t.table).update(o).eq("id",r.id):sb.from(t.table).insert(o);
+  const {error}=await q;
+  error?alert("Could not save: "+error.message):show(cur,"Saved ✔ — it is now live on the website.")};
+}
+start();
+</script></body></html>
