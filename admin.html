@@ -48,6 +48,7 @@ const T={
   ["overview","textarea","Overview"],["key_provisions","textarea","Key provisions (one per line)"],["faq","textarea","FAQ",0,BODY],
   ["related","text","Related Ating Alamin slugs (comma-separated)"],["content","textarea","Full text (optional)"],["pdf_url","text","PDF link"],
   ["sort_order","number","Sort order"],["published","check","Published"]]},
+ backup:{label:"💾 Backup",special:1,adminOnly:1},
  contact_info:{label:"📞 Contact",table:"contact_info",single:1,fields:[
   ["office_name","text","Office name"],["address","text","Address"],["office_hours","text","Office hours"],["phone","text","Contact number"],
   ["email","text","Email"],["map_url","text","Google Maps EMBED link (src of the embed code)"]]}
@@ -72,9 +73,10 @@ async function start(){
 }
 async function show(k,msg,isErr){
  cur=k;ed=null;const t=T[k];
- const tabs=Object.entries(T).map(([id,x])=>`<button class="${id===k?"on":""}" data-k="${id}">${x.label}</button>`).join("");
+ const tabs=Object.entries(T).filter(([id,x])=>!x.adminOnly||me.role==="admin").map(([id,x])=>`<button class="${id===k?"on":""}" data-k="${id}">${x.label}</button>`).join("");
  $("#app").innerHTML=`<div class="tabs">${tabs}</div>${msg?`<div class="msg ${isErr?"err":""}">${esc(msg)}</div>`:""}<div id="panel">Loading…</div>`;
  document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>show(b.dataset.k));
+ if(t.special)return backupView();
  let q=sb.from(t.table).select("*"); if(t.order)q=q.order(t.order,{ascending:!!t.asc});
  const {data,error}=await q; if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}</div>`;
  rows=data||[];
@@ -124,6 +126,35 @@ function form(r){
   const q=r.id?sb.from(t.table).update(o).eq("id",r.id):sb.from(t.table).insert(o);
   const {error}=await q;
   error?alert("Could not save: "+error.message):show(cur,"Saved ✔ — it is now live on the website.")};
+}
+// ---- Backup & restore (admins only) ----
+const BK=["posts","ating_alamin","faqs","legal_library","contact_info"];
+function backupView(){
+ let last="";try{last=localStorage.getItem("lc_last_backup")||""}catch(e){}
+ $("#panel").innerHTML=`<div class="box"><h3 style="margin-top:0">⬇️ Download backup</h3>
+  <p>Saves all news, Ating Alamin articles, FAQs, legal library and contact details into one file.</p>
+  <p class="hint">Photos are not inside this file (only their links). Keep your original photos too.${last?" Last backup on this device: "+esc(last):" No backup downloaded on this device yet."}</p>
+  <button class="btn" id="bk">Download backup</button> <span id="bkst" class="hint"></span></div>
+ <div class="box"><h3 style="margin-top:0">⬆️ Restore from backup</h3>
+  <p>Choose a backup file you downloaded earlier. Items in the file are put back as they were: edited ones return to their saved version and deleted ones come back. Items you added <b>after</b> the backup are <b>not</b> removed.</p>
+  <input type="file" id="rf" accept=".json,application/json"> <span id="rfst" class="hint"></span></div>`;
+ $("#bk").onclick=async()=>{const st=$("#bkst");st.textContent="Collecting…";
+  try{const out={app:"luponconnect",version:1,created:new Date().toISOString(),tables:{}};
+   for(const t of BK){const {data,error}=await sb.from(t).select("*");if(error)throw new Error(t+": "+error.message);out.tables[t]=data}
+   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,1)],{type:"application/json"}));
+   a.download="luponconnect-backup-"+out.created.slice(0,10)+".json";a.click();
+   const n=Object.values(out.tables).reduce((x,y)=>x+y.length,0);
+   try{localStorage.setItem("lc_last_backup",new Date().toLocaleString())}catch(e){}
+   st.textContent="Done ✔ "+n+" items saved."}catch(e){st.textContent="Failed: "+e.message}};
+ $("#rf").onchange=async e=>{const f=e.target.files[0];if(!f)return;const st=$("#rfst");
+  try{const b=JSON.parse(await f.text());if(b.app!=="luponconnect"||!b.tables)throw new Error("This is not a LuponConnect backup file.");
+   const sum=BK.map(t=>t+": "+(b.tables[t]||[]).length).join("\n");
+   if(!confirm("Restore backup made on "+new Date(b.created).toLocaleString()+"?\n\n"+sum+"\n\nExisting items with the same ID will be overwritten."))return(e.target.value="");
+   st.textContent="Restoring…";
+   for(const t of BK){const rows=b.tables[t]||[];if(!rows.length)continue;
+    const {error}=await sb.from(t).upsert(rows,{onConflict:"id"});if(error)throw new Error(t+": "+error.message)}
+   st.textContent="Restore complete ✔ Reload the website to see it."}
+  catch(err){st.textContent="Failed: "+err.message}e.target.value=""}
 }
 // Shrink to max 1200px wide and re-encode as JPEG (keeps files ~100-250 KB)
 async function shrink(file,max=1200,q=0.8){
