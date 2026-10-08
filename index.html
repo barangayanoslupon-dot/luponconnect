@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LuponConnect – Barangay Anos Lupong Tagapamayapa</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚖️</text></svg>">
+<style>
+:root{--bg:#f7f5ef;--card:#fff;--ink:#1d2a2f;--mute:#5d6b70;--brand:#1f5f5b;--accent:#c8892b;--line:#e3dfd2}
+@media(prefers-color-scheme:dark){:root{--bg:#121a1c;--card:#1b2629;--ink:#e8eeee;--mute:#9aaaad;--brand:#5fb5ae;--accent:#e2a64d;--line:#2d3b3e}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--brand);color:#fff;position:sticky;top:0;z-index:5}
+.wrap{max-width:1000px;margin:0 auto;padding:0 16px}
+.top{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;flex-wrap:wrap}
+.logo{font-weight:700;font-size:1.25rem;color:#fff;text-decoration:none}
+.logo small{display:block;font-weight:400;font-size:.72rem;opacity:.85}
+nav{display:flex;gap:2px;flex-wrap:wrap}
+nav a{color:#fff;text-decoration:none;padding:6px 10px;border-radius:6px;font-size:.9rem}
+nav a:hover,nav a.on{background:rgba(255,255,255,.2)}
+main{padding:24px 0 48px;min-height:70vh}
+h1{font-size:1.8rem;margin:.2em 0 .4em}h2{font-size:1.25rem;margin:1.4em 0 .4em;color:var(--brand)}
+.hero{background:linear-gradient(135deg,var(--brand),#2f847d);color:#fff;border-radius:14px;padding:32px 24px;margin-bottom:24px}
+.hero h1{margin:0}.hero p{margin:.4em 0 0;opacity:.92}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;color:inherit;text-decoration:none;display:block}
+a.card:hover{border-color:var(--brand)}
+.card h3{margin:.1em 0 .3em;font-size:1.05rem}.card p{margin:0;color:var(--mute);font-size:.93rem}
+.tag{display:inline-block;font-size:.72rem;background:var(--accent);color:#fff;border-radius:99px;padding:1px 9px;margin-bottom:6px}
+.date{font-size:.8rem;color:var(--mute)}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px}
+summary{cursor:pointer;font-weight:600}
+input[type=search]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-size:1rem;margin-bottom:14px}
+.btn{display:inline-block;background:var(--accent);color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:600}
+.body p{margin:.7em 0}.body ul{padding-left:1.3em}
+.note{font-size:.82rem;color:var(--mute);border-left:3px solid var(--accent);padding-left:10px;margin-top:24px}
+iframe{width:100%;height:320px;border:0;border-radius:12px}
+footer{background:#143f3c;color:#d9e8e6;padding:28px 0;text-align:center;font-size:.9rem;line-height:1.9}
+footer strong{color:#fff;font-size:1.05rem;letter-spacing:.3px}
+footer .fine{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);font-size:.8rem;opacity:.75}
+footer a{color:#f2c879}
+.burger{display:none;background:none;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:8px;width:44px;height:40px;font-size:1.4rem;cursor:pointer}
+header{box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.hero{text-align:center;padding:48px 20px;box-shadow:0 8px 24px rgba(31,95,91,.25)}
+.hero h1{font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:.2px}
+.hero p{max-width:640px;margin:.8em auto 0;font-size:1.05rem}
+.sec{text-align:center;margin:2.2em 0 .9em;position:relative}
+.sec:after{content:"";display:block;width:56px;height:3px;background:var(--accent);border-radius:3px;margin:8px auto 0}
+.card{box-shadow:0 1px 3px rgba(0,0,0,.06);transition:transform .15s,box-shadow .15s,border-color .15s}
+a.card:hover{transform:translateY(-3px);box-shadow:0 8px 18px rgba(0,0,0,.1)}
+nav a{transition:background .15s}
+@media(max-width:820px){
+ .burger{display:block}
+ .top{flex-wrap:nowrap}
+ nav{display:none;position:absolute;left:0;right:0;top:100%;background:var(--brand);flex-direction:column;padding:8px 16px 14px;box-shadow:0 10px 18px rgba(0,0,0,.25)}
+ nav.open{display:flex}
+ nav a{padding:12px 10px;font-size:1rem;border-bottom:1px solid rgba(255,255,255,.12);border-radius:0}
+ .logo{font-size:1.1rem}.logo small{font-size:.65rem}
+ main{padding-top:16px}h1{font-size:1.5rem}
+}
+.crumb a{color:var(--brand)}
+</style>
+</head>
+<body>
+<header><div class="wrap top">
+  <a class="logo" href="#/">⚖️ LuponConnect<small>Connecting Communities Through Peaceful Resolution</small></a>
+  <button class="burger" id="burger" aria-label="Menu" aria-expanded="false">☰</button>
+  <nav id="nav"></nav>
+</div></header>
+<main><div class="wrap" id="app">Loading…</div></main>
+<footer><div class="wrap">
+  <strong>LuponConnect · Lupong Tagapamayapa</strong><br>
+  Barangay Anos, Los Baños, Laguna<br>
+  Lupon President: Mr. Dante R. Garcia, Ph.D.<br>
+  Lupon Chairperson, Hon. Editha V. Lozano (Acting Punong Barangay)<br>
+  Barangay Number: <a href="tel:09171469167">0917 146 9167</a>
+  <div class="fine">LuponConnect · For general information only; not legal advice.</div>
+</div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* ===== CONFIG – edit these ===== */
+const CONFIG = {
+  SUPABASE_URL: "",       // e.g. https://xxxx.supabase.co
+  SUPABASE_ANON_KEY: "",  // anon public key (safe for browsers; protect data with RLS)
+  contact: {
+    address: "Barangay Hall, Barangay Anos, Los Baños, Laguna",
+    hours: "Monday–Friday, 8:00 AM – 5:00 PM",
+    phone: "0917 146 9167",
+    email: "lupon.anos@example.com",
+    mapQuery: "Barangay Anos Los Baños Laguna"
+  }
+};
+
+/* ===== DEFAULT CONTENT (used until Supabase returns data) ===== */
+let DB = {
+news:[
+ {id:1,category:"Lupon Activities",title:"Welcome to LuponConnect",created_at:"2026-10-08",body:"LuponConnect is the new digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos. News and updates will be posted here."}
+],
+articles:[
+ {slug:"what-is-kp",featured:true,title:"What is Katarungang Pambarangay?",summary:"The barangay-level justice system that encourages amicable settlement.",
+  body:"Katarungang Pambarangay (KP) is the community-based dispute resolution system under Chapter 7, Title I, Book III of the Local Government Code (RA 7160, Secs. 399–422).\n\nIts goal is to settle disputes between neighbors amicably, quickly and at little cost, so that many cases never need to reach the courts.\n\nThe Punong Barangay first tries mediation. If that fails, a Pangkat ng Tagapagkasundo, formed from the Lupong Tagapamayapa members, tries conciliation and, if the parties agree, arbitration."},
+ {slug:"what-cases",title:"What cases may be brought before the Lupon?",summary:"Disputes between individuals residing in the same city/municipality, subject to exceptions.",
+  body:"As a general rule, the Lupon has authority over disputes between persons actually residing in the same city or municipality (Sec. 408, RA 7160).\n\nCommon exceptions where KP does not apply include:\n- Where one party is the government or a public officer or employee, and the dispute relates to official functions.\n- Offenses punishable by imprisonment of more than one (1) year or a fine of more than ₱5,000.\n- Offenses where there is no private offended party.\n- Disputes involving real property located in different cities or municipalities.\n- Disputes between parties residing in different cities or municipalities (unless their barangays adjoin and the parties agree).\n- Other cases that the Supreme Court or the law specifically exempts.\n\nWhen unsure, consult the Punong Barangay or the Lupon Secretary."},
+ {slug:"cfa",title:"What is a Certificate to File Action?",summary:"The document that lets a complainant bring a case to court or the prosecutor.",
+  body:"A Certificate to File Action (CFA) certifies that the dispute went through the KP process without settlement, so the complainant may go to court or to the prosecutor's office.\n\nIt is issued by the Lupon or Pangkat Secretary and attested by the Punong Barangay or Pangkat Chairman, for example when:\n- mediation and conciliation failed;\n- the respondent did not appear despite notice;\n- a settlement was repudiated.\n\nFor covered disputes, going to court without a CFA may be a ground for dismissal for non-compliance with a condition precedent."},
+ {slug:"prescription",title:"Does the Lupon stop the running of prescription periods?",summary:"Filing a complaint with the Punong Barangay can interrupt prescription—for up to 60 days.",
+  body:"Yes, in limited form. Under Sec. 410(c) of RA 7160, filing a complaint with the Punong Barangay interrupts the running of the prescriptive period for offenses and cause of action.\n\nThe interruption cannot exceed sixty (60) days from the filing of the complaint. After that, the period resumes.\n\nComplainants should therefore act promptly and keep their dates and receipts in order."},
+ {slug:"who-appears",title:"Who may appear during mediation and conciliation?",summary:"The parties themselves, in person—no lawyers.",
+  body:"Under Sec. 415 of RA 7160, parties must appear in person without the assistance of counsel or representative.\n\nMinors and incompetents may be assisted by their next-of-kin who is not a lawyer.\n\nThe rule exists so that the process stays simple, personal and focused on reconciliation."}
+],
+faqs:[
+ {question:"Do I need a lawyer during Lupon proceedings?",answer:"No. Parties appear personally, without counsel or representatives (Sec. 415, RA 7160)."},
+ {question:"Can non-residents file complaints?",answer:"Generally the Lupon covers disputes between persons residing in the same city or municipality. A non-resident may file where the respondent resides, subject to the venue rules in Sec. 409. Ask the Lupon Secretary about your specific situation."},
+ {question:"What happens if a respondent fails to appear?",answer:"The Punong Barangay or Pangkat may issue summons again and can refer the matter for contempt. If the respondent still does not participate, a Certificate to File Action may be issued to the complainant."},
+ {question:"What is an amicable settlement?",answer:"A written agreement signed by the parties, resolving their dispute. It has the force of a final judgment after ten (10) days unless repudiated within that period on grounds such as fraud, violence or intimidation."},
+ {question:"What disputes are exempt from KP?",answer:"Examples: disputes involving the government or public officers on official duty, offenses with penalties above one year or ₱5,000, cases with no private offended party, and parties from different cities/municipalities (with limited exceptions). See the article “What cases may be brought before the Lupon?”."}
+],
+laws:[
+ {slug:"ra7160",category:"Katarungang Pambarangay",title:"RA 7160 – Local Government Code (KP provisions)",
+  overview:"Secs. 399–422 establish the Lupong Tagapamayapa and the KP process of mediation, conciliation and arbitration.",
+  provisions:"Sec. 399: Lupong Tagapamayapa is organized in each barangay.\nSec. 408: Subject matter and exceptions.\nSec. 409: Venue.\nSec. 410: Procedure for amicable settlement; interruption of prescription.\nSec. 412: Conciliation as a precondition to filing in court.\nSec. 415: Appearance of parties in person.\nSec. 416: Execution of settlements.",
+  faq:"Is the settlement enforceable? Yes—by the Lupon within six months, and after that through the proper court.",related:"what-is-kp,what-cases,cfa,prescription"},
+ {slug:"kp-rules",category:"Katarungang Pambarangay",title:"KP Rules and Guidelines",
+  overview:"Implementing rules, forms and guidelines issued for the Katarungang Pambarangay system, including the standard KP forms.",
+  provisions:"Standard forms for complaint, summons, notice of hearing and settlement.\nTimelines for mediation (15 days) and conciliation (15 days, extendable by 15).\nRecord-keeping duties of the Lupon Secretary.",
+  faq:"Where can I get KP forms? Ask the Lupon Secretary at the barangay hall.",related:"who-appears,cfa"},
+ {slug:"ra9262",category:"Family and Community Protection",title:"RA 9262 – Anti-Violence Against Women and Their Children Act",
+  overview:"Penalizes violence against women and their children committed by intimate partners and provides protective remedies.",
+  provisions:"Defines physical, sexual, psychological and economic abuse.\nBarangay Protection Orders (BPO) may be issued by the Punong Barangay.\nTemporary and Permanent Protection Orders are issued by courts.\nViolations are not subject to mediation or conciliation.",
+  faq:"Can a VAWC case be settled at the Lupon? No. Victims should seek a BPO and assistance from the barangay VAW desk, police, or the court.",related:"what-cases"},
+ {slug:"ra7610",category:"Family and Community Protection",title:"RA 7610 – Special Protection of Children Against Abuse, Exploitation and Discrimination Act",
+  overview:"Provides stronger deterrence and special protection against child abuse, exploitation and discrimination.",
+  provisions:"Defines child abuse, cruelty and exploitation.\nImposes penalties on offenders.\nRequires reporting and protective action by barangay and local officials.",
+  faq:"Who should be told of child abuse? The barangay, the police, the DSWD/local social welfare office or the Barangay Council for the Protection of Children.",related:"what-cases"},
+ {slug:"ra11313",category:"Safe Spaces",title:"RA 11313 – Safe Spaces Act (Bawal Bastos Law)",
+  overview:"Penalizes gender-based sexual harassment in streets, public spaces, online spaces, workplaces and schools.",
+  provisions:"Covers catcalling, unwanted sexual remarks, stalking, and online harassment.\nLocal governments, including barangays, have duties to prevent and respond.",
+  faq:"Where do I report street harassment? To the barangay or police, who can act under the law.",related:"what-cases"}
+]};
+
+/* ===== SUPABASE ===== */
+let sb=null;
+if(CONFIG.SUPABASE_URL&&CONFIG.SUPABASE_ANON_KEY&&window.supabase){
+  sb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+}
+async function loadRemote(){
+  if(!sb)return;
+  const jobs=[
+    ["news",sb.from("news_posts").select("*").eq("published",true).order("created_at",{ascending:false})],
+    ["articles",sb.from("articles").select("*").eq("published",true).order("created_at",{ascending:false})],
+    ["faqs",sb.from("faqs").select("*").eq("published",true).order("sort_order")],
+    ["laws",sb.from("laws").select("*").eq("published",true).order("sort_order")]
+  ];
+  for(const [k,q] of jobs){
+    try{const {data,error}=await q;if(!error&&data&&data.length)DB[k]=data;else if(error)console.warn(k,error.message)}catch(e){console.warn(k,e)}
+  }
+}
+
+/* ===== HELPERS ===== */
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function rich(t){ // blank-line paragraphs, "- " bullets
+  return String(t||"").split(/\n\n+/).map(b=>{
+    const L=b.split("\n");
+    if(L.every(l=>l.startsWith("- ")))return "<ul>"+L.map(l=>"<li>"+esc(l.slice(2))+"</li>").join("")+"</ul>";
+    return "<p>"+L.map(esc).join("<br>")+"</p>";
+  }).join("");
+}
+const fmt=d=>d?new Date(d).toLocaleDateString("en-PH",{year:"numeric",month:"long",day:"numeric"}):"";
+const NAV=[["#/","🏠 Home"],["#/news","📢 News"],["#/alamin","📚 Ating Alamin"],["#/laws","⚖️ Legal Library"],["#/faq","❓ FAQ"],["#/about","🏛 About"],["#/contact","📞 Contact"]];
+const newsCard=n=>`<div class="card"><span class="tag">${esc(n.category||"Update")}</span><h3>${esc(n.title)}</h3><div class="date">${fmt(n.created_at)}</div><p>${esc((n.body||"").slice(0,140))}${(n.body||"").length>140?"…":""}</p></div>`;
+const artCard=a=>`<a class="card" href="#/alamin/${esc(a.slug)}"><h3>${esc(a.title)}</h3><p>${esc(a.summary)}</p></a>`;
+
+/* ===== VIEWS ===== */
+const V={
+home(){
+  const f=DB.articles.find(a=>a.featured)||DB.articles[0];
+  return `<div class="hero"><h1>Maligayang pagdating sa LuponConnect</h1>
+  <p>A digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos—reliable information on Katarungang Pambarangay, dispute resolution and relevant laws.</p></div>
+  <h2 class="sec">Latest Updates</h2><div class="grid">${DB.news.slice(0,3).map(newsCard).join("")}</div>
+  <h2 class="sec">Featured Ating Alamin</h2>${f?`<div class="grid">${artCard(f)}</div>`:""}
+  <h2 class="sec">Quick Links</h2><div class="grid">
+   ${NAV.slice(1).map(([h,l])=>`<a class="card" href="${h}"><h3>${l}</h3></a>`).join("")}</div>`;
+},
+news(){return `<h1>📢 News &amp; Updates</h1><p class="date">Lupon activities · Training highlights · Community announcements · Legal and policy updates</p>
+  <div class="grid">${DB.news.map(newsCard).join("")}</div>`},
+alamin(){return `<h1>📚 Ating Alamin</h1><input type="search" id="q" placeholder="Search articles…">
+  <div class="grid" id="list">${DB.articles.map(artCard).join("")}</div>`},
+article(slug){
+  const a=DB.articles.find(x=>x.slug===slug);if(!a)return V.nf();
+  return `<p class="crumb"><a href="#/alamin">← Ating Alamin</a></p><h1>${esc(a.title)}</h1><div class="body">${rich(a.body)}</div>
+  <p class="note">General information only. For advice on your specific case, consult the Lupon Secretary, the Punong Barangay or a lawyer (PAO for qualified indigent persons).</p>`},
+laws(){
+  const cats=[...new Set(DB.laws.map(l=>l.category))];
+  return `<h1>⚖️ Legal Library</h1>`+cats.map(c=>`<h2>${esc(c)}</h2><div class="grid">${DB.laws.filter(l=>l.category===c).map(l=>`<a class="card" href="#/laws/${esc(l.slug)}"><h3>${esc(l.title)}</h3><p>${esc(l.overview)}</p></a>`).join("")}</div>`).join("")},
+law(slug){
+  const l=DB.laws.find(x=>x.slug===slug);if(!l)return V.nf();
+  const rel=String(l.related||"").split(",").map(s=>DB.articles.find(a=>a.slug===s.trim())).filter(Boolean);
+  const li=t=>"<ul>"+String(t||"").split("\n").filter(Boolean).map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>";
+  return `<p class="crumb"><a href="#/laws">← Legal Library</a></p><h1>${esc(l.title)}</h1><div class="body">
+  <h2>Overview</h2><p>${esc(l.overview)}</p><h2>Key Provisions</h2>${li(l.provisions)}
+  <h2>Frequently Asked Questions</h2>${rich(l.faq)}
+  <h2>Related Ating Alamin Articles</h2>${rel.length?`<div class="grid">${rel.map(artCard).join("")}</div>`:"<p>None yet.</p>"}</div>`},
+faq(){return `<h1>❓ Frequently Asked Questions</h1>`+DB.faqs.map(f=>`<details><summary>${esc(f.question)}</summary><div class="body">${rich(f.answer)}</div></details>`).join("")},
+about(){return `<h1>🏛 About the Lupon</h1><div class="body">
+  <h2>Role of the Lupong Tagapamayapa</h2><p>The Lupon is a body of respected community members organized in every barangay to help settle disputes amicably, keeping peace and order and reducing court congestion.</p>
+  <h2>Powers and Functions</h2><ul><li>Exercise administrative supervision over the conciliation panels (Pangkat).</li><li>Meet regularly to discuss mediation and conciliation work and ways to improve it.</li><li>Enable members to share experiences and recommend improvements.</li><li>Perform other duties assigned by law or by the Punong Barangay.</li></ul>
+  <h2>Mediation Process</h2><p>The complainant files a complaint with the Punong Barangay, who summons the respondent and mediates within fifteen (15) days of the first meeting.</p>
+  <h2>Conciliation Process</h2><p>If mediation fails, a Pangkat ng Tagapagkasundo of three Lupon members is constituted. It hears the parties and tries to settle within fifteen (15) days, extendable by another fifteen (15) days.</p>
+  <h2>Arbitration</h2><p>If conciliation fails, the parties may agree in writing to submit the dispute to arbitration by the Punong Barangay or Pangkat. The award is final after ten (10) days, unless a petition to nullify it is filed.</p></div>`},
+contact(){const c=CONFIG.contact;return `<h1>📞 Contact Information</h1><div class="grid">
+  <div class="card"><h3>📍 Barangay Address</h3><p>${esc(c.address)}</p></div>
+  <div class="card"><h3>🕗 Office Hours</h3><p>${esc(c.hours)}</p></div>
+  <div class="card"><h3>☎️ Contact Number</h3><p>${esc(c.phone)}</p></div>
+  <div class="card"><h3>✉️ Email</h3><p><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p></div></div>
+  <h2>Location Map</h2><iframe loading="lazy" title="Map" src="https://www.google.com/maps?q=${encodeURIComponent(c.mapQuery)}&output=embed"></iframe>`},
+nf(){return `<h1>Page not found</h1><p><a class="btn" href="#/">Go home</a></p>`}
+};
+
+/* ===== ROUTER ===== */
+function route(){
+  const [,p="",id]=(location.hash||"#/").slice(1).split("/");
+  let h;
+  if(p==="")h=V.home();else if(p==="alamin")h=id?V.article(id):V.alamin();
+  else if(p==="laws")h=id?V.law(id):V.laws();else h=(V[p]&&p!=="nf")?V[p]():V.nf();
+  document.getElementById("app").innerHTML=h;
+  document.getElementById("nav").innerHTML=NAV.map(([href,l])=>`<a href="${href}" class="${"#/"+p===href||(href==="#/"&&!p)?"on":""}">${l}</a>`).join("");
+  const q=document.getElementById("q");
+  if(q)q.oninput=()=>{const t=q.value.toLowerCase();
+    document.getElementById("list").innerHTML=DB.articles.filter(a=>(a.title+a.summary+a.body).toLowerCase().includes(t)).map(artCard).join("")||"<p>No results.</p>"};
+  window.scrollTo(0,0);
+}
+const nav=document.getElementById("nav"),bg=document.getElementById("burger");
+bg.onclick=()=>{const o=nav.classList.toggle("open");bg.textContent=o?"✕":"☰";bg.setAttribute("aria-expanded",o)};
+function closeMenu(){nav.classList.remove("open");bg.textContent="☰";bg.setAttribute("aria-expanded","false")}
+window.addEventListener("hashchange",()=>{closeMenu();route()});
+route();
+loadRemote().then(route);
+</script>
+</body>
+</html>
