@@ -59,6 +59,8 @@ nav a{transition:background .15s}
  main{padding-top:16px}h1{font-size:1.5rem}
 }
 .crumb a{color:var(--brand)}
+.thumb{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;margin-bottom:10px;background:var(--line);display:block}
+.hero-img{width:100%;max-height:440px;object-fit:cover;border-radius:12px;margin:14px 0;background:var(--line)}
 </style>
 </head>
 <body>
@@ -81,8 +83,8 @@ nav a{transition:background .15s}
 <script>
 /* ===== CONFIG – edit these ===== */
 const CONFIG = {
-  SUPABASE_URL: "https://adragnnngictwxtslosy.supabase.co",       // e.g. https://xxxx.supabase.co
-  SUPABASE_ANON_KEY: "sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd",  // anon public key only (never the service_role key)
+  SUPABASE_URL: "",       // e.g. https://xxxx.supabase.co
+  SUPABASE_ANON_KEY: "",  // anon public key only (never the service_role key)
   contact: {
     address: "Barangay Hall, Barangay Anos, Los Baños, Laguna",
     hours: "Monday–Friday, 8:00 AM – 5:00 PM",
@@ -145,10 +147,10 @@ async function loadRemote(){
   if(!sb)return;
   const get=async(q,fn)=>{try{const {data,error}=await q;if(error)return console.warn(error.message);if(data&&data.length)fn(data)}catch(e){console.warn(e)}};
   await Promise.all([
-    get(sb.from("posts").select("id,title,slug,excerpt,content,category,created_at").eq("published",true).order("created_at",{ascending:false}).limit(50),
-      d=>DB.news=d.map(x=>({id:x.id,title:x.title,category:x.category,created_at:x.created_at,summary:x.excerpt,body:x.content}))),
+    get(sb.from("posts").select("id,title,slug,excerpt,content,category,created_at,cover_image").eq("published",true).order("created_at",{ascending:false}).limit(50),
+      d=>DB.news=d.map(x=>({id:x.id,title:x.title,category:x.category,created_at:x.created_at,summary:x.excerpt,body:x.content,image:x.cover_image}))),
     get(sb.from("ating_alamin").select("*").eq("published",true).order("created_at",{ascending:false}),
-      d=>DB.articles=d.map(x=>({slug:x.slug,title:x.title,summary:x.summary,body:x.content,featured:x.featured}))),
+      d=>DB.articles=d.map(x=>({slug:x.slug,title:x.title,summary:x.summary,body:x.content,featured:x.featured,image:x.featured_image}))),
     get(sb.from("faqs").select("*").eq("active",true).order("display_order"),d=>DB.faqs=d),
     get(sb.from("legal_library").select("*").eq("published",true).order("sort_order").order("title"),
       d=>DB.laws=d.map(x=>({slug:x.slug||x.id,category:x.category||"Other",title:x.title,ref:x.reference_number,overview:x.overview,provisions:x.key_provisions,faq:x.faq,related:x.related,content:x.content,pdf:x.pdf_url}))),
@@ -168,8 +170,9 @@ function rich(t){ // blank-line paragraphs, "- " bullets
 }
 const fmt=d=>d?new Date(d).toLocaleDateString("en-PH",{year:"numeric",month:"long",day:"numeric"}):"";
 const NAV=[["#/","🏠 Home"],["#/news","📢 News"],["#/alamin","📚 Ating Alamin"],["#/laws","⚖️ Legal Library"],["#/faq","❓ FAQ"],["#/about","🏛 About"],["#/contact","📞 Contact"]];
-const newsCard=n=>{const t=n.summary||n.body||"";return `<a class="card" href="#/news/${esc(n.id)}"><span class="tag">${esc(n.category||"Update")}</span><h3>${esc(n.title)}</h3><div class="date">${fmt(n.created_at)}</div><p>${esc(t.slice(0,140))}${t.length>140?"…":""}</p></a>`};
-const artCard=a=>`<a class="card" href="#/alamin/${esc(a.slug)}"><h3>${esc(a.title)}</h3><p>${esc(a.summary)}</p></a>`;
+const img=(u,c="thumb")=>u?`<img class="${c}" src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()">`:"";
+const newsCard=n=>{const t=n.summary||n.body||"";return `<a class="card" href="#/news/${esc(n.id)}">${img(n.image)}<span class="tag">${esc(n.category||"Update")}</span><h3>${esc(n.title)}</h3><div class="date">${fmt(n.created_at)}</div><p>${esc(t.slice(0,140))}${t.length>140?"…":""}</p></a>`};
+const artCard=a=>`<a class="card" href="#/alamin/${esc(a.slug)}">${img(a.image)}<h3>${esc(a.title)}</h3><p>${esc(a.summary)}</p></a>`;
 
 /* ===== VIEWS ===== */
 const V={
@@ -185,12 +188,12 @@ home(){
 news(){return `<h1>📢 News &amp; Updates</h1><p class="date">Lupon activities · Training highlights · Community announcements · Legal and policy updates</p>
   <div class="grid">${DB.news.map(newsCard).join("")}</div>`},
 post(id){const n=DB.news.find(x=>String(x.id)===String(id));if(!n)return V.nf();
-  return `<p class="crumb"><a href="#/news">← News &amp; Updates</a></p><span class="tag">${esc(n.category||"Update")}</span><h1>${esc(n.title)}</h1><div class="date">${fmt(n.created_at)}</div><div class="body">${rich(n.body||n.summary)}</div>`},
+  return `<p class="crumb"><a href="#/news">← News &amp; Updates</a></p><span class="tag">${esc(n.category||"Update")}</span><h1>${esc(n.title)}</h1><div class="date">${fmt(n.created_at)}</div>${img(n.image,"hero-img")}<div class="body">${rich(n.body||n.summary)}</div>`},
 alamin(){return `<h1>📚 Ating Alamin</h1><input type="search" id="q" placeholder="Search articles…">
   <div class="grid" id="list">${DB.articles.map(artCard).join("")}</div>`},
 article(slug){
   const a=DB.articles.find(x=>x.slug===slug);if(!a)return V.nf();
-  return `<p class="crumb"><a href="#/alamin">← Ating Alamin</a></p><h1>${esc(a.title)}</h1><div class="body">${rich(a.body)}</div>
+  return `<p class="crumb"><a href="#/alamin">← Ating Alamin</a></p><h1>${esc(a.title)}</h1>${img(a.image,"hero-img")}<div class="body">${rich(a.body)}</div>
   <p class="note">General information only. For advice on your specific case, consult the Lupon Secretary, the Punong Barangay or a lawyer (PAO for qualified indigent persons).</p>`},
 laws(){
   const cats=[...new Set(DB.laws.map(l=>l.category))];
