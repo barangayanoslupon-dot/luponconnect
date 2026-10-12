@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LuponConnect – Barangay Anos Lupong Tagapamayapa</title>
+<meta name="description" content="LuponConnect – digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos, Los Baños, Laguna.">
+<meta property="og:title" content="LuponConnect – Barangay Anos Lupong Tagapamayapa">
+<meta property="og:description" content="Connecting Communities Through Peaceful Resolution. Katarungang Pambarangay, dispute resolution and relevant laws.">
+<meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚖️</text></svg>">
 <style>
 :root{--bg:#f7f5ef;--card:#fff;--ink:#1d2a2f;--mute:#5d6b70;--brand:#1f5f5b;--accent:#c8892b;--line:#e3dfd2}
@@ -64,6 +68,9 @@ nav a{transition:background .15s}
  main{padding-top:16px}h1{font-size:1.5rem}
 }
 .crumb a{color:var(--brand)}
+.share{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:22px 0;color:var(--mute);font-size:.9rem}
+.sbtn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:99px;text-decoration:none;font:inherit;font-size:.9rem;cursor:pointer}
+.sbtn:hover{border-color:var(--brand)}.sbtn[hidden]{display:none}
 .thumb{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;margin-bottom:10px;background:var(--line);display:block}
 .hero-img{width:100%;max-height:440px;object-fit:cover;border-radius:12px;margin:14px 0;background:var(--line)}
 </style>
@@ -88,9 +95,10 @@ nav a{transition:background .15s}
 <script>
 /* ===== CONFIG – edit these ===== */
 const CONFIG = {
-  SUPABASE_URL: "https://adragnnngictwxtslosy.supabase.co",       // e.g. https://xxxx.supabase.co
-  SUPABASE_ANON_KEY: "sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd",  // anon public key only (never the service_role key)
+  SUPABASE_URL: "",       // e.g. https://xxxx.supabase.co
+  SUPABASE_ANON_KEY: "",  // anon public key only (never the service_role key)
   contact: {
+    facebook: "",   // optional; normally set from the admin (Contact tab)
     address: "Barangay Hall, Barangay Anos, Los Baños, Laguna",
     hours: "Monday–Friday, 8:00 AM – 5:00 PM",
     phone: "0917 146 9167",
@@ -160,7 +168,7 @@ async function loadRemote(){
     get(sb.from("legal_library").select("*").eq("published",true).order("sort_order").order("title"),
       d=>DB.laws=d.map(x=>({slug:x.slug||x.id,category:x.category||"Other",title:x.title,ref:x.reference_number,overview:x.overview,provisions:x.key_provisions,faq:x.faq,related:x.related,content:x.content,pdf:x.pdf_url}))),
     get(sb.from("contact_info").select("*").limit(1),
-      d=>{const c=d[0];DB.contact={address:c.address,hours:c.office_hours,phone:c.phone,email:c.email,mapUrl:c.map_url,name:c.office_name}})
+      d=>{const c=d[0];DB.contact={address:c.address,hours:c.office_hours,phone:c.phone,email:c.email,mapUrl:c.map_url,name:c.office_name,facebook:c.facebook_url}})
   ]);
 }
 
@@ -175,6 +183,7 @@ function rich(t){ // blank-line paragraphs, "- " bullets
 }
 const fmt=d=>d?new Date(d).toLocaleDateString("en-PH",{year:"numeric",month:"long",day:"numeric"}):"";
 const NAV=[["#/","🏠 Home"],["#/news","📢 News"],["#/alamin","📚 Ating Alamin"],["#/laws","⚖️ Legal Library"],["#/faq","❓ FAQ"],["#/about","🏛 About"],["#/contact","📞 Contact"]];
+const shareBar=t=>`<div class="share"><span>Share:</span><a class="sbtn" target="_blank" rel="noopener" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}">Facebook</a><a class="sbtn" href="mailto:?subject=${encodeURIComponent(t)}&body=${encodeURIComponent(location.href)}">Email</a><button class="sbtn" data-copy>Copy link</button><button class="sbtn" data-native hidden>More…</button></div>`;
 const img=(u,c="thumb")=>u?`<img class="${c}" src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()">`:"";
 const newsCard=n=>{const t=n.summary||n.body||"";return `<a class="card" href="#/news/${esc(n.id)}">${img(n.image)}<span class="tag">${esc(n.category||"Update")}</span><h3>${esc(n.title)}</h3><div class="date">${fmt(n.created_at)}</div><p>${esc(t.slice(0,140))}${t.length>140?"…":""}</p></a>`};
 const artCard=a=>`<a class="card" href="#/alamin/${esc(a.slug)}">${img(a.image)}<h3>${esc(a.title)}</h3><p>${esc(a.summary)}</p></a>`;
@@ -193,13 +202,13 @@ home(){
 news(){return `<h1>📢 News &amp; Updates</h1><p class="date">Lupon activities · Training highlights · Community announcements · Legal and policy updates</p>
   <div class="grid">${DB.news.map(newsCard).join("")}</div>`},
 post(id){const n=DB.news.find(x=>String(x.id)===String(id));if(!n)return V.nf();
-  return `<p class="crumb"><a href="#/news">← News &amp; Updates</a></p><span class="tag">${esc(n.category||"Update")}</span><h1>${esc(n.title)}</h1><div class="date">${fmt(n.created_at)}</div>${img(n.image,"hero-img")}<div class="body">${rich(n.body||n.summary)}</div>`},
+  return `<p class="crumb"><a href="#/news">← News &amp; Updates</a></p><span class="tag">${esc(n.category||"Update")}</span><h1>${esc(n.title)}</h1><div class="date">${fmt(n.created_at)}</div>${img(n.image,"hero-img")}<div class="body">${rich(n.body||n.summary)}</div>${shareBar(n.title)}`},
 alamin(){return `<h1>📚 Ating Alamin</h1><input type="search" id="q" placeholder="Search articles…">
   <div class="grid" id="list">${DB.articles.map(artCard).join("")}</div>`},
 article(slug){
   const a=DB.articles.find(x=>x.slug===slug);if(!a)return V.nf();
   return `<p class="crumb"><a href="#/alamin">← Ating Alamin</a></p><h1>${esc(a.title)}</h1>${img(a.image,"hero-img")}<div class="body">${rich(a.body)}</div>
-  <p class="note">General information only. For advice on your specific case, consult the Lupon Secretary, the Punong Barangay or a lawyer (PAO for qualified indigent persons).</p>`},
+  ${shareBar(a.title)}<p class="note">General information only. For advice on your specific case, consult the Lupon Secretary, the Punong Barangay or a lawyer (PAO for qualified indigent persons).</p>`},
 laws(){
   const cats=[...new Set(DB.laws.map(l=>l.category))];
   return `<h1>⚖️ Legal Library</h1>`+cats.map(c=>`<h2>${esc(c)}</h2><div class="grid">${DB.laws.filter(l=>l.category===c).map(l=>`<a class="card" href="#/laws/${esc(l.slug)}"><h3>${esc(l.title)}</h3><p>${esc(l.overview)}</p></a>`).join("")}</div>`).join("")},
@@ -210,7 +219,7 @@ law(slug){
   return `<p class="crumb"><a href="#/laws">← Legal Library</a></p><h1>${esc(l.title)}</h1>${l.ref?`<div class="date">${esc(l.ref)}</div>`:""}<div class="body">
   <h2>Overview</h2><p>${esc(l.overview)}</p><h2>Key Provisions</h2>${l.provisions?li(l.provisions):rich(l.content)}
   <h2>Frequently Asked Questions</h2>${l.faq?rich(l.faq):"<p>None yet.</p>"}
-  <h2>Related Ating Alamin Articles</h2>${rel.length?`<div class="grid">${rel.map(artCard).join("")}</div>`:"<p>None yet.</p>"}${l.pdf?`<p><a class="btn" href="${esc(l.pdf)}" target="_blank" rel="noopener">📄 Download PDF</a></p>`:""}</div>`},
+  <h2>Related Ating Alamin Articles</h2>${rel.length?`<div class="grid">${rel.map(artCard).join("")}</div>`:"<p>None yet.</p>"}${l.pdf?`<p><a class="btn" href="${esc(l.pdf)}" target="_blank" rel="noopener">📄 Download PDF</a></p>`:""}</div>${shareBar(l.title)}`},
 faq(){return `<h1>❓ Frequently Asked Questions</h1>`+DB.faqs.map(f=>`<details><summary>${esc(f.question)}</summary><div class="body">${rich(f.answer)}</div></details>`).join("")},
 about(){return `<h1>🏛 About the Lupon</h1><div class="body">
   <h2>Role of the Lupong Tagapamayapa</h2><p>The Lupon is a body of respected community members organized in every barangay to help settle disputes amicably, keeping peace and order and reducing court congestion.</p>
@@ -222,8 +231,8 @@ contact(){const c=Object.assign({},CONFIG.contact,Object.fromEntries(Object.entr
   <div class="card"><h3>📍 Barangay Address</h3><p>${esc(c.address)}</p></div>
   <div class="card"><h3>🕗 Office Hours</h3><p>${esc(c.hours)}</p></div>
   <div class="card"><h3>☎️ Contact Number</h3><p>${esc(c.phone)}</p></div>
-  <div class="card"><h3>✉️ Email</h3><p><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p></div></div>
-  <h2>Location Map</h2><iframe loading="lazy" title="Map" src="${esc(map)}"></iframe>`},
+  <div class="card"><h3>✉️ Email</h3><p><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p></div>${/^https?:\/\//.test(c.facebook||"")?`<a class="card" href="${esc(c.facebook)}" target="_blank" rel="noopener"><h3>📘 Facebook</h3><p>Visit our Facebook page</p></a>`:""}</div>
+  <h2>Location Map</h2><iframe loading="lazy" title="Map" src="${esc(map)}"></iframe><h2>Share LuponConnect</h2>${shareBar("LuponConnect – Barangay Anos Lupong Tagapamayapa")}`},
 nf(){return `<h1>Page not found</h1><p><a class="btn" href="#/">Go home</a></p>`}
 };
 
@@ -235,6 +244,8 @@ function route(){
   else if(p==="laws")h=id?V.law(id):V.laws();else if(p==="news"&&id)h=V.post(id);else h=(V[p]&&p!=="nf")?V[p]():V.nf();
   document.getElementById("app").innerHTML=h;
   document.getElementById("nav").innerHTML=NAV.map(([href,l])=>`<a href="${href}" class="${"#/"+p===href||(href==="#/"&&!p)?"on":""}">${l}</a>`).join("");
+  document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(location.href);b.textContent="Copied ✔"}catch(e){prompt("Copy this link:",location.href)}});
+  if(navigator.share)document.querySelectorAll("[data-native]").forEach(b=>{b.hidden=false;b.onclick=()=>navigator.share({title:document.title,url:location.href}).catch(()=>{})});
   const q=document.getElementById("q");
   if(q)q.oninput=()=>{const t=q.value.toLowerCase();
     document.getElementById("list").innerHTML=DB.articles.filter(a=>(a.title+a.summary+a.body).toLowerCase().includes(t)).map(artCard).join("")||"<p>No results.</p>"};
