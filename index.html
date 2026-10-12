@@ -191,11 +191,11 @@ const artCard=a=>`<a class="card" href="#/alamin/${esc(a.slug)}">${img(a.image)}
 /* ===== VIEWS ===== */
 const V={
 home(){
-  const f=DB.articles.find(a=>a.featured)||DB.articles[0];
+  let f=DB.articles.filter(a=>a.featured).slice(0,3);if(!f.length)f=DB.articles.slice(0,3);
   return `<div class="hero"><div class="hero-logos"><img class="hero-logo" src="logo-anos.png" alt="Barangay Anos seal" onerror="this.remove()"><img class="hero-logo" src="logo-lupon.png" alt="Lupong Tagapamayapa seal" onerror="this.remove()"></div><h1>Maligayang pagdating sa LuponConnect</h1>
   <p>A digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos—reliable information on Katarungang Pambarangay, dispute resolution and relevant laws.</p></div>
   <h2 class="sec">Latest Updates</h2><div class="grid">${DB.news.slice(0,3).map(newsCard).join("")}</div>
-  <h2 class="sec">Featured Ating Alamin</h2>${f?`<div class="grid">${artCard(f)}</div>`:""}
+  <h2 class="sec">Featured Ating Alamin</h2>${f.length?`<div class="grid">${f.map(artCard).join("")}</div>`:""}
   <h2 class="sec">Quick Links</h2><div class="grid">
    ${NAV.slice(1).map(([h,l])=>`<a class="card" href="${h}"><h3>${l}</h3></a>`).join("")}</div>`;
 },
