@@ -70,6 +70,10 @@ nav a{transition:background .15s}
 .crumb a{color:var(--brand)}
 .share{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:22px 0;color:var(--mute);font-size:.9rem}
 .sbtn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:99px;text-decoration:none;font:inherit;font-size:.9rem;cursor:pointer}
+.vc-pill{display:inline-block;margin-top:14px;background:rgba(255,255,255,.18);border-radius:99px;padding:4px 16px;font-size:.88rem}
+.vc-pill:empty{display:none}
+.like{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 18px;border-radius:99px;font:inherit;cursor:pointer}
+.like.on{border-color:#e0707a;color:#e0707a;font-weight:600}.lk{font-size:.8rem;color:var(--mute);margin-top:8px}
 .sbtn:hover{border-color:var(--brand)}.sbtn[hidden]{display:none}
 .thumb{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;margin-bottom:10px;background:var(--line);display:block}
 .hero-img{width:100%;max-height:440px;object-fit:cover;border-radius:12px;margin:14px 0;background:var(--line)}
@@ -155,6 +159,8 @@ laws:[
 ]};
 
 /* ===== SUPABASE ===== */
+let LIKES={},VISITS=0;
+const visitText=()=>VISITS?"👁 Bilang ng mga bumisita: "+VISITS.toLocaleString("en-PH"):"";
 const sb=(CONFIG.SUPABASE_URL&&CONFIG.SUPABASE_ANON_KEY&&window.supabase)?window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY):null;
 async function loadRemote(){
   if(!sb)return;
@@ -168,9 +174,24 @@ async function loadRemote(){
     get(sb.from("legal_library").select("*").eq("published",true).order("sort_order").order("title"),
       d=>DB.laws=d.map(x=>({slug:x.slug||x.id,category:x.category||"Other",title:x.title,ref:x.reference_number,overview:x.overview,provisions:x.key_provisions,faq:x.faq,related:x.related,content:x.content,pdf:x.pdf_url}))),
     get(sb.from("contact_info").select("*").limit(1),
-      d=>{const c=d[0];DB.contact={address:c.address,hours:c.office_hours,phone:c.phone,email:c.email,mapUrl:c.map_url,name:c.office_name,facebook:c.facebook_url}})
+      d=>{const c=d[0];DB.contact={address:c.address,hours:c.office_hours,phone:c.phone,email:c.email,mapUrl:c.map_url,name:c.office_name,facebook:c.facebook_url}}),
+    get(sb.from("likes").select("*"),d=>d.forEach(x=>LIKES[x.item_type+":"+x.item_id]=Number(x.count)))
   ]);
 }
+
+async function initStats(){
+  if(!sb)return;
+  try{
+    const today=new Date().toISOString().slice(0,10);let seen=null;
+    try{seen=localStorage.getItem("lc_visit")}catch(e){}
+    const {data}=await sb.rpc(seen===today?"get_visits":"hit_visit");
+    if(seen!==today){try{localStorage.setItem("lc_visit",today)}catch(e){}}
+    if(data!=null){VISITS=Number(data);document.querySelectorAll(".vc-pill").forEach(e=>e.textContent=visitText())}
+  }catch(e){console.warn(e)}
+}
+const myLikes=()=>{try{return JSON.parse(localStorage.getItem("lc_likes")||"[]")}catch(e){return[]}};
+const likeBtn=(t,id)=>{if(!sb)return"";const k=t+":"+id,on=myLikes().includes(k);return `<p><button class="like${on?" on":""}" data-like="${esc(k)}">${on?"♥ Liked":"♡ Like"} · <span>${LIKES[k]||0}</span></button></p>`};
+const likeTag=(t,id)=>(sb&&LIKES[t+":"+id]>0)?`<div class="lk">♥ ${LIKES[t+":"+id]}</div>`:"";
 
 /* ===== HELPERS ===== */
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -185,15 +206,15 @@ const fmt=d=>d?new Date(d).toLocaleDateString("en-PH",{year:"numeric",month:"lon
 const NAV=[["#/","🏠 Home"],["#/news","📢 News"],["#/alamin","📚 Ating Alamin"],["#/laws","⚖️ Legal Library"],["#/faq","❓ FAQ"],["#/about","🏛 About"],["#/contact","📞 Contact"]];
 const shareBar=t=>`<div class="share"><span>Share:</span><a class="sbtn" target="_blank" rel="noopener" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}">Facebook</a><a class="sbtn" href="mailto:?subject=${encodeURIComponent(t)}&body=${encodeURIComponent(location.href)}">Email</a><button class="sbtn" data-copy>Copy link</button><button class="sbtn" data-native hidden>More…</button></div>`;
 const img=(u,c="thumb")=>u?`<img class="${c}" src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()">`:"";
-const newsCard=n=>{const t=n.summary||n.body||"";return `<a class="card" href="#/news/${esc(n.id)}">${img(n.image)}<span class="tag">${esc(n.category||"Update")}</span><h3>${esc(n.title)}</h3><div class="date">${fmt(n.created_at)}</div><p>${esc(t.slice(0,140))}${t.length>140?"…":""}</p></a>`};
-const artCard=a=>`<a class="card" href="#/alamin/${esc(a.slug)}">${img(a.image)}<h3>${esc(a.title)}</h3><p>${esc(a.summary)}</p></a>`;
+const newsCard=n=>{const t=n.summary||n.body||"";return `<a class="card" href="#/news/${esc(n.id)}">${img(n.image)}<span class="tag">${esc(n.category||"Update")}</span><h3>${esc(n.title)}</h3><div class="date">${fmt(n.created_at)}</div><p>${esc(t.slice(0,140))}${t.length>140?"…":""}</p>${likeTag("post",n.id)}</a>`};
+const artCard=a=>`<a class="card" href="#/alamin/${esc(a.slug)}">${img(a.image)}<h3>${esc(a.title)}</h3><p>${esc(a.summary)}</p>${likeTag("article",a.slug)}</a>`;
 
 /* ===== VIEWS ===== */
 const V={
 home(){
   let f=DB.articles.filter(a=>a.featured).slice(0,3);if(!f.length)f=DB.articles.slice(0,3);
   return `<div class="hero"><div class="hero-logos"><img class="hero-logo" src="logo-anos.png" alt="Barangay Anos seal" onerror="this.remove()"><img class="hero-logo" src="logo-lupon.png" alt="Lupong Tagapamayapa seal" onerror="this.remove()"></div><h1>Maligayang pagdating sa LuponConnect</h1>
-  <p>A digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos—reliable information on Katarungang Pambarangay, dispute resolution and relevant laws.</p></div>
+  <p>A digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos—reliable information on Katarungang Pambarangay, dispute resolution and relevant laws.</p><div class="vc-pill">${visitText()}</div></div>
   <h2 class="sec">Latest Updates</h2><div class="grid">${DB.news.slice(0,3).map(newsCard).join("")}</div>
   <h2 class="sec">Featured Ating Alamin</h2>${f.length?`<div class="grid">${f.map(artCard).join("")}</div>`:""}
   <h2 class="sec">Quick Links</h2><div class="grid">
@@ -202,13 +223,13 @@ home(){
 news(){return `<h1>📢 News &amp; Updates</h1><p class="date">Lupon activities · Training highlights · Community announcements · Legal and policy updates</p>
   <div class="grid">${DB.news.map(newsCard).join("")}</div>`},
 post(id){const n=DB.news.find(x=>String(x.id)===String(id));if(!n)return V.nf();
-  return `<p class="crumb"><a href="#/news">← News &amp; Updates</a></p><span class="tag">${esc(n.category||"Update")}</span><h1>${esc(n.title)}</h1><div class="date">${fmt(n.created_at)}</div>${img(n.image,"hero-img")}<div class="body">${rich(n.body||n.summary)}</div>${shareBar(n.title)}`},
+  return `<p class="crumb"><a href="#/news">← News &amp; Updates</a></p><span class="tag">${esc(n.category||"Update")}</span><h1>${esc(n.title)}</h1><div class="date">${fmt(n.created_at)}</div>${img(n.image,"hero-img")}<div class="body">${rich(n.body||n.summary)}</div>${likeBtn("post",n.id)}${shareBar(n.title)}`},
 alamin(){return `<h1>📚 Ating Alamin</h1><input type="search" id="q" placeholder="Search articles…">
   <div class="grid" id="list">${DB.articles.map(artCard).join("")}</div>`},
 article(slug){
   const a=DB.articles.find(x=>x.slug===slug);if(!a)return V.nf();
   return `<p class="crumb"><a href="#/alamin">← Ating Alamin</a></p><h1>${esc(a.title)}</h1>${img(a.image,"hero-img")}<div class="body">${rich(a.body)}</div>
-  ${shareBar(a.title)}<p class="note">General information only. For advice on your specific case, consult the Lupon Secretary, the Punong Barangay or a lawyer (PAO for qualified indigent persons).</p>`},
+  ${likeBtn("article",a.slug)}${shareBar(a.title)}<p class="note">General information only. For advice on your specific case, consult the Lupon Secretary, the Punong Barangay or a lawyer (PAO for qualified indigent persons).</p>`},
 laws(){
   const cats=[...new Set(DB.laws.map(l=>l.category))];
   return `<h1>⚖️ Legal Library</h1>`+cats.map(c=>`<h2>${esc(c)}</h2><div class="grid">${DB.laws.filter(l=>l.category===c).map(l=>`<a class="card" href="#/laws/${esc(l.slug)}"><h3>${esc(l.title)}</h3><p>${esc(l.overview)}</p></a>`).join("")}</div>`).join("")},
@@ -246,6 +267,12 @@ function route(){
   document.getElementById("nav").innerHTML=NAV.map(([href,l])=>`<a href="${href}" class="${"#/"+p===href||(href==="#/"&&!p)?"on":""}">${l}</a>`).join("");
   document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(location.href);b.textContent="Copied ✔"}catch(e){prompt("Copy this link:",location.href)}});
   if(navigator.share)document.querySelectorAll("[data-native]").forEach(b=>{b.hidden=false;b.onclick=()=>navigator.share({title:document.title,url:location.href}).catch(()=>{})});
+  document.querySelectorAll("[data-like]").forEach(b=>b.onclick=async()=>{
+    const k=b.dataset.like,[t,...rest]=k.split(":"),id=rest.join(":"),l=myLikes(),on=l.includes(k);b.disabled=true;
+    try{const {data,error}=await sb.rpc(on?"remove_like":"add_like",{p_type:t,p_id:id});if(error)throw error;LIKES[k]=Number(data);
+      try{localStorage.setItem("lc_likes",JSON.stringify(on?l.filter(x=>x!==k):[...l,k]))}catch(e){}
+      b.classList.toggle("on",!on);b.innerHTML=(on?"♡ Like":"♥ Liked")+" · <span>"+LIKES[k]+"</span>"}catch(e){console.warn(e)}
+    b.disabled=false});
   const q=document.getElementById("q");
   if(q)q.oninput=()=>{const t=q.value.toLowerCase();
     document.getElementById("list").innerHTML=DB.articles.filter(a=>(a.title+a.summary+a.body).toLowerCase().includes(t)).map(artCard).join("")||"<p>No results.</p>"};
@@ -257,6 +284,7 @@ function closeMenu(){nav.classList.remove("open");bg.textContent="☰";bg.setAtt
 window.addEventListener("hashchange",()=>{closeMenu();route()});
 route();
 loadRemote().then(route);
+initStats();
 </script>
 </body>
 </html>
