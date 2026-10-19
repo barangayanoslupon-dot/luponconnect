@@ -20,6 +20,7 @@ textarea{min-height:110px;resize:vertical}.hint{font-weight:400;color:#6a777b;fo
 .row:last-child{border:0}.row small{color:#6a777b}.pill{font-size:.7rem;padding:1px 8px;border-radius:99px;background:#d9e8e6;margin-left:6px}
 .pill.draft{background:#f3dcc0}.msg{padding:10px 14px;border-radius:8px;margin-bottom:12px;background:#d9e8e6}.msg.err{background:#f6d4cf}
 .pv{max-width:240px;max-height:150px;border-radius:8px;display:block;margin:6px 0}
+.tb{display:flex;gap:6px;margin:4px 0}.tb button{padding:3px 12px;min-width:38px}
 .ck{display:flex;gap:8px;align-items:center;margin-top:14px}.ck label{margin:0}.acts{display:flex;gap:6px;flex-shrink:0}
 </style></head><body>
 <header><b>⚖️ LuponConnect Admin</b><span id="who"></span></header>
@@ -32,7 +33,7 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=s=>document.querySelector(s);
 const slugify=t=>t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
-const BODY='Blank line = new paragraph. Start a line with "- " for bullets.';
+const BODY='Blank line = new paragraph. Start a line with "- " for bullets. Select text, then use B / I / U.';
 const T={
  posts:{label:"📢 News",table:"posts",title:"title",order:"created_at",upd:1,fields:[
   ["title","text","Title",1],["category","select","Category",1,["Lupon Activities","Training Highlights","Community Announcements","Legal and Policy Updates"]],
@@ -48,11 +49,13 @@ const T={
   ["overview","textarea","Overview"],["key_provisions","textarea","Key provisions (one per line)"],["faq","textarea","FAQ",0,BODY],
   ["related","text","Related Ating Alamin slugs (comma-separated)"],["content","textarea","Full text (optional)"],["pdf_url","text","PDF link"],
   ["sort_order","number","Sort order"],["published","check","Published"]]},
+ messages:{label:"✉️ Messages",special:"messages"},
  backup:{label:"💾 Backup",special:1,adminOnly:1},
  contact_info:{label:"📞 Contact",table:"contact_info",single:1,fields:[
   ["office_name","text","Office name"],["address","text","Address"],["office_hours","text","Office hours"],["phone","text","Contact number"],
   ["email","text","Email"],["facebook_url","text","Facebook page link (https://facebook.com/...)"],["map_url","text","Google Maps EMBED link (src of the embed code)"]]}
 };
+let UNREAD=0;
 let me=null,cur="posts",rows=[],ed=null;
 
 function login(m){ $("#who").textContent="";
@@ -73,9 +76,11 @@ async function start(){
 }
 async function show(k,msg,isErr){
  cur=k;ed=null;const t=T[k];
- const tabs=Object.entries(T).filter(([id,x])=>!x.adminOnly||me.role==="admin").map(([id,x])=>`<button class="${id===k?"on":""}" data-k="${id}">${x.label}</button>`).join("");
+ try{const {count}=await sb.from("feedback").select("id",{count:"exact",head:true}).eq("is_read",false);UNREAD=count||0}catch(e){UNREAD=0}
+ const tabs=Object.entries(T).filter(([id,x])=>!x.adminOnly||me.role==="admin").map(([id,x])=>`<button class="${id===k?"on":""}" data-k="${id}">${x.label}${id==="messages"&&UNREAD?" ("+UNREAD+")":""}</button>`).join("");
  $("#app").innerHTML=`<div class="tabs">${tabs}</div>${msg?`<div class="msg ${isErr?"err":""}">${esc(msg)}</div>`:""}<div id="panel">Loading…</div>`;
  document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>show(b.dataset.k));
+ if(t.special==="messages")return messagesView();
  if(t.special)return backupView();
  let q=sb.from(t.table).select("*"); if(t.order)q=q.order(t.order,{ascending:!!t.asc});
  const {data,error}=await q; if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}</div>`;
@@ -98,11 +103,14 @@ function form(r){
   const h=`<label>${lb}${req?" *":""} ${ty==="textarea"&&x?`<span class="hint">${esc(x)}</span>`:""}</label>`;
   if(ty==="image")return h+`<img class="pv" id="pv_${n}" src="${esc(v||"")}" ${v?"":"hidden"}><input type="text" id="f_${n}" value="${esc(v)}" placeholder="Photo link (filled automatically when you upload)"><div style="margin-top:6px"><input type="file" id="up_${n}" accept="image/*"> <span class="hint" id="st_${n}">Photos are shrunk automatically and saved as JPEG.</span></div>`;
   if(ty==="select")return h+`<select id="f_${n}">${x.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
-  if(ty==="textarea")return h+`<textarea id="f_${n}">${esc(v)}</textarea>`;
+  if(ty==="textarea")return h+(x===BODY?`<div class="tb"><button type="button" class="btn s" data-fmt="**" data-for="f_${n}" title="Bold"><b>B</b></button><button type="button" class="btn s" data-fmt="*" data-for="f_${n}" title="Italic"><i>I</i></button><button type="button" class="btn s" data-fmt="__" data-for="f_${n}" title="Underline"><u>U</u></button></div>`:"")+`<textarea id="f_${n}">${esc(v)}</textarea>`;
   return h+`<input type="${ty==="number"?"number":"text"}" id="f_${n}" value="${esc(v)}">`}).join("");
  $("#panel").innerHTML=`<div class="box"><h3 style="margin-top:0">${t.single?t.label:(r.id?"Edit":"Add new")}</h3>${f}
   <p style="margin-top:18px"><button class="btn" id="save">Save</button> ${t.single?"":'<button class="btn s" id="cancel">Cancel</button>'}</p></div>`;
 
+ document.querySelectorAll("[data-fmt]").forEach(b=>b.onclick=()=>{
+  const ta=$("#"+b.dataset.for),m=b.dataset.fmt,s=ta.selectionStart,e=ta.selectionEnd,sel=ta.value.slice(s,e)||"teksto";
+  ta.setRangeText(m+sel+m,s,e,"end");ta.focus();ta.setSelectionRange(s+m.length,s+m.length+sel.length)});
  t.fields.filter(x=>x[1]==="image").forEach(([n])=>{
   $("#up_"+n).onchange=async e=>{const file=e.target.files[0];if(!file)return;const st=$("#st_"+n);
    try{st.textContent="Shrinking…";const blob=await shrink(file);
@@ -129,6 +137,22 @@ function form(r){
 }
 // ---- Backup & restore (admins only) ----
 const BK=["posts","ating_alamin","faqs","legal_library","contact_info"];
+async function messagesView(){
+ const {data,error}=await sb.from("feedback").select("*").order("created_at",{ascending:false});
+ if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}</div>`;
+ const m=data||[];
+ $("#panel").innerHTML=m.length?m.map((r,i)=>`<div class="box" style="${r.is_read?"":"border-left:4px solid var(--a)"}">
+  <b>${esc(r.name||"(walang pangalan)")}</b>${r.is_read?"":'<span class="pill draft">Bago</span>'}<br>
+  <small><a href="mailto:${esc(r.email)}">${esc(r.email)}</a> · ${new Date(r.created_at).toLocaleString("en-PH")}</small>
+  <p style="white-space:pre-wrap;margin:10px 0 12px">${esc(r.message)}</p>
+  <div class="acts"><a class="btn" style="text-decoration:none" href="mailto:${esc(r.email)}?subject=${encodeURIComponent("Re: Mensahe mo sa LuponConnect")}">Reply</a>
+  <button class="btn s" data-r="${i}">${r.is_read?"Mark as unread":"Mark as read"}</button>${me.role==="admin"?`<button class="btn d" data-x="${i}">Delete</button>`:""}</div></div>`).join(""):'<div class="box"><p>Wala pang mensahe.</p></div>';
+ document.querySelectorAll("[data-r]").forEach(b=>b.onclick=async()=>{const r=m[b.dataset.r];
+  const {error}=await sb.from("feedback").update({is_read:!r.is_read}).eq("id",r.id);show("messages",error?error.message:"",!!error)});
+ document.querySelectorAll("[data-x]").forEach(b=>b.onclick=async()=>{const r=m[b.dataset.x];
+  if(!confirm("Delete this message from "+(r.name||r.email)+"? This cannot be undone."))return;
+  const {error}=await sb.from("feedback").delete().eq("id",r.id);show("messages",error?error.message:"Deleted.",!!error)});
+}
 function backupView(){
  let last="";try{last=localStorage.getItem("lc_last_backup")||""}catch(e){}
  $("#panel").innerHTML=`<div class="box"><h3 style="margin-top:0">⬇️ Download backup</h3>

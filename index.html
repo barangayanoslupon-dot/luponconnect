@@ -72,6 +72,18 @@ nav a{transition:background .15s}
 .sbtn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:99px;text-decoration:none;font:inherit;font-size:.9rem;cursor:pointer}
 .vc-pill{display:inline-block;margin-top:14px;background:rgba(255,255,255,.18);border-radius:99px;padding:4px 16px;font-size:.88rem}
 .vc-pill:empty{display:none}
+.fab{position:fixed;right:16px;bottom:22px;z-index:15;width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:1.6rem;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3);transition:transform .15s}
+.fab:hover{transform:scale(1.08)}.fab[hidden]{display:none}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal[hidden]{display:none}
+.mbox{background:var(--card);color:var(--ink);border-radius:14px;padding:22px;max-width:440px;width:100%;max-height:92vh;overflow:auto;position:relative}
+.mbox h3{margin:0 0 6px;color:var(--brand)}.mnote{font-size:.85rem;color:var(--mute);margin:.4em 0}
+.mbox label{display:block;font-weight:600;margin:12px 0 4px;font-size:.88rem}
+.mbox input,.mbox textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.mbox textarea{min-height:120px;resize:vertical}
+.mx{position:absolute;top:10px;right:12px;border:0;background:none;font-size:1.2rem;color:var(--mute);cursor:pointer}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+#fbSt{font-size:.85rem;margin-left:8px;color:#b3382c}
 .like{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 18px;border-radius:99px;font:inherit;cursor:pointer}
 .like.on{border-color:#e0707a;color:#e0707a;font-weight:600}.lk{font-size:.8rem;color:var(--mute);margin-top:8px}
 .sbtn:hover{border-color:var(--brand)}.sbtn[hidden]{display:none}
@@ -94,6 +106,21 @@ nav a{transition:background .15s}
   Barangay Number: <a href="tel:09171469167">0917 146 9167</a>
   <div class="fine">Developed by: Daniel "Jigs" L. Garcia (Lupon Clerk)<br>LuponConnect · For general information only; not legal advice.<br>Sangguniang Barangay ng Anos · 2026 · All Rights Reserved.</div>
 </div></footer>
+<button class="fab" id="fbBtn" aria-label="Mag-iwan ng mensahe" title="Mag-iwan ng mensahe" hidden>💬</button>
+<div class="modal" id="fbModal" hidden><div class="mbox" role="dialog" aria-modal="true" aria-labelledby="fbT">
+  <button class="mx" id="fbX" aria-label="Isara">✕</button>
+  <h3 id="fbT">💬 Mag-iwan ng Mensahe</h3>
+  <div id="fbForm">
+    <p class="mnote">Para sa feedback, tanong, o suhestiyon. Para sa pormal na reklamo, pumunta po sa barangay hall.</p>
+    <label for="fbName">Pangalan (optional)</label><input id="fbName" maxlength="100" autocomplete="name">
+    <label for="fbEmail">Email *</label><input id="fbEmail" type="email" maxlength="200" autocomplete="email">
+    <label for="fbMsg">Mensahe *</label><textarea id="fbMsg" maxlength="2000"></textarea>
+    <input class="hp" id="fbHp" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <p class="mnote">Ang iyong email ay gagamitin lamang para tumugon sa iyong mensahe.</p>
+    <p><button class="btn" id="fbSend" style="border:0;cursor:pointer">Ipadala</button><span id="fbSt"></span></p>
+  </div>
+  <div id="fbOk" hidden><p>✅ <b>Salamat po!</b> Natanggap na namin ang iyong mensahe.</p><p><button class="btn" id="fbDone" style="border:0;cursor:pointer">Isara</button></p></div>
+</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
@@ -195,19 +222,21 @@ const likeTag=(t,id)=>(sb&&LIKES[t+":"+id]>0)?`<div class="lk">♥ ${LIKES[t+":"
 
 /* ===== HELPERS ===== */
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function rich(t){ // blank-line paragraphs, "- " bullets
+const inl=s=>s.replace(/\*\*([^\s*](?:[^*]*[^\s*])?)\*\*/g,"<strong>$1</strong>").replace(/__([^\s_](?:[^_]*[^\s_])?)__/g,"<u>$1</u>").replace(/\*([^\s*](?:[^*]*[^\s*])?)\*/g,"<em>$1</em>");
+const plain=s=>String(s||"").replace(/\*\*|__|\*/g,"");
+function rich(t){ // blank-line paragraphs, "- " bullets, **bold** *italic* __underline__
   return String(t||"").split(/\n\n+/).map(b=>{
     const L=b.split("\n");
-    if(L.every(l=>l.startsWith("- ")))return "<ul>"+L.map(l=>"<li>"+esc(l.slice(2))+"</li>").join("")+"</ul>";
-    return "<p>"+L.map(esc).join("<br>")+"</p>";
+    if(L.every(l=>l.startsWith("- ")))return "<ul>"+L.map(l=>"<li>"+inl(esc(l.slice(2)))+"</li>").join("")+"</ul>";
+    return "<p>"+L.map(l=>inl(esc(l))).join("<br>")+"</p>";
   }).join("");
 }
 const fmt=d=>d?new Date(d).toLocaleDateString("en-PH",{year:"numeric",month:"long",day:"numeric"}):"";
 const NAV=[["#/","🏠 Home"],["#/news","📢 News"],["#/alamin","📚 Ating Alamin"],["#/laws","⚖️ Legal Library"],["#/faq","❓ FAQ"],["#/about","🏛 About"],["#/contact","📞 Contact"]];
 const shareBar=t=>`<div class="share"><span>Share:</span><a class="sbtn" target="_blank" rel="noopener" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}">Facebook</a><a class="sbtn" href="mailto:?subject=${encodeURIComponent(t)}&body=${encodeURIComponent(location.href)}">Email</a><button class="sbtn" data-copy>Copy link</button><button class="sbtn" data-native hidden>More…</button></div>`;
 const img=(u,c="thumb")=>u?`<img class="${c}" src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()">`:"";
-const newsCard=n=>{const t=n.summary||n.body||"";return `<a class="card" href="#/news/${esc(n.id)}">${img(n.image)}<span class="tag">${esc(n.category||"Update")}</span><h3>${esc(n.title)}</h3><div class="date">${fmt(n.created_at)}</div><p>${esc(t.slice(0,140))}${t.length>140?"…":""}</p>${likeTag("post",n.id)}</a>`};
-const artCard=a=>`<a class="card" href="#/alamin/${esc(a.slug)}">${img(a.image)}<h3>${esc(a.title)}</h3><p>${esc(a.summary)}</p>${likeTag("article",a.slug)}</a>`;
+const newsCard=n=>{const t=plain(n.summary||n.body||"");return `<a class="card" href="#/news/${esc(n.id)}">${img(n.image)}<span class="tag">${esc(n.category||"Update")}</span><h3>${esc(n.title)}</h3><div class="date">${fmt(n.created_at)}</div><p>${esc(t.slice(0,140))}${t.length>140?"…":""}</p>${likeTag("post",n.id)}</a>`};
+const artCard=a=>`<a class="card" href="#/alamin/${esc(a.slug)}">${img(a.image)}<h3>${esc(a.title)}</h3><p>${esc(plain(a.summary))}</p>${likeTag("article",a.slug)}</a>`;
 
 /* ===== VIEWS ===== */
 const V={
@@ -282,6 +311,29 @@ const nav=document.getElementById("nav"),bg=document.getElementById("burger");
 bg.onclick=()=>{const o=nav.classList.toggle("open");bg.textContent=o?"✕":"☰";bg.setAttribute("aria-expanded",o)};
 function closeMenu(){nav.classList.remove("open");bg.textContent="☰";bg.setAttribute("aria-expanded","false")}
 window.addEventListener("hashchange",()=>{closeMenu();route()});
+(function(){
+  if(!sb)return;
+  const $=id=>document.getElementById(id);$("fbBtn").hidden=false;
+  const close=()=>{$("fbModal").hidden=true;$("fbForm").hidden=false;$("fbOk").hidden=true;$("fbSt").textContent="";["fbName","fbEmail","fbMsg"].forEach(i=>$(i).value="")};
+  $("fbBtn").onclick=()=>{$("fbModal").hidden=false;$("fbEmail").focus()};
+  $("fbX").onclick=close;$("fbDone").onclick=close;
+  $("fbModal").onclick=e=>{if(e.target.id==="fbModal")close()};
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("fbModal").hidden)close()});
+  $("fbSend").onclick=async()=>{
+    const st=$("fbSt"),name=$("fbName").value.trim(),email=$("fbEmail").value.trim(),msg=$("fbMsg").value.trim();
+    if($("fbHp").value)return;
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))return st.textContent="Maglagay po ng tamang email.";
+    if(msg.length<5)return st.textContent="Pakisulat po ang inyong mensahe.";
+    let last=0;try{last=+localStorage.getItem("lc_fb")||0}catch(e){}
+    if(Date.now()-last<60000)return st.textContent="Sandali lang po, subukan ulit pagkalipas ng isang minuto.";
+    $("fbSend").disabled=true;st.textContent="Ipinapadala…";
+    const {error}=await sb.from("feedback").insert({name:name||null,email,message:msg});
+    $("fbSend").disabled=false;
+    if(error){console.warn(error.message);return st.textContent="Hindi naipadala. Pakisubukan ulit mamaya."}
+    try{localStorage.setItem("lc_fb",Date.now())}catch(e){}
+    st.textContent="";$("fbForm").hidden=true;$("fbOk").hidden=false;
+  };
+})();
 route();
 loadRemote().then(route);
 initStats();
