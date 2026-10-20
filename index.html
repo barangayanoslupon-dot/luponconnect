@@ -246,7 +246,7 @@ const newsFeat=n=>{
   const paras=String(n.body||n.summary||"").split(/\n\n+/);let out=[],len=0;
   for(const p of paras){if(out.length&&len+p.length>600)break;out.push(p);len+=p.length}
   const clipped=out.length<paras.length;
-  return `<article class="newsfeat"><h2 class="sec" style="margin-top:0">📢 Latest News</h2>${img(n.image,"hero-img")}<span class="tag">${esc(n.category||"Update")}</span><h2 class="nf-t">${esc(n.title)}</h2><div class="date">${fmt(n.created_at)}</div><div class="body">${rich(out.join("\n\n"))}</div><p><a class="btn" href="#/news/${esc(n.id)}">${clipped?"Basahin ang buong balita →":"Buksan ang balita →"}</a></p></article>`};
+  return `<article class="newsfeat"><h2 class="sec" style="margin-top:0">Latest News</h2>${img(n.image,"hero-img")}<span class="tag">${esc(n.category||"Update")}</span><h2 class="nf-t">${esc(n.title)}</h2><div class="date">${fmt(n.created_at)}</div><div class="body">${rich(out.join("\n\n"))}</div><p><a class="btn" href="#/news/${esc(n.id)}">${clipped?"Basahin ang buong balita →":"Buksan ang balita →"}</a></p></article>`};
 const V={
 home(){
   let f=DB.articles.filter(a=>a.featured).slice(0,3);if(!f.length)f=DB.articles.slice(0,3);
