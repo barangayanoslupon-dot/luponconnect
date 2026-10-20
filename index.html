@@ -72,6 +72,8 @@ nav a{transition:background .15s}
 .sbtn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:99px;text-decoration:none;font:inherit;font-size:.9rem;cursor:pointer}
 .vc-pill{display:inline-block;margin-top:14px;background:rgba(255,255,255,.18);border-radius:99px;padding:4px 16px;font-size:.88rem}
 .vc-pill:empty{display:none}
+.newsfeat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px 8px;margin-top:26px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.newsfeat .hero-img{margin:0 0 14px}.nf-t{font-size:1.5rem;color:var(--ink);margin:.15em 0 0}
 .fab{position:fixed;right:16px;bottom:22px;z-index:15;width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:1.6rem;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3);transition:transform .15s}
 .fab:hover{transform:scale(1.08)}.fab[hidden]{display:none}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -239,11 +241,18 @@ const newsCard=n=>{const t=plain(n.summary||n.body||"");return `<a class="card" 
 const artCard=a=>`<a class="card" href="#/alamin/${esc(a.slug)}">${img(a.image)}<h3>${esc(a.title)}</h3><p>${esc(plain(a.summary))}</p>${likeTag("article",a.slug)}</a>`;
 
 /* ===== VIEWS ===== */
+const newsFeat=n=>{
+  if(!n)return"";
+  const paras=String(n.body||n.summary||"").split(/\n\n+/);let out=[],len=0;
+  for(const p of paras){if(out.length&&len+p.length>600)break;out.push(p);len+=p.length}
+  const clipped=out.length<paras.length;
+  return `<article class="newsfeat"><h2 class="sec" style="margin-top:0">📢 Latest News</h2>${img(n.image,"hero-img")}<span class="tag">${esc(n.category||"Update")}</span><h2 class="nf-t">${esc(n.title)}</h2><div class="date">${fmt(n.created_at)}</div><div class="body">${rich(out.join("\n\n"))}</div><p><a class="btn" href="#/news/${esc(n.id)}">${clipped?"Basahin ang buong balita →":"Buksan ang balita →"}</a></p></article>`};
 const V={
 home(){
   let f=DB.articles.filter(a=>a.featured).slice(0,3);if(!f.length)f=DB.articles.slice(0,3);
   return `<div class="hero"><div class="hero-logos"><img class="hero-logo" src="logo-anos.png" alt="Barangay Anos seal" onerror="this.remove()"><img class="hero-logo" src="logo-lupon.png" alt="Lupong Tagapamayapa seal" onerror="this.remove()"></div><h1>Maligayang pagdating sa LuponConnect</h1>
   <p>A digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos—reliable information on Katarungang Pambarangay, dispute resolution and relevant laws.</p><div class="vc-pill">${visitText()}</div></div>
+  ${newsFeat(DB.news[0])}
   <h2 class="sec">Latest Updates</h2><div class="grid">${DB.news.slice(0,3).map(newsCard).join("")}</div>
   <h2 class="sec">Featured Ating Alamin</h2>${f.length?`<div class="grid">${f.map(artCard).join("")}</div>`:""}
   <h2 class="sec">Quick Links</h2><div class="grid">
@@ -327,9 +336,12 @@ window.addEventListener("hashchange",()=>{closeMenu();route()});
     let last=0;try{last=+localStorage.getItem("lc_fb")||0}catch(e){}
     if(Date.now()-last<60000)return st.textContent="Sandali lang po, subukan ulit pagkalipas ng isang minuto.";
     $("fbSend").disabled=true;st.textContent="Ipinapadala…";
-    const {error}=await sb.from("feedback").insert({name:name||null,email,message:msg});
+    const {data,error}=await sb.rpc("send_feedback",{p_name:name||null,p_email:email,p_message:msg});
     $("fbSend").disabled=false;
     if(error){console.warn(error.message);return st.textContent="Hindi naipadala. Pakisubukan ulit mamaya."}
+    if(data==="rate")return st.textContent="Ilang mensahe na po ang naipadala ninyo. Subukan ulit mamaya.";
+    if(data==="busy")return st.textContent="Maraming mensahe ngayon. Pakisubukan ulit mamaya.";
+    if(data!=="ok")return st.textContent="Hindi naipadala. Pakisuri ang email at mensahe.";
     try{localStorage.setItem("lc_fb",Date.now())}catch(e){}
     st.textContent="";$("fbForm").hidden=true;$("fbOk").hidden=false;
   };

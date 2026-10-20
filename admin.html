@@ -141,12 +141,14 @@ async function messagesView(){
  const {data,error}=await sb.from("feedback").select("*").order("created_at",{ascending:false});
  if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}</div>`;
  const m=data||[];
- $("#panel").innerHTML=m.length?m.map((r,i)=>`<div class="box" style="${r.is_read?"":"border-left:4px solid var(--a)"}">
+ $("#panel").innerHTML=(me.role==="admin"&&m.some(r=>r.is_read)?'<p><button class="btn d" id="delRead">🗑 Delete all read messages</button></p>':"")+(m.length?m.map((r,i)=>`<div class="box" style="${r.is_read?"":"border-left:4px solid var(--a)"}">
   <b>${esc(r.name||"(walang pangalan)")}</b>${r.is_read?"":'<span class="pill draft">Bago</span>'}<br>
   <small><a href="mailto:${esc(r.email)}">${esc(r.email)}</a> · ${new Date(r.created_at).toLocaleString("en-PH")}</small>
   <p style="white-space:pre-wrap;margin:10px 0 12px">${esc(r.message)}</p>
   <div class="acts"><a class="btn" style="text-decoration:none" href="mailto:${esc(r.email)}?subject=${encodeURIComponent("Re: Mensahe mo sa LuponConnect")}">Reply</a>
-  <button class="btn s" data-r="${i}">${r.is_read?"Mark as unread":"Mark as read"}</button>${me.role==="admin"?`<button class="btn d" data-x="${i}">Delete</button>`:""}</div></div>`).join(""):'<div class="box"><p>Wala pang mensahe.</p></div>';
+  <button class="btn s" data-r="${i}">${r.is_read?"Mark as unread":"Mark as read"}</button>${me.role==="admin"?`<button class="btn d" data-x="${i}">Delete</button>`:""}</div></div>`).join(""):'<div class="box"><p>Wala pang mensahe.</p></div>');
+ const dr=$("#delRead");if(dr)dr.onclick=async()=>{if(!confirm("Delete ALL messages marked as read? This cannot be undone."))return;
+  const {error}=await sb.from("feedback").delete().eq("is_read",true);show("messages",error?error.message:"Read messages deleted.",!!error)};
  document.querySelectorAll("[data-r]").forEach(b=>b.onclick=async()=>{const r=m[b.dataset.r];
   const {error}=await sb.from("feedback").update({is_read:!r.is_read}).eq("id",r.id);show("messages",error?error.message:"",!!error)});
  document.querySelectorAll("[data-x]").forEach(b=>b.onclick=async()=>{const r=m[b.dataset.x];
