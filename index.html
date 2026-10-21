@@ -74,6 +74,25 @@ nav a{transition:background .15s}
 .vc-pill:empty{display:none}
 .newsfeat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px 8px;margin-top:26px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
 .newsfeat .hero-img{margin:0 0 14px}.nf-t{font-size:1.5rem;color:var(--ink);margin:.15em 0 0}
+.card a:not(.btn){color:var(--brand)}
+.qban{display:block;max-width:560px;margin:14px auto 0;padding:12px 18px;border-radius:14px;background:var(--accent);color:#fff;text-decoration:none;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.25);transition:transform .15s}
+.qban:hover{transform:translateY(-2px)}.qban span{display:block}
+.qb1{font-weight:800;font-size:1.05rem;letter-spacing:.2px}.qb2{font-size:.92rem;margin-top:3px;opacity:.97}.qb3{font-size:.85rem;margin-top:4px;font-weight:700;text-decoration:underline}
+.qform label{display:block;font-weight:600;margin:12px 0 4px;font-size:.88rem}
+.qform input,.qform select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.qform input[hidden]{display:none}.qmsg{font-size:.85rem;color:#b3382c;margin-left:6px}
+.qhead{display:flex;justify-content:space-between;font-weight:700;margin:8px 0}
+.qtimer{height:12px;background:var(--line);border-radius:99px;overflow:hidden}.qbar{height:100%;background:var(--accent)}
+.qsec{text-align:right;color:var(--mute);margin:4px 0 10px;font-size:.9rem}
+.qopts{display:grid;gap:10px;margin-top:12px}
+.qopt{padding:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;font:inherit;text-align:left;cursor:pointer}
+.qopt:hover:not(:disabled){border-color:var(--brand)}.qopt:disabled{cursor:default}
+.qopt.good{border-color:#2e9d57;background:rgba(46,157,87,.18)}.qopt.bad{border-color:#d0453a;background:rgba(208,69,58,.18)}
+.qres{text-align:center}.qres .big{font-size:3.2rem;font-weight:800;color:var(--brand);line-height:1.1}
+.board{display:grid;gap:6px;max-width:560px;margin:0 auto}
+.brow{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.brow.me{border-color:var(--accent);box-shadow:0 0 0 2px rgba(200,137,43,.35)}
+.rk{width:34px;text-align:center;font-weight:700}.nm{flex:1}.nm small{display:block;color:var(--mute);font-size:.78rem}.pt{font-weight:800;color:var(--brand)}
 .fab{position:fixed;right:16px;bottom:22px;z-index:15;width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:1.6rem;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3);transition:transform .15s}
 .fab:hover{transform:scale(1.08)}.fab[hidden]{display:none}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -128,6 +147,7 @@ nav a{transition:background .15s}
 <script>
 /* ===== CONFIG – edit these ===== */
 const CONFIG = {
+  quizPlaces: ["Purok 1","Purok 2","Purok 3","Purok 4","Purok 5","Purok 6","Purok 7"],   // edit to match the real puroks of Barangay Anos
   SUPABASE_URL: "https://adragnnngictwxtslosy.supabase.co",       // e.g. https://xxxx.supabase.co
   SUPABASE_ANON_KEY: "sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd",  // anon public key only (never the service_role key)
   contact: {
@@ -246,16 +266,16 @@ const newsFeat=n=>{
   const paras=String(n.body||n.summary||"").split(/\n\n+/);let out=[],len=0;
   for(const p of paras){if(out.length&&len+p.length>600)break;out.push(p);len+=p.length}
   const clipped=out.length<paras.length;
-  return `<article class="newsfeat"><h2 class="sec" style="margin-top:0">Latest News</h2>${img(n.image,"hero-img")}<span class="tag">${esc(n.category||"Update")}</span><h2 class="nf-t">${esc(n.title)}</h2><div class="date">${fmt(n.created_at)}</div><div class="body">${rich(out.join("\n\n"))}</div><p><a class="btn" href="#/news/${esc(n.id)}">${clipped?"Basahin ang buong balita →":"Buksan ang balita →"}</a></p></article>`};
+  return `<article class="newsfeat"><h2 class="sec" style="margin-top:0">📢 Latest News</h2>${img(n.image,"hero-img")}<span class="tag">${esc(n.category||"Update")}</span><h2 class="nf-t">${esc(n.title)}</h2><div class="date">${fmt(n.created_at)}</div><div class="body">${rich(out.join("\n\n"))}</div><p><a class="btn" href="#/news/${esc(n.id)}">${clipped?"Basahin ang buong balita →":"Buksan ang balita →"}</a></p></article>`};
 const V={
 home(){
   let f=DB.articles.filter(a=>a.featured).slice(0,3);if(!f.length)f=DB.articles.slice(0,3);
   return `<div class="hero"><div class="hero-logos"><img class="hero-logo" src="logo-anos.png" alt="Barangay Anos seal" onerror="this.remove()"><img class="hero-logo" src="logo-lupon.png" alt="Lupong Tagapamayapa seal" onerror="this.remove()"></div><h1>Maligayang pagdating sa LuponConnect</h1>
-  <p>A digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos—reliable information on Katarungang Pambarangay, dispute resolution and relevant laws.</p><div class="vc-pill">${visitText()}</div></div>
+  <p>A digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos—reliable information on Katarungang Pambarangay, dispute resolution and relevant laws.</p><div class="vc-pill">${visitText()}</div>${quizBanner()}</div>
   ${newsFeat(DB.news[0])}
   <h2 class="sec">Latest Updates</h2><div class="grid">${DB.news.slice(0,3).map(newsCard).join("")}</div>
   <h2 class="sec">Featured Ating Alamin</h2>${f.length?`<div class="grid">${f.map(artCard).join("")}</div>`:""}
-  <h2 class="sec">Quick Links</h2><div class="grid">
+  ${quizHome()}<h2 class="sec">Quick Links</h2><div class="grid">
    ${NAV.slice(1).map(([h,l])=>`<a class="card" href="${h}"><h3>${l}</h3></a>`).join("")}</div>`;
 },
 news(){return `<h1>📢 News &amp; Updates</h1><p class="date">Lupon activities · Training highlights · Community announcements · Legal and policy updates</p>
@@ -292,12 +312,136 @@ contact(){const c=Object.assign({},CONFIG.contact,Object.fromEntries(Object.entr
   <div class="card"><h3>☎️ Contact Number</h3><p>${esc(c.phone)}</p></div>
   <div class="card"><h3>✉️ Email</h3><p><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p></div>${/^https?:\/\//.test(c.facebook||"")?`<a class="card" href="${esc(c.facebook)}" target="_blank" rel="noopener"><h3>📘 Facebook</h3><p>Visit our Facebook page</p></a>`:""}</div>
   <h2>Location Map</h2><iframe loading="lazy" title="Map" src="${esc(map)}"></iframe><h2>Share LuponConnect</h2>${shareBar("LuponConnect – Barangay Anos Lupong Tagapamayapa")}`},
+quiz(){return ""},
 nf(){return `<h1>Page not found</h1><p><a class="btn" href="#/">Go home</a></p>`}
 };
+
+/* ===== QUIZ (weekly, timed) ===== */
+const LIM=20,QPLACES=(CONFIG.quizPlaces&&CONFIG.quizPlaces.length)?CONFIG.quizPlaces:["Purok 1","Purok 2","Purok 3","Purok 4","Purok 5","Purok 6","Purok 7"];
+let QB=null,QS={step:"intro"},QT=null;
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const inGame=()=>(location.hash||"").startsWith("#/quiz")&&(QS.step==="play"||QS.step==="fb");
+const mName=d=>{try{return new Date(d+"T00:00:00").toLocaleDateString("fil-PH",{month:"long",year:"numeric"})}catch(e){return d}};
+async function loadBoard(){
+  if(!sb)return;
+  try{const {data,error}=await sb.rpc("quiz_board");if(error||!data)return;QB=data;
+    if(QB.quiz&&!NAV.some(n=>n[0]==="#/quiz"))NAV.splice(3,0,["#/quiz","🎯 Quiz"])}catch(e){console.warn(e)}
+}
+const medal=i=>["🥇","🥈","🥉"][i]||(i+1)+".";
+const boardHTML=(rows,me,title)=>`<h2 class="sec">${title}</h2>`+(rows&&rows.length?`<div class="board">${rows.map((r,i)=>`<div class="brow${me&&String(r.nickname).toLowerCase()===String(me).toLowerCase()?" me":""}"><span class="rk">${medal(i)}</span><span class="nm">${esc(r.nickname)}<small>${esc(r.place||"")}</small></span><span class="pt">${esc(r.points)}</span></div>`).join("")}</div>`:`<p class="date" style="text-align:center">Wala pang nakakumpleto. Maging una!</p>`);
+const quizBanner=()=>{
+  if(!QB||!QB.quiz)return "";
+  const t=QB.week&&QB.week[0];
+  const top=t?`👑 Nangunguna: <b>${esc(t.nickname)}</b> (${esc(t.place||"")}) · ${esc(t.points)} puntos`:"👑 Wala pang nangunguna. Ikaw na ang una!";
+  return `<a class="qban" href="#/quiz"><span class="qb1">🎯 BAGONG QUIZ: ${esc(QB.quiz.title)}</span><span class="qb2">${top}</span><span class="qb3">Maglaro na →</span></a>`;
+};
+const quizHome=()=>{
+  if(!QB||!(QB.quiz||(QB.last&&QB.last.length)||(QB.month&&QB.month.length)))return "";
+  return (QB.quiz?`<h2 class="sec">🎯 Quiz ng Linggo</h2><div class="card" style="text-align:center"><h3>${esc(QB.quiz.title)}</h3><p>${esc(QB.quiz.questions)} tanong · ${LIM} segundo bawat tanong. Kaya mo bang talunin ang oras?</p><p style="margin-top:12px"><a class="btn" href="#/quiz">Maglaro ngayon</a></p></div>`:"")
+   +(QB.last&&QB.last.length?boardHTML(QB.last,null,"🏆 Mga Kampeon ng "+esc(mName(QB.last_month))):"")
+   +(QB.month&&QB.month.length?boardHTML(QB.month,null,"🔥 Nangunguna ngayong "+esc(mName(QB.month_start))):"");
+};
+function stopTimer(){clearInterval(QT);QT=null}
+function startTimer(){
+  stopTimer();
+  QT=setInterval(()=>{
+    const left=Math.max(0,QS.deadline-performance.now());
+    const bar=document.getElementById("qBar"),sec=document.getElementById("qSec");
+    if(bar)bar.style.width=(left/(LIM*1000)*100)+"%";
+    if(sec)sec.textContent=Math.ceil(left/1000);
+    if(left<=0){stopTimer();submitAnswer(null)}
+  },100);
+}
+function quizIntro(){
+  const q=QB&&QB.quiz,done=q&&lsGet("lc_quiz_done")===q.start;
+  let prof={};try{prof=JSON.parse(lsGet("lc_quiz_prof")||"{}")}catch(e){}
+  const cats=["Estudyante","Adult","Senior","Lupon/Opisyal"];
+  const head=`<h1>🎯 LuponConnect Quiz</h1>`;
+  const board=boardHTML(QB&&QB.week,prof.nick,"🏅 Top 10 ngayong linggo");
+  if(!q)return head+`<div class="card"><p>Wala pang aktibong quiz ngayong linggo. Balik po kayo sa susunod na Lunes!</p></div>`+board;
+  const info=`<div class="card"><span class="tag">Quiz ng Linggo</span><h3>${esc(q.title)}</h3><p>${esc(q.questions)} tanong · ${LIM} segundo bawat tanong. 100 puntos sa bawat tamang sagot, may dagdag para sa mabilis na sagot. Isang beses lang ang may-record na laro kada linggo.</p><p class="date">Hanggang ${esc(fmt(q.end))}</p></div>`;
+  if(done)return head+info+`<div class="card"><p>✅ <b>Nakalaro ka na ngayong linggo!</b> Balik po sa susunod na Lunes para sa bagong tanong.</p></div>`+board+shareBar("LuponConnect Quiz");
+  return head+info+`<div class="card qform"><label for="qNick">Palayaw (makikita ng publiko)</label><input id="qNick" maxlength="20" placeholder="hal. Kuya Jun" value="${esc(prof.nick||"")}">
+   <label for="qPlace">Purok / Barangay</label><select id="qPlace">${QPLACES.map(p=>`<option>${esc(p)}</option>`).join("")}<option>Ibang Barangay</option></select>
+   <input id="qOther" maxlength="30" placeholder="Pangalan ng inyong barangay" hidden style="margin-top:8px">
+   <label for="qCat">Kategorya (optional)</label><select id="qCat"><option value="">—</option>${cats.map(c=>`<option${prof.cat===c?" selected":""}>${esc(c)}</option>`).join("")}</select>
+   <p class="mnote">Walang email o totoong pangalan na kailangan. Palayaw, Purok/Barangay, at puntos lang ang ipapakita. Kung naputol ang laro, ilagay ang parehong palayaw para magpatuloy.</p>
+   <p><button class="btn" id="qGo" style="border:0;cursor:pointer">▶ Simulan ang Quiz</button> <span id="qMsg" class="qmsg"></span></p></div>`+board;
+}
+function qHead(){return `<div class="qhead"><span>Tanong ${QS.pos} / ${QS.total}</span><span>⭐ ${QS.points}</span></div>`}
+function quizPlay(){
+  const q=QS.q,w=Math.max(0,(QS.deadline-performance.now())/(LIM*1000))*100;
+  return qHead()+`<div class="qtimer"><div id="qBar" class="qbar" style="width:${w}%"></div></div><div class="qsec">⏱ <b id="qSec">${Math.ceil(Math.max(0,QS.deadline-performance.now())/1000)}</b> segundo</div>
+  <div class="card"><h3>${esc(q.question)}</h3><div class="qopts">${q.options.map((o,i)=>`<button class="qopt" data-i="${i}">${"ABCD"[i]}. ${esc(o)}</button>`).join("")}</div></div>`;
+}
+function quizFb(){
+  const q=QS.q,f=QS.fb;
+  const verdict=f.choice==null?"⏰ Naubos ang oras!":(f.correct?"✅ Tama! +"+f.points+" puntos":"❌ Mali po.");
+  return qHead()+`<div class="card"><h3>${esc(q.question)}</h3><div class="qopts">${q.options.map((o,i)=>`<button class="qopt${i===f.correct_index?" good":(i===f.choice?" bad":"")}" disabled>${"ABCD"[i]}. ${esc(o)}</button>`).join("")}</div></div>
+  <div class="card"><b>${verdict}</b>${f.explanation?`<p style="margin-top:8px">${esc(f.explanation)}</p>`:""}${f.article?`<p><a href="${esc(location.pathname)}#/alamin/${esc(f.article)}" target="_blank" rel="noopener">📚 Basahin pa sa Ating Alamin</a></p>`:""}
+  <p style="margin-top:12px"><button class="btn" id="qNext" style="border:0;cursor:pointer">${f.finished?"Tingnan ang resulta →":"Susunod →"}</button></p></div>`;
+}
+function quizResult(){
+  return `<h1>🎉 Tapos na!</h1><div class="card qres"><div class="big">${esc(QS.points)}</div><p>puntos · ${esc(QS.correct)} sa ${esc(QS.total)} ang tama</p><p>Salamat, <b>${esc(QS.nick)}</b> (${esc(QS.place)})!</p></div>`
+   +boardHTML(QB&&QB.week,QS.nick,"🏅 Top 10 ngayong linggo")+`<p style="text-align:center;margin-top:10px">Hamunin ang kapitbahay mo!</p>`+shareBar("LuponConnect Quiz – kaya mo bang talunin ako?")+`<p style="text-align:center"><a class="btn" href="#/">Bumalik sa Home</a></p>`;
+}
+function quizRender(){
+  const app=document.getElementById("app");
+  if(!sb){app.innerHTML=`<h1>🎯 Quiz</h1><p>Hindi pa available ang quiz.</p>`;return}
+  const s=QS.step;
+  app.innerHTML=s==="play"?quizPlay():s==="fb"?quizFb():s==="result"?quizResult():quizIntro();
+  quizBind();
+}
+function quizBind(){
+  const $=id=>document.getElementById(id),s=QS.step;
+  if(s==="intro"){const pl=$("qPlace"),ot=$("qOther");if(pl)pl.onchange=()=>{ot.hidden=pl.value!=="Ibang Barangay"};const go=$("qGo");if(go)go.onclick=quizStart}
+  if(s==="play")document.querySelectorAll(".qopt").forEach(b=>b.onclick=()=>submitAnswer(+b.dataset.i));
+  if(s==="fb"&&$("qNext"))$("qNext").onclick=quizNext;
+  if($("qRetry"))$("qRetry").onclick=()=>{QS={step:"intro"};quizRender()};
+}
+function quizFail(msg){
+  stopTimer();QS={step:"intro"};
+  document.getElementById("app").innerHTML=`<h1>🎯 Quiz</h1><div class="card"><p>${esc(msg)}</p><p><button class="btn" id="qRetry" style="border:0;cursor:pointer">Subukan ulit</button></p></div>`;quizBind();
+}
+async function quizStart(){
+  const $=id=>document.getElementById(id),msg=$("qMsg"),nick=$("qNick").value.trim(),sel=$("qPlace").value,cat=$("qCat").value;
+  const place=sel==="Ibang Barangay"?("Brgy. "+$("qOther").value.trim()):sel;
+  if(!/^[A-Za-zÀ-ÿ0-9 _.-]{2,20}$/.test(nick))return msg.textContent="Palayaw: 2–20 letra o numero lang po.";
+  if(sel==="Ibang Barangay"&&place.length<7)return msg.textContent="Isulat po ang pangalan ng inyong barangay.";
+  $("qGo").disabled=true;msg.textContent="Sandali lang…";
+  const {data,error}=await sb.rpc("quiz_start",{p_nickname:nick,p_place:place,p_category:cat||null});
+  $("qGo").disabled=false;
+  if(error||!data)return msg.textContent="Hindi makapagsimula. Pakisubukan ulit.";
+  if(data.error)return msg.textContent=({invalid:"Pakisuri po ang palayaw at barangay.",taken:"Nakalaro na ang palayaw na ito ngayong linggo. Gumamit ng ibang palayaw.",no_quiz:"Wala pang aktibong quiz ngayon.",busy:"Maraming naglalaro ngayon. Subukan ulit mamaya."})[data.error]||"Hindi makapagsimula.";
+  lsSet("lc_quiz_prof",JSON.stringify({nick,cat}));
+  QS={step:"play",attempt:data.attempt,total:data.total,title:data.title,nick,place,pos:data.next,points:data.points||0,correct:data.correct||0,busy:false};
+  loadQuestion();
+}
+async function loadQuestion(){
+  const {data,error}=await sb.rpc("quiz_question",{p_attempt:QS.attempt,p_pos:QS.pos});
+  if(error||!data||data.error)return quizFail("Hindi makuha ang tanong. Pakisubukan ulit.");
+  QS.q=data;QS.step="play";QS.busy=false;
+  QS.deadline=performance.now()+Math.max(0,LIM*1000-(data.elapsed_ms||0));
+  if((location.hash||"").startsWith("#/quiz")){quizRender();startTimer()}
+}
+async function submitAnswer(choice){
+  if(QS.busy)return;QS.busy=true;stopTimer();
+  document.querySelectorAll(".qopt").forEach(b=>b.disabled=true);
+  const {data,error}=await sb.rpc("quiz_answer",{p_attempt:QS.attempt,p_pos:QS.pos,p_choice:choice});
+  if(error||!data||data.error)return quizFail("Hindi naitala ang sagot. Pakisubukan ulit.");
+  QS.fb={...data,choice};QS.points=data.total_points;if(data.correct)QS.correct++;
+  QS.step="fb";QS.busy=false;quizRender();
+}
+async function quizNext(){
+  if(QS.fb.finished){await loadBoard();if(QB&&QB.quiz)lsSet("lc_quiz_done",QB.quiz.start);QS.step="result";quizRender();return}
+  QS.pos++;await loadQuestion();
+}
 
 /* ===== ROUTER ===== */
 function route(){
   const [,p="",id]=(location.hash||"#/").slice(1).split("/");
+  if(p!=="quiz")stopTimer();
   let h;
   if(p==="")h=V.home();else if(p==="alamin")h=id?V.article(id):V.alamin();
   else if(p==="laws")h=id?V.law(id):V.laws();else if(p==="news"&&id)h=V.post(id);else h=(V[p]&&p!=="nf")?V[p]():V.nf();
@@ -311,6 +455,7 @@ function route(){
       try{localStorage.setItem("lc_likes",JSON.stringify(on?l.filter(x=>x!==k):[...l,k]))}catch(e){}
       b.classList.toggle("on",!on);b.innerHTML=(on?"♡ Like":"♥ Liked")+" · <span>"+LIKES[k]+"</span>"}catch(e){console.warn(e)}
     b.disabled=false});
+  if(p==="quiz"){quizRender();if(QS.step==="play"&&!QT)startTimer()}
   const q=document.getElementById("q");
   if(q)q.oninput=()=>{const t=q.value.toLowerCase();
     document.getElementById("list").innerHTML=DB.articles.filter(a=>(a.title+a.summary+a.body).toLowerCase().includes(t)).map(artCard).join("")||"<p>No results.</p>"};
@@ -349,6 +494,7 @@ window.addEventListener("hashchange",()=>{closeMenu();route()});
 route();
 loadRemote().then(route);
 initStats();
+loadBoard().then(()=>{if(!inGame())route()});
 </script>
 </body>
 </html>

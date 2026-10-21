@@ -12,7 +12,7 @@ header b{font-size:1.1rem}header span{font-size:.85rem;opacity:.85}
 .tabs button.on{background:var(--g);color:#fff;border-color:var(--g)}
 .box{background:#fff;border:1px solid var(--l);border-radius:12px;padding:16px;margin-bottom:14px}
 label{display:block;font-weight:600;margin:12px 0 4px;font-size:.88rem}
-input[type=text],input[type=email],input[type=password],input[type=number],select,textarea{width:100%;padding:9px 10px;border:1px solid var(--l);border-radius:8px;font:inherit}
+input[type=text],input[type=email],input[type=password],input[type=number],input[type=date],select,textarea{width:100%;padding:9px 10px;border:1px solid var(--l);border-radius:8px;font:inherit}
 textarea{min-height:110px;resize:vertical}.hint{font-weight:400;color:#6a777b;font-size:.78rem}
 .btn{background:var(--a);color:#fff;border:0;padding:9px 16px;border-radius:8px;font-weight:600;cursor:pointer}
 .btn.s{background:#fff;color:#1d2a2f;border:1px solid var(--l)}.btn.d{background:#b3382c}
@@ -49,6 +49,8 @@ const T={
   ["overview","textarea","Overview"],["key_provisions","textarea","Key provisions (one per line)"],["faq","textarea","FAQ",0,BODY],
   ["related","text","Related Ating Alamin slugs (comma-separated)"],["content","textarea","Full text (optional)"],["pdf_url","text","PDF link"],
   ["sort_order","number","Sort order"],["published","check","Published"]]},
+ quiz:{label:"🎯 Quiz",special:"quiz"},
+ scores:{label:"🏅 Scores",special:"scores"},
  messages:{label:"✉️ Messages",special:"messages"},
  backup:{label:"💾 Backup",special:1,adminOnly:1},
  contact_info:{label:"📞 Contact",table:"contact_info",single:1,fields:[
@@ -81,6 +83,8 @@ async function show(k,msg,isErr){
  $("#app").innerHTML=`<div class="tabs">${tabs}</div>${msg?`<div class="msg ${isErr?"err":""}">${esc(msg)}</div>`:""}<div id="panel">Loading…</div>`;
  document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>show(b.dataset.k));
  if(t.special==="messages")return messagesView();
+ if(t.special==="quiz")return quizAdmin();
+ if(t.special==="scores")return scoresAdmin();
  if(t.special)return backupView();
  let q=sb.from(t.table).select("*"); if(t.order)q=q.order(t.order,{ascending:!!t.asc});
  const {data,error}=await q; if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}</div>`;
@@ -137,6 +141,64 @@ function form(r){
 }
 // ---- Backup & restore (admins only) ----
 const BK=["posts","ating_alamin","faqs","legal_library","contact_info"];
+const ymd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+async function quizAdmin(){
+ const {data,error}=await sb.from("quizzes").select("*").order("start_date",{ascending:false});
+ if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}<br>Naitakbo mo na ba ang supabase-quiz.sql?</div>`;
+ const rows=data||[];
+ $("#panel").innerHTML=`<p><button class="btn" id="qnew">+ New weekly quiz</button> <span class="hint">Isang quiz lang dapat ang bukas bawat linggo.</span></p><div class="box">${rows.length?rows.map((r,i)=>`<div class="row"><div><b>${esc(r.title)}</b><span class="pill ${r.published?"":"draft"}">${r.published?"Published":"Draft"}</span><br><small>${esc(r.start_date)} → ${esc(r.end_date)}</small></div><div class="acts"><button class="btn s" data-qe="${i}">Edit</button>${me.role==="admin"?`<button class="btn d" data-qd="${i}">Delete</button>`:""}</div></div>`).join(""):"<p>Wala pang quiz.</p>"}</div>`;
+ $("#qnew").onclick=()=>quizForm(null);
+ document.querySelectorAll("[data-qe]").forEach(b=>b.onclick=()=>quizForm(rows[b.dataset.qe]));
+ document.querySelectorAll("[data-qd]").forEach(b=>b.onclick=async()=>{const r=rows[b.dataset.qd];
+  if(!confirm('Delete quiz "'+r.title+'" with all its questions and scores? This cannot be undone.'))return;
+  const {error}=await sb.from("quizzes").delete().eq("id",r.id);show("quiz",error?error.message:"Deleted.",!!error)});
+}
+async function quizForm(row){
+ let qs=[];
+ if(row){const {data}=await sb.from("quiz_questions").select("*").eq("quiz_id",row.id).order("pos");qs=data||[]}
+ const d0=new Date(),d1=new Date(Date.now()+6*864e5);
+ const qb=n=>{const q=qs.find(x=>x.pos===n)||{options:["","","",""],correct_index:0};
+  return `<div class="box"><b>Tanong ${n}</b><label>Tanong</label><textarea id="qq${n}" style="min-height:60px">${esc(q.question||"")}</textarea>
+  ${[0,1,2,3].map(i=>`<label>Pagpipilian ${"ABCD"[i]}</label><input type="text" id="qo${n}_${i}" value="${esc(q.options[i]||"")}">`).join("")}
+  <label>Tamang sagot</label><select id="qc${n}">${[0,1,2,3].map(i=>`<option value="${i}" ${q.correct_index===i?"selected":""}>${"ABCD"[i]}</option>`).join("")}</select>
+  <label>Paliwanag <span class="hint">(lalabas pagkatapos sumagot)</span></label><textarea id="qx${n}" style="min-height:70px">${esc(q.explanation||"")}</textarea>
+  <label>Kaugnay na Ating Alamin slug <span class="hint">(optional, hal. cfa)</span></label><input type="text" id="qa${n}" value="${esc(q.article_slug||"")}"></div>`};
+ $("#panel").innerHTML=`<div class="box"><h3 style="margin-top:0">${row?"Edit":"New"} weekly quiz</h3>
+  <label>Pamagat</label><input type="text" id="qt" value="${esc(row?row.title:"")}">
+  <label>Simula (petsa)</label><input type="date" id="qstart" value="${row?esc(row.start_date):ymd(d0)}">
+  <label>Wakas (petsa)</label><input type="date" id="qend" value="${row?esc(row.end_date):ymd(d1)}">
+  <div class="ck"><input type="checkbox" id="qp" ${(!row||row.published)?"checked":""}><label for="qp">Published</label></div></div>${[1,2,3,4,5].map(qb).join("")}
+  <p><button class="btn" id="qsave">Save quiz</button> <button class="btn s" id="qcancel">Cancel</button></p>`;
+ $("#qcancel").onclick=()=>show("quiz");
+ $("#qsave").onclick=async()=>{
+  const title=$("#qt").value.trim(),s=$("#qstart").value,e=$("#qend").value;
+  if(!title||!s||!e)return alert("Kumpletuhin ang pamagat at mga petsa.");
+  if(e<s)return alert("Dapat mas huli ang petsa ng wakas kaysa simula.");
+  const items=[];
+  for(let n=1;n<=5;n++){
+   const question=$("#qq"+n).value.trim(),opts=[0,1,2,3].map(i=>$(`#qo${n}_${i}`).value.trim());
+   if(!question||opts.some(o=>!o))return alert("Kumpletuhin ang Tanong "+n+" at ang 4 na pagpipilian.");
+   items.push({pos:n,question,options:opts,correct_index:+$("#qc"+n).value,explanation:$("#qx"+n).value.trim()||null,article_slug:$("#qa"+n).value.trim()||null})}
+  const o={title,start_date:s,end_date:e,published:$("#qp").checked};
+  let id=row&&row.id;
+  if(id){const {error}=await sb.from("quizzes").update(o).eq("id",id);if(error)return alert("Hindi na-save: "+error.message)}
+  else{const {data,error}=await sb.from("quizzes").insert(o).select("id").single();if(error)return alert("Hindi na-save: "+error.message);id=data.id}
+  const {error}=await sb.from("quiz_questions").upsert(items.map(x=>({...x,quiz_id:id})),{onConflict:"quiz_id,pos"});
+  if(error)return alert("Na-save ang quiz pero hindi ang mga tanong: "+error.message);
+  show("quiz","Saved ✔ "+(o.published?"Lalabas ito sa website kapag pumasok ang petsa ng simula.":"Draft pa ito at hindi pa lalabas."));
+ };
+}
+async function scoresAdmin(){
+ const {data,error}=await sb.from("quiz_attempts").select("*, quizzes(title)").order("started_at",{ascending:false}).limit(150);
+ if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}</div>`;
+ const rows=data||[];
+ $("#panel").innerHTML=`<p class="hint">Pinakabagong 150 na laro. I-hide ang hindi angkop na palayaw; mawawala ito sa Top 10 at sa mga Kampeon ng Buwan.</p><div class="box">${rows.length?rows.map((r,i)=>`<div class="row"><div><b>${esc(r.nickname)}</b> <small>${esc(r.place)}${r.category?" · "+esc(r.category):""}</small>${r.hidden?'<span class="pill draft">Hidden</span>':""}${r.finished_at?"":'<span class="pill draft">Hindi tapos</span>'}<br><small>${esc(r.quizzes?r.quizzes.title:"")} · ${r.total_points} pts · ${r.correct_count} tama · ${(r.total_ms/1000).toFixed(1)}s</small></div><div class="acts"><button class="btn s" data-h="${i}">${r.hidden?"Unhide":"Hide"}</button>${me.role==="admin"?`<button class="btn d" data-sx="${i}">Delete</button>`:""}</div></div>`).join(""):"<p>Wala pang naglaro.</p>"}</div>`;
+ document.querySelectorAll("[data-h]").forEach(b=>b.onclick=async()=>{const r=rows[b.dataset.h];
+  const {error}=await sb.from("quiz_attempts").update({hidden:!r.hidden}).eq("id",r.id);show("scores",error?error.message:"",!!error)});
+ document.querySelectorAll("[data-sx]").forEach(b=>b.onclick=async()=>{const r=rows[b.dataset.sx];
+  if(!confirm("Delete the score of "+r.nickname+"? This cannot be undone."))return;
+  const {error}=await sb.from("quiz_attempts").delete().eq("id",r.id);show("scores",error?error.message:"Deleted.",!!error)});
+}
 async function messagesView(){
  const {data,error}=await sb.from("feedback").select("*").order("created_at",{ascending:false});
  if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}</div>`;
