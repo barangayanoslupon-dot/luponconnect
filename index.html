@@ -313,6 +313,7 @@ contact(){const c=Object.assign({},CONFIG.contact,Object.fromEntries(Object.entr
   <div class="card"><h3>✉️ Email</h3><p><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p></div>${/^https?:\/\//.test(c.facebook||"")?`<a class="card" href="${esc(c.facebook)}" target="_blank" rel="noopener"><h3>📘 Facebook</h3><p>Visit our Facebook page</p></a>`:""}</div>
   <h2>Location Map</h2><iframe loading="lazy" title="Map" src="${esc(map)}"></iframe><h2>Share LuponConnect</h2>${shareBar("LuponConnect – Barangay Anos Lupong Tagapamayapa")}`},
 quiz(){return ""},
+lupon(){return ""},
 nf(){return `<h1>Page not found</h1><p><a class="btn" href="#/">Go home</a></p>`}
 };
 
@@ -321,7 +322,7 @@ const LIM=20,QPLACES=(CONFIG.quizPlaces&&CONFIG.quizPlaces.length)?CONFIG.quizPl
 let QB=null,QS={step:"intro"},QT=null;
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-const inGame=()=>(location.hash||"").startsWith("#/quiz")&&(QS.step==="play"||QS.step==="fb");
+const inGame=()=>/^#\/(quiz|lupon)/.test(location.hash||"")&&(QS.step==="play"||QS.step==="fb");
 const mName=d=>{try{return new Date(d+"T00:00:00").toLocaleDateString("fil-PH",{month:"long",year:"numeric"})}catch(e){return d}};
 async function loadBoard(){
   if(!sb)return;
@@ -353,21 +354,22 @@ function startTimer(){
     if(left<=0){stopTimer();submitAnswer(null)}
   },100);
 }
+const lupLink='<p style="text-align:center;margin-top:18px"><a href="#/lupon">🔒 Para sa mga miyembro ng Lupon (kailangan ng passkey)</a></p>';
 function quizIntro(){
   const q=QB&&QB.quiz,done=q&&lsGet("lc_quiz_done")===q.start;
   let prof={};try{prof=JSON.parse(lsGet("lc_quiz_prof")||"{}")}catch(e){}
   const cats=["Estudyante","Adult","Senior","Lupon/Opisyal"];
   const head=`<h1>🎯 LuponConnect Quiz</h1>`;
   const board=boardHTML(QB&&QB.week,prof.nick,"🏅 Top 10 ngayong linggo");
-  if(!q)return head+`<div class="card"><p>Wala pang aktibong quiz ngayong linggo. Balik po kayo sa susunod na Lunes!</p></div>`+board;
+  if(!q)return head+`<div class="card"><p>Wala pang aktibong quiz ngayong linggo. Balik po kayo sa susunod na Lunes!</p></div>`+board+lupLink;
   const info=`<div class="card"><span class="tag">Quiz ng Linggo</span><h3>${esc(q.title)}</h3><p>${esc(q.questions)} tanong · ${LIM} segundo bawat tanong. 100 puntos sa bawat tamang sagot, may dagdag para sa mabilis na sagot. Isang beses lang ang may-record na laro kada linggo.</p><p class="date">Hanggang ${esc(fmt(q.end))}</p></div>`;
-  if(done)return head+info+`<div class="card"><p>✅ <b>Nakalaro ka na ngayong linggo!</b> Balik po sa susunod na Lunes para sa bagong tanong.</p></div>`+board+shareBar("LuponConnect Quiz");
+  if(done)return head+info+`<div class="card"><p>✅ <b>Nakalaro ka na ngayong linggo!</b> Balik po sa susunod na Lunes para sa bagong tanong.</p></div>`+board+shareBar("LuponConnect Quiz")+lupLink;
   return head+info+`<div class="card qform"><label for="qNick">Palayaw (makikita ng publiko)</label><input id="qNick" maxlength="20" placeholder="hal. Kuya Jun" value="${esc(prof.nick||"")}">
    <label for="qPlace">Purok / Barangay</label><select id="qPlace">${QPLACES.map(p=>`<option>${esc(p)}</option>`).join("")}<option>Ibang Barangay</option></select>
    <input id="qOther" maxlength="30" placeholder="Pangalan ng inyong barangay" hidden style="margin-top:8px">
    <label for="qCat">Kategorya (optional)</label><select id="qCat"><option value="">—</option>${cats.map(c=>`<option${prof.cat===c?" selected":""}>${esc(c)}</option>`).join("")}</select>
    <p class="mnote">Walang email o totoong pangalan na kailangan. Palayaw, Purok/Barangay, at puntos lang ang ipapakita. Kung naputol ang laro, ilagay ang parehong palayaw para magpatuloy.</p>
-   <p><button class="btn" id="qGo" style="border:0;cursor:pointer">▶ Simulan ang Quiz</button> <span id="qMsg" class="qmsg"></span></p></div>`+board;
+   <p><button class="btn" id="qGo" style="border:0;cursor:pointer">▶ Simulan ang Quiz</button> <span id="qMsg" class="qmsg"></span></p></div>`+board+lupLink;
 }
 function qHead(){return `<div class="qhead"><span>Tanong ${QS.pos} / ${QS.total}</span><span>⭐ ${QS.points}</span></div>`}
 function quizPlay(){
@@ -383,25 +385,54 @@ function quizFb(){
   <p style="margin-top:12px"><button class="btn" id="qNext" style="border:0;cursor:pointer">${f.finished?"Tingnan ang resulta →":"Susunod →"}</button></p></div>`;
 }
 function quizResult(){
+  if(QS.mode==="private")return lupResult();
   return `<h1>🎉 Tapos na!</h1><div class="card qres"><div class="big">${esc(QS.points)}</div><p>puntos · ${esc(QS.correct)} sa ${esc(QS.total)} ang tama</p><p>Salamat, <b>${esc(QS.nick)}</b> (${esc(QS.place)})!</p></div>`
    +boardHTML(QB&&QB.week,QS.nick,"🏅 Top 10 ngayong linggo")+`<p style="text-align:center;margin-top:10px">Hamunin ang kapitbahay mo!</p>`+shareBar("LuponConnect Quiz – kaya mo bang talunin ako?")+`<p style="text-align:center"><a class="btn" href="#/">Bumalik sa Home</a></p>`;
+}
+function lupIntro(){
+  let prof={};try{prof=JSON.parse(lsGet("lc_lupon_prof")||"{}")}catch(e){}
+  return `<h1>🔒 Quiz ng mga Miyembro ng Lupon</h1><div class="card"><p>Para ito sa mga miyembro ng Lupong Tagapamayapa. Kailangan ang <b>passkey</b> na ibinigay ng Lupon. 10 tanong · ${LIM} segundo bawat tanong · parehong sistema ng puntos: 100 sa bawat tama at dagdag para sa bilis.</p></div>
+  <div class="card qform"><label for="lKey">Passkey</label><input id="lKey" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <label for="lName">Pangalan</label><input id="lName" maxlength="40" autocomplete="name" value="${esc(prof.name||"")}">
+  <label for="lPlace">Barangay</label><input id="lPlace" maxlength="40" value="${esc(prof.place||"Barangay Anos")}">
+  <p class="mnote">Ang inyong pangalan at puntos ay makikita ng mga may passkey. Kung naputol ang laro, ilagay ang parehong pangalan para magpatuloy.</p>
+  <p><button class="btn" id="lGo" style="border:0;cursor:pointer">▶ Simulan ang Quiz</button> <span id="qMsg" class="qmsg"></span></p></div>
+  <p style="text-align:center;margin-top:12px"><a href="#/quiz">← Bumalik sa Quiz para sa Publiko</a></p>`;
+}
+function lupResult(){
+  return `<h1>🎉 Tapos na!</h1><div class="card qres"><div class="big">${esc(QS.points)}</div><p>puntos · ${esc(QS.correct)} sa ${esc(QS.total)} ang tama</p><p>Salamat, <b>${esc(QS.nick)}</b>!</p></div>`
+   +boardHTML(QS.pboard,QS.nick,"🏅 Resulta ng mga Miyembro")+`<p style="text-align:center;margin-top:12px"><a class="btn" href="#/">Bumalik sa Home</a></p>`;
+}
+async function lupStart(){
+  const $=id=>document.getElementById(id),msg=$("qMsg"),key=$("lKey").value.trim(),name=$("lName").value.trim(),place=$("lPlace").value.trim();
+  if(key.length<4)return msg.textContent="Ilagay po ang passkey.";
+  if(!/^[A-Za-zÀ-ÿ0-9 _.,-]{2,40}$/.test(name))return msg.textContent="Pangalan: 2–40 letra o numero lang po.";
+  if(place.length<2)return msg.textContent="Ilagay po ang inyong barangay.";
+  $("lGo").disabled=true;msg.textContent="Sandali lang…";
+  const {data,error}=await sb.rpc("quiz_start_private",{p_passkey:key,p_name:name,p_place:place});
+  $("lGo").disabled=false;
+  if(error||!data)return msg.textContent="Hindi makapagsimula. Pakisubukan ulit.";
+  if(data.error)return msg.textContent=({badkey:"Maling passkey, o wala pang bukas na quiz para dito.",locked:"Masyadong maraming maling subok. Subukan ulit pagkalipas ng isang oras.",invalid:"Pakisuri po ang pangalan at barangay.",taken:"Nakalaro na ang pangalang ito sa quiz na ito.",no_quiz:"Walang tanong ang quiz na ito."})[data.error]||"Hindi makapagsimula.";
+  lsSet("lc_lupon_prof",JSON.stringify({name,place}));
+  QS={step:"play",mode:"private",key,attempt:data.attempt,total:data.total,title:data.title,nick:name,place,pos:data.next,points:data.points||0,correct:data.correct||0,busy:false};
+  loadQuestion();
 }
 function quizRender(){
   const app=document.getElementById("app");
   if(!sb){app.innerHTML=`<h1>🎯 Quiz</h1><p>Hindi pa available ang quiz.</p>`;return}
   const s=QS.step;
-  app.innerHTML=s==="play"?quizPlay():s==="fb"?quizFb():s==="result"?quizResult():quizIntro();
+  app.innerHTML=s==="play"?quizPlay():s==="fb"?quizFb():s==="result"?quizResult():(QS.mode==="private"?lupIntro():quizIntro());
   quizBind();
 }
 function quizBind(){
   const $=id=>document.getElementById(id),s=QS.step;
-  if(s==="intro"){const pl=$("qPlace"),ot=$("qOther");if(pl)pl.onchange=()=>{ot.hidden=pl.value!=="Ibang Barangay"};const go=$("qGo");if(go)go.onclick=quizStart}
+  if(s==="intro"){const pl=$("qPlace"),ot=$("qOther");if(pl)pl.onchange=()=>{ot.hidden=pl.value!=="Ibang Barangay"};const go=$("qGo");if(go)go.onclick=quizStart;const lg=$("lGo");if(lg)lg.onclick=lupStart}
   if(s==="play")document.querySelectorAll(".qopt").forEach(b=>b.onclick=()=>submitAnswer(+b.dataset.i));
   if(s==="fb"&&$("qNext"))$("qNext").onclick=quizNext;
-  if($("qRetry"))$("qRetry").onclick=()=>{QS={step:"intro"};quizRender()};
+  if($("qRetry"))$("qRetry").onclick=()=>{QS={step:"intro",mode:QS.mode};quizRender()};
 }
 function quizFail(msg){
-  stopTimer();QS={step:"intro"};
+  stopTimer();QS={step:"intro",mode:QS.mode};
   document.getElementById("app").innerHTML=`<h1>🎯 Quiz</h1><div class="card"><p>${esc(msg)}</p><p><button class="btn" id="qRetry" style="border:0;cursor:pointer">Subukan ulit</button></p></div>`;quizBind();
 }
 async function quizStart(){
@@ -423,7 +454,7 @@ async function loadQuestion(){
   if(error||!data||data.error)return quizFail("Hindi makuha ang tanong. Pakisubukan ulit.");
   QS.q=data;QS.step="play";QS.busy=false;
   QS.deadline=performance.now()+Math.max(0,LIM*1000-(data.elapsed_ms||0));
-  if((location.hash||"").startsWith("#/quiz")){quizRender();startTimer()}
+  if(/^#\/(quiz|lupon)/.test(location.hash||"")){quizRender();startTimer()}
 }
 async function submitAnswer(choice){
   if(QS.busy)return;QS.busy=true;stopTimer();
@@ -434,6 +465,7 @@ async function submitAnswer(choice){
   QS.step="fb";QS.busy=false;quizRender();
 }
 async function quizNext(){
+  if(QS.fb.finished&&QS.mode==="private"){const {data}=await sb.rpc("quiz_board_private",{p_passkey:QS.key});QS.pboard=(data&&data.rows)||[];QS.step="result";quizRender();return}
   if(QS.fb.finished){await loadBoard();if(QB&&QB.quiz)lsSet("lc_quiz_done",QB.quiz.start);QS.step="result";quizRender();return}
   QS.pos++;await loadQuestion();
 }
@@ -441,7 +473,7 @@ async function quizNext(){
 /* ===== ROUTER ===== */
 function route(){
   const [,p="",id]=(location.hash||"#/").slice(1).split("/");
-  if(p!=="quiz")stopTimer();
+  if(p!=="quiz"&&p!=="lupon")stopTimer();
   let h;
   if(p==="")h=V.home();else if(p==="alamin")h=id?V.article(id):V.alamin();
   else if(p==="laws")h=id?V.law(id):V.laws();else if(p==="news"&&id)h=V.post(id);else h=(V[p]&&p!=="nf")?V[p]():V.nf();
@@ -455,7 +487,7 @@ function route(){
       try{localStorage.setItem("lc_likes",JSON.stringify(on?l.filter(x=>x!==k):[...l,k]))}catch(e){}
       b.classList.toggle("on",!on);b.innerHTML=(on?"♡ Like":"♥ Liked")+" · <span>"+LIKES[k]+"</span>"}catch(e){console.warn(e)}
     b.disabled=false});
-  if(p==="quiz"){quizRender();if(QS.step==="play"&&!QT)startTimer()}
+  if(p==="quiz"||p==="lupon"){const want=p==="lupon"?"private":"public";if(QS.step==="result"&&QS.mode!==want)QS={step:"intro"};if(QS.step==="intro")QS.mode=want;quizRender();if(QS.step==="play"&&!QT)startTimer()}
   const q=document.getElementById("q");
   if(q)q.oninput=()=>{const t=q.value.toLowerCase();
     document.getElementById("list").innerHTML=DB.articles.filter(a=>(a.title+a.summary+a.body).toLowerCase().includes(t)).map(artCard).join("")||"<p>No results.</p>"};

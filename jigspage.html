@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>LuponConnect Admin</title>
+<style>
+:root{--g:#143f3c;--a:#c8892b;--bg:#f4f2eb;--l:#ddd8c8}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:#1d2a2f}
+header{background:var(--g);color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+header b{font-size:1.1rem}header span{font-size:.85rem;opacity:.85}
+.w{max-width:900px;margin:0 auto;padding:16px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--l);background:#fff;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:.9rem}
+.tabs button.on{background:var(--g);color:#fff;border-color:var(--g)}
+.box{background:#fff;border:1px solid var(--l);border-radius:12px;padding:16px;margin-bottom:14px}
+label{display:block;font-weight:600;margin:12px 0 4px;font-size:.88rem}
+input[type=text],input[type=email],input[type=password],input[type=number],input[type=date],select,textarea{width:100%;padding:9px 10px;border:1px solid var(--l);border-radius:8px;font:inherit}
+textarea{min-height:110px;resize:vertical}.hint{font-weight:400;color:#6a777b;font-size:.78rem}
+.btn{background:var(--a);color:#fff;border:0;padding:9px 16px;border-radius:8px;font-weight:600;cursor:pointer}
+.btn.s{background:#fff;color:#1d2a2f;border:1px solid var(--l)}.btn.d{background:#b3382c}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--l)}
+.row:last-child{border:0}.row small{color:#6a777b}.pill{font-size:.7rem;padding:1px 8px;border-radius:99px;background:#d9e8e6;margin-left:6px}
+.pill.draft{background:#f3dcc0}.msg{padding:10px 14px;border-radius:8px;margin-bottom:12px;background:#d9e8e6}.msg.err{background:#f6d4cf}
+.pv{max-width:240px;max-height:150px;border-radius:8px;display:block;margin:6px 0}
+.tb{display:flex;gap:6px;margin:4px 0}.tb button{padding:3px 12px;min-width:38px}
+.ck{display:flex;gap:8px;align-items:center;margin-top:14px}.ck label{margin:0}.acts{display:flex;gap:6px;flex-shrink:0}
+</style></head><body>
+<header><b>⚖️ LuponConnect Admin</b><span id="who"></span></header>
+<div class="w" id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL="https://adragnnngictwxtslosy.supabase.co", SUPABASE_ANON_KEY="sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd";   // same values as index.html (anon key only)
+if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!window.supabase){document.getElementById("app").innerHTML='<div class="box" style="margin-top:30px"><h3 style="margin-top:0">Setup needed</h3><p>'+(window.supabase?'Open <b>admin.html</b> and fill in <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> at the top of the script, then upload it again.':'The Supabase library could not load. Check your internet connection or any ad-blocker.')+'</p></div>';throw new Error("Missing Supabase config")}
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=s=>document.querySelector(s);
+const slugify=t=>t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const BODY='Blank line = new paragraph. Start a line with "- " for bullets. Select text, then use B / I / U.';
+const T={
+ posts:{label:"📢 News",table:"posts",title:"title",order:"created_at",upd:1,fields:[
+  ["title","text","Title",1],["category","select","Category",1,["Lupon Activities","Training Highlights","Community Announcements","Legal and Policy Updates"]],
+  ["excerpt","textarea","Short summary (shown on cards)"],["content","textarea","Full content",1,BODY],["cover_image","image","Cover photo"],["slug","text","Slug (auto if blank)"],["published","check","Published"]]},
+ ating_alamin:{label:"📚 Ating Alamin",table:"ating_alamin",title:"title",order:"created_at",upd:1,fields:[
+  ["title","text","Title",1],["summary","textarea","Short summary"],["content","textarea","Article content",1,BODY],["slug","text","Slug (auto if blank)"],
+  ["featured_image","image","Photo"],["featured","check","Featured on Home page"],["published","check","Published"]]},
+ faqs:{label:"❓ FAQs",table:"faqs",title:"question",order:"display_order",asc:1,fields:[
+  ["question","text","Question",1],["answer","textarea","Answer",1,BODY],["display_order","number","Display order (1 = first)"],["active","check","Active"]]},
+ legal_library:{label:"⚖️ Legal Library",table:"legal_library",title:"title",order:"sort_order",asc:1,fields:[
+  ["title","text","Law title",1],["reference_number","text","Reference number (e.g. RA 9262)"],
+  ["category","select","Category",1,["Katarungang Pambarangay","Family and Community Protection","Safe Spaces","Other"]],["slug","text","Slug (auto if blank)"],
+  ["overview","textarea","Overview"],["key_provisions","textarea","Key provisions (one per line)"],["faq","textarea","FAQ",0,BODY],
+  ["related","text","Related Ating Alamin slugs (comma-separated)"],["content","textarea","Full text (optional)"],["pdf_url","text","PDF link"],
+  ["sort_order","number","Sort order"],["published","check","Published"]]},
+ quiz:{label:"🎯 Quiz",special:"quiz"},
+ scores:{label:"🏅 Scores",special:"scores"},
+ messages:{label:"✉️ Messages",special:"messages"},
+ backup:{label:"💾 Backup",special:1,adminOnly:1},
+ contact_info:{label:"📞 Contact",table:"contact_info",single:1,fields:[
+  ["office_name","text","Office name"],["address","text","Address"],["office_hours","text","Office hours"],["phone","text","Contact number"],
+  ["email","text","Email"],["facebook_url","text","Facebook page link (https://facebook.com/...)"],["map_url","text","Google Maps EMBED link (src of the embed code)"]]}
+};
+let UNREAD=0;
+let me=null,cur="posts",rows=[],ed=null;
+
+function login(m){ $("#who").textContent="";
+ $("#app").innerHTML=`<div class="box" style="max-width:380px;margin:40px auto"><h2 style="margin-top:0">Staff Login</h2>${m?`<div class="msg err">${esc(m)}</div>`:""}
+ <label>Email</label><input type="email" id="em" autocomplete="username"><label>Password</label><input type="password" id="pw" autocomplete="current-password">
+ <p><button class="btn" id="go">Log in</button></p></div>`;
+ const go=async()=>{const {error}=await sb.auth.signInWithPassword({email:$("#em").value.trim(),password:$("#pw").value});
+  error?login("Wrong email or password."):start()};
+ $("#go").onclick=go;$("#pw").onkeydown=e=>{if(e.key==="Enter")go()};
+}
+async function start(){
+ const {data:{session}}=await sb.auth.getSession(); if(!session)return login();
+ const {data}=await sb.from("profiles").select("full_name,role").eq("id",session.user.id).maybeSingle();
+ if(!data||!["admin","editor"].includes(data.role)){await sb.auth.signOut();return login("This account has no staff access. Ask the administrator.")}
+ me=data;$("#who").innerHTML=`${esc(data.full_name||session.user.email)} (${esc(data.role)}) · <a href="#" id="lo" style="color:#f2c879">Log out</a>`;
+ $("#lo").onclick=async e=>{e.preventDefault();await sb.auth.signOut();login()};
+ show(cur);
+}
+async function show(k,msg,isErr){
+ cur=k;ed=null;const t=T[k];
+ try{const {count}=await sb.from("feedback").select("id",{count:"exact",head:true}).eq("is_read",false);UNREAD=count||0}catch(e){UNREAD=0}
+ const tabs=Object.entries(T).filter(([id,x])=>!x.adminOnly||me.role==="admin").map(([id,x])=>`<button class="${id===k?"on":""}" data-k="${id}">${x.label}${id==="messages"&&UNREAD?" ("+UNREAD+")":""}</button>`).join("");
+ $("#app").innerHTML=`<div class="tabs">${tabs}</div>${msg?`<div class="msg ${isErr?"err":""}">${esc(msg)}</div>`:""}<div id="panel">Loading…</div>`;
+ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>show(b.dataset.k));
+ if(t.special==="messages")return messagesView();
+ if(t.special==="quiz")return quizAdmin();
+ if(t.special==="scores")return scoresAdmin();
+ if(t.special)return backupView();
+ let q=sb.from(t.table).select("*"); if(t.order)q=q.order(t.order,{ascending:!!t.asc});
+ const {data,error}=await q; if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}</div>`;
+ rows=data||[];
+ if(t.single)return form(rows[0]||{});
+ $("#panel").innerHTML=`<p><button class="btn" id="new">+ Add new</button></p><div class="box">${rows.length?rows.map((r,i)=>{
+  const on=r.published??r.active;
+  return `<div class="row"><div><b>${esc(r[t.title])}</b>${on===undefined?"":`<span class="pill ${on?"":"draft"}">${on?"Published":"Draft"}</span>`}<br><small>${esc(r.category||r.reference_number||"")}</small></div>
+  <div class="acts"><button class="btn s" data-e="${i}">Edit</button>${me.role==="admin"?`<button class="btn d" data-d="${i}">Delete</button>`:""}</div></div>`}).join(""):"<p>Nothing here yet.</p>"}</div>`;
+ $("#new").onclick=()=>form({published:true,active:true});
+ document.querySelectorAll("[data-e]").forEach(b=>b.onclick=()=>form(rows[b.dataset.e]));
+ document.querySelectorAll("[data-d]").forEach(b=>b.onclick=async()=>{const r=rows[b.dataset.d];
+  if(!confirm('Delete "'+r[t.title]+'"? This cannot be undone.'))return;
+  const {error}=await sb.from(t.table).delete().eq("id",r.id);show(k,error?error.message:"Deleted.",!!error)});
+}
+function form(r){
+ const t=T[cur];ed=r;
+ const f=t.fields.map(([n,ty,lb,req,x])=>{const v=r[n];
+  if(ty==="check")return `<div class="ck"><input type="checkbox" id="f_${n}" ${v?"checked":""}><label for="f_${n}">${lb}</label></div>`;
+  const h=`<label>${lb}${req?" *":""} ${ty==="textarea"&&x?`<span class="hint">${esc(x)}</span>`:""}</label>`;
+  if(ty==="image")return h+`<img class="pv" id="pv_${n}" src="${esc(v||"")}" ${v?"":"hidden"}><input type="text" id="f_${n}" value="${esc(v)}" placeholder="Photo link (filled automatically when you upload)"><div style="margin-top:6px"><input type="file" id="up_${n}" accept="image/*"> <span class="hint" id="st_${n}">Photos are shrunk automatically and saved as JPEG.</span></div>`;
+  if(ty==="select")return h+`<select id="f_${n}">${x.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+  if(ty==="textarea")return h+(x===BODY?`<div class="tb"><button type="button" class="btn s" data-fmt="**" data-for="f_${n}" title="Bold"><b>B</b></button><button type="button" class="btn s" data-fmt="*" data-for="f_${n}" title="Italic"><i>I</i></button><button type="button" class="btn s" data-fmt="__" data-for="f_${n}" title="Underline"><u>U</u></button></div>`:"")+`<textarea id="f_${n}">${esc(v)}</textarea>`;
+  return h+`<input type="${ty==="number"?"number":"text"}" id="f_${n}" value="${esc(v)}">`}).join("");
+ $("#panel").innerHTML=`<div class="box"><h3 style="margin-top:0">${t.single?t.label:(r.id?"Edit":"Add new")}</h3>${f}
+  <p style="margin-top:18px"><button class="btn" id="save">Save</button> ${t.single?"":'<button class="btn s" id="cancel">Cancel</button>'}</p></div>`;
+
+ document.querySelectorAll("[data-fmt]").forEach(b=>b.onclick=()=>{
+  const ta=$("#"+b.dataset.for),m=b.dataset.fmt,s=ta.selectionStart,e=ta.selectionEnd,sel=ta.value.slice(s,e)||"teksto";
+  ta.setRangeText(m+sel+m,s,e,"end");ta.focus();ta.setSelectionRange(s+m.length,s+m.length+sel.length)});
+ t.fields.filter(x=>x[1]==="image").forEach(([n])=>{
+  $("#up_"+n).onchange=async e=>{const file=e.target.files[0];if(!file)return;const st=$("#st_"+n);
+   try{st.textContent="Shrinking…";const blob=await shrink(file);
+    st.textContent="Uploading ("+Math.round(blob.size/1024)+" KB)…";
+    const path=t.table+"/"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+".jpg";
+    const {error}=await sb.storage.from("images").upload(path,blob,{contentType:"image/jpeg",cacheControl:"31536000"});
+    if(error)throw error;
+    const url=sb.storage.from("images").getPublicUrl(path).data.publicUrl;
+    $("#f_"+n).value=url;$("#pv_"+n).src=url;$("#pv_"+n).hidden=false;st.textContent="Uploaded ✔ ("+Math.round(blob.size/1024)+" KB). Click Save to keep it."}
+   catch(err){st.textContent="Upload failed: "+(err.message||err)}}});
+ if(!t.single)$("#cancel").onclick=()=>show(cur);
+ $("#save").onclick=async()=>{
+  const o={};
+  for(const [n,ty,lb,req] of t.fields){const e=$("#f_"+n);let v=ty==="check"?e.checked:e.value.trim();
+   if(ty==="number")v=v===""?null:parseInt(v,10);
+   if(req&&(v===""||v===null))return alert(lb+" is required.");
+   if(v==="")v=null;o[n]=v}
+  if(t.fields.some(x=>x[0]==="slug"&&!o.slug))o.slug=slugify(o[t.title]||"")+(r.id?"":"-"+Date.now().toString(36).slice(-4));
+  if(t.upd)o.updated_at=new Date().toISOString();
+  if(t.single&&!r.id)o.id=1;
+  const q=r.id?sb.from(t.table).update(o).eq("id",r.id):sb.from(t.table).insert(o);
+  const {error}=await q;
+  error?alert("Could not save: "+error.message):show(cur,"Saved ✔ — it is now live on the website.")};
+}
+// ---- Backup & restore (admins only) ----
+const BK=["posts","ating_alamin","faqs","legal_library","contact_info"];
+const ymd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+async function quizAdmin(){
+ const {data,error}=await sb.from("quizzes").select("*").order("start_date",{ascending:false});
+ if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}<br>Naitakbo mo na ba ang supabase-quiz.sql?</div>`;
+ const rows=data||[];
+ $("#panel").innerHTML=`<p><button class="btn" id="qnew">+ New weekly quiz</button> <button class="btn s" id="qnewp">+ New Lupon quiz (passkey)</button> <span class="hint">Isang quiz lang dapat ang bukas bawat linggo.</span></p><div class="box">${rows.length?rows.map((r,i)=>`<div class="row"><div><b>${r.private?"🔒 ":""}${esc(r.title)}</b><span class="pill ${r.published?"":"draft"}">${r.published?"Published":"Draft"}</span><br><small>${esc(r.start_date)} → ${esc(r.end_date)}${r.private?" · Passkey: <b>"+esc(r.passkey||"")+"</b>":""}</small></div><div class="acts"><button class="btn s" data-qe="${i}">Edit</button>${me.role==="admin"?`<button class="btn d" data-qd="${i}">Delete</button>`:""}</div></div>`).join(""):"<p>Wala pang quiz.</p>"}</div>`;
+ $("#qnew").onclick=()=>quizForm(null);
+ $("#qnewp").onclick=()=>quizForm(null,true);
+ document.querySelectorAll("[data-qe]").forEach(b=>b.onclick=()=>quizForm(rows[b.dataset.qe]));
+ document.querySelectorAll("[data-qd]").forEach(b=>b.onclick=async()=>{const r=rows[b.dataset.qd];
+  if(!confirm('Delete quiz "'+r.title+'" with all its questions and scores? This cannot be undone.'))return;
+  const {error}=await sb.from("quizzes").delete().eq("id",r.id);show("quiz",error?error.message:"Deleted.",!!error)});
+}
+async function quizForm(row,mkPriv){
+ const isPriv=row?!!row.private:!!mkPriv,N=isPriv?10:5;
+ let qs=[];
+ if(row){const {data}=await sb.from("quiz_questions").select("*").eq("quiz_id",row.id).order("pos");qs=data||[]}
+ const d0=new Date(),d1=new Date(Date.now()+6*864e5);
+ const qb=n=>{const q=qs.find(x=>x.pos===n)||{options:["","","",""],correct_index:0};
+  return `<div class="box"><b>Tanong ${n}</b><label>Tanong</label><textarea id="qq${n}" style="min-height:60px">${esc(q.question||"")}</textarea>
+  ${[0,1,2,3].map(i=>`<label>Pagpipilian ${"ABCD"[i]}</label><input type="text" id="qo${n}_${i}" value="${esc(q.options[i]||"")}">`).join("")}
+  <label>Tamang sagot</label><select id="qc${n}">${[0,1,2,3].map(i=>`<option value="${i}" ${q.correct_index===i?"selected":""}>${"ABCD"[i]}</option>`).join("")}</select>
+  <label>Paliwanag <span class="hint">(lalabas pagkatapos sumagot)</span></label><textarea id="qx${n}" style="min-height:70px">${esc(q.explanation||"")}</textarea>
+  <label>Kaugnay na Ating Alamin slug <span class="hint">(optional, hal. cfa)</span></label><input type="text" id="qa${n}" value="${esc(q.article_slug||"")}"></div>`};
+ $("#panel").innerHTML=`<div class="box"><h3 style="margin-top:0">${row?"Edit":"New"} ${isPriv?"Lupon quiz (may passkey, 10 tanong)":"weekly quiz"}</h3>
+  <p class="hint">Ang pagkakasunod-sunod ng mga tanong at ng mga pagpipilian ay random sa bawat manlalaro (kailangan ang supabase-quiz-shuffle.sql).</p>
+  <label>Pamagat</label><input type="text" id="qt" value="${esc(row?row.title:"")}">
+  ${isPriv?`<label>Passkey <span class="hint">(ibigay lang sa mga miyembro; hindi bababa sa 6 na karakter; hindi mahalaga ang laki ng titik)</span></label><input type="text" id="qkey" value="${esc(row&&row.passkey||"")}">`:""}
+  <label>Simula (petsa)</label><input type="date" id="qstart" value="${row?esc(row.start_date):ymd(d0)}">
+  <label>Wakas (petsa)</label><input type="date" id="qend" value="${row?esc(row.end_date):ymd(d1)}">
+  <div class="ck"><input type="checkbox" id="qp" ${(!row||row.published)?"checked":""}><label for="qp">Published</label></div></div>${Array.from({length:N},(_,i)=>i+1).map(qb).join("")}
+  <p><button class="btn" id="qsave">Save quiz</button> <button class="btn s" id="qcancel">Cancel</button></p>`;
+ $("#qcancel").onclick=()=>show("quiz");
+ $("#qsave").onclick=async()=>{
+  const title=$("#qt").value.trim(),s=$("#qstart").value,e=$("#qend").value;
+  if(!title||!s||!e)return alert("Kumpletuhin ang pamagat at mga petsa.");
+  if(e<s)return alert("Dapat mas huli ang petsa ng wakas kaysa simula.");
+  const key=isPriv?$("#qkey").value.trim():null;
+  if(isPriv&&key.length<6)return alert("Ang passkey ay dapat hindi bababa sa 6 na karakter.");
+  const items=[];
+  for(let n=1;n<=N;n++){
+   const question=$("#qq"+n).value.trim(),opts=[0,1,2,3].map(i=>$(`#qo${n}_${i}`).value.trim());
+   if(!question||opts.some(o=>!o))return alert("Kumpletuhin ang Tanong "+n+" at ang 4 na pagpipilian.");
+   items.push({pos:n,question,options:opts,correct_index:+$("#qc"+n).value,explanation:$("#qx"+n).value.trim()||null,article_slug:$("#qa"+n).value.trim()||null})}
+  const o={title,start_date:s,end_date:e,published:$("#qp").checked,private:isPriv,passkey:key};
+  let id=row&&row.id;
+  if(id){const {error}=await sb.from("quizzes").update(o).eq("id",id);if(error)return alert("Hindi na-save: "+error.message)}
+  else{const {data,error}=await sb.from("quizzes").insert(o).select("id").single();if(error)return alert("Hindi na-save: "+error.message);id=data.id}
+  const {error}=await sb.from("quiz_questions").upsert(items.map(x=>({...x,quiz_id:id})),{onConflict:"quiz_id,pos"});
+  if(error)return alert("Na-save ang quiz pero hindi ang mga tanong: "+error.message);
+  show("quiz","Saved ✔ "+(o.published?(isPriv?"Bukas ito sa pahina ng Lupon (#/lupon) gamit ang passkey, simula sa petsa ng simula.":"Lalabas ito sa website kapag pumasok ang petsa ng simula."):"Draft pa ito at hindi pa lalabas."));
+ };
+}
+async function scoresAdmin(){
+ const {data,error}=await sb.from("quiz_attempts").select("*, quizzes(title,private)").order("started_at",{ascending:false}).limit(150);
+ if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}</div>`;
+ const rows=data||[];
+ $("#panel").innerHTML=`<p class="hint">Pinakabagong 150 na laro. I-hide ang hindi angkop na palayaw; mawawala ito sa Top 10 at sa mga Kampeon ng Buwan.</p><div class="box">${rows.length?rows.map((r,i)=>`<div class="row"><div><b>${esc(r.nickname)}</b> <small>${esc(r.place)}${r.category?" · "+esc(r.category):""}</small>${r.hidden?'<span class="pill draft">Hidden</span>':""}${r.finished_at?"":'<span class="pill draft">Hindi tapos</span>'}<br><small>${r.quizzes&&r.quizzes.private?"🔒 ":""}${esc(r.quizzes?r.quizzes.title:"")} · ${r.total_points} pts · ${r.correct_count} tama · ${(r.total_ms/1000).toFixed(1)}s</small></div><div class="acts"><button class="btn s" data-h="${i}">${r.hidden?"Unhide":"Hide"}</button>${me.role==="admin"?`<button class="btn d" data-sx="${i}">Delete</button>`:""}</div></div>`).join(""):"<p>Wala pang naglaro.</p>"}</div>`;
+ document.querySelectorAll("[data-h]").forEach(b=>b.onclick=async()=>{const r=rows[b.dataset.h];
+  const {error}=await sb.from("quiz_attempts").update({hidden:!r.hidden}).eq("id",r.id);show("scores",error?error.message:"",!!error)});
+ document.querySelectorAll("[data-sx]").forEach(b=>b.onclick=async()=>{const r=rows[b.dataset.sx];
+  if(!confirm("Delete the score of "+r.nickname+"? This cannot be undone."))return;
+  const {error}=await sb.from("quiz_attempts").delete().eq("id",r.id);show("scores",error?error.message:"Deleted.",!!error)});
+}
+async function messagesView(){
+ const {data,error}=await sb.from("feedback").select("*").order("created_at",{ascending:false});
+ if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}</div>`;
+ const m=data||[];
+ $("#panel").innerHTML=(me.role==="admin"&&m.some(r=>r.is_read)?'<p><button class="btn d" id="delRead">🗑 Delete all read messages</button></p>':"")+(m.length?m.map((r,i)=>`<div class="box" style="${r.is_read?"":"border-left:4px solid var(--a)"}">
+  <b>${esc(r.name||"(walang pangalan)")}</b>${r.is_read?"":'<span class="pill draft">Bago</span>'}<br>
+  <small><a href="mailto:${esc(r.email)}">${esc(r.email)}</a> · ${new Date(r.created_at).toLocaleString("en-PH")}</small>
+  <p style="white-space:pre-wrap;margin:10px 0 12px">${esc(r.message)}</p>
+  <div class="acts"><a class="btn" style="text-decoration:none" href="mailto:${esc(r.email)}?subject=${encodeURIComponent("Re: Mensahe mo sa LuponConnect")}">Reply</a>
+  <button class="btn s" data-r="${i}">${r.is_read?"Mark as unread":"Mark as read"}</button>${me.role==="admin"?`<button class="btn d" data-x="${i}">Delete</button>`:""}</div></div>`).join(""):'<div class="box"><p>Wala pang mensahe.</p></div>');
+ const dr=$("#delRead");if(dr)dr.onclick=async()=>{if(!confirm("Delete ALL messages marked as read? This cannot be undone."))return;
+  const {error}=await sb.from("feedback").delete().eq("is_read",true);show("messages",error?error.message:"Read messages deleted.",!!error)};
+ document.querySelectorAll("[data-r]").forEach(b=>b.onclick=async()=>{const r=m[b.dataset.r];
+  const {error}=await sb.from("feedback").update({is_read:!r.is_read}).eq("id",r.id);show("messages",error?error.message:"",!!error)});
+ document.querySelectorAll("[data-x]").forEach(b=>b.onclick=async()=>{const r=m[b.dataset.x];
+  if(!confirm("Delete this message from "+(r.name||r.email)+"? This cannot be undone."))return;
+  const {error}=await sb.from("feedback").delete().eq("id",r.id);show("messages",error?error.message:"Deleted.",!!error)});
+}
+function backupView(){
+ let last="";try{last=localStorage.getItem("lc_last_backup")||""}catch(e){}
+ $("#panel").innerHTML=`<div class="box"><h3 style="margin-top:0">⬇️ Download backup</h3>
+  <p>Saves all news, Ating Alamin articles, FAQs, legal library and contact details into one file.</p>
+  <p class="hint">Photos are not inside this file (only their links). Keep your original photos too.${last?" Last backup on this device: "+esc(last):" No backup downloaded on this device yet."}</p>
+  <button class="btn" id="bk">Download backup</button> <span id="bkst" class="hint"></span></div>
+ <div class="box"><h3 style="margin-top:0">⬆️ Restore from backup</h3>
+  <p>Choose a backup file you downloaded earlier. Items in the file are put back as they were: edited ones return to their saved version and deleted ones come back. Items you added <b>after</b> the backup are <b>not</b> removed.</p>
+  <input type="file" id="rf" accept=".json,application/json"> <span id="rfst" class="hint"></span></div>`;
+ $("#bk").onclick=async()=>{const st=$("#bkst");st.textContent="Collecting…";
+  try{const out={app:"luponconnect",version:1,created:new Date().toISOString(),tables:{}};
+   for(const t of BK){const {data,error}=await sb.from(t).select("*");if(error)throw new Error(t+": "+error.message);out.tables[t]=data}
+   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,1)],{type:"application/json"}));
+   a.download="luponconnect-backup-"+out.created.slice(0,10)+".json";a.click();
+   const n=Object.values(out.tables).reduce((x,y)=>x+y.length,0);
+   try{localStorage.setItem("lc_last_backup",new Date().toLocaleString())}catch(e){}
+   st.textContent="Done ✔ "+n+" items saved."}catch(e){st.textContent="Failed: "+e.message}};
+ $("#rf").onchange=async e=>{const f=e.target.files[0];if(!f)return;const st=$("#rfst");
+  try{const b=JSON.parse(await f.text());if(b.app!=="luponconnect"||!b.tables)throw new Error("This is not a LuponConnect backup file.");
+   const sum=BK.map(t=>t+": "+(b.tables[t]||[]).length).join("\n");
+   if(!confirm("Restore backup made on "+new Date(b.created).toLocaleString()+"?\n\n"+sum+"\n\nExisting items with the same ID will be overwritten."))return(e.target.value="");
+   st.textContent="Restoring…";
+   for(const t of BK){const rows=b.tables[t]||[];if(!rows.length)continue;
+    const {error}=await sb.from(t).upsert(rows,{onConflict:"id"});if(error)throw new Error(t+": "+error.message)}
+   st.textContent="Restore complete ✔ Reload the website to see it."}
+  catch(err){st.textContent="Failed: "+err.message}e.target.value=""}
+}
+// Shrink to max 1200px wide and re-encode as JPEG (keeps files ~100-250 KB)
+async function shrink(file,max=1200,q=0.8){
+ const bmp=await createImageBitmap(file);const k=Math.min(1,max/Math.max(bmp.width,bmp.height));
+ const c=document.createElement("canvas");c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);
+ const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(bmp,0,0,c.width,c.height);
+ return new Promise((ok,no)=>c.toBlob(b=>b?ok(b):no(new Error("Could not process image")),"image/jpeg",q));
+}
+start();
+</script></body></html>
