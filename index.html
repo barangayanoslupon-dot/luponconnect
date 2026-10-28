@@ -286,10 +286,28 @@ const newsFeat=n=>{
   return `<article class="newsfeat"><h2 class="sec" style="margin-top:0">📢 Latest News</h2>${img(n.image,"hero-img")}<span class="tag">${esc(n.category||"Update")}</span><h2 class="nf-t">${esc(n.title)}</h2><div class="date">${fmt(n.created_at)}</div><div class="body">${rich(out.join("\n\n"))}</div><p><a class="btn" href="#/news/${esc(n.id)}">${clipped?"Basahin ang buong balita →":"Buksan ang balita →"}</a></p></article>`};
 const V={
 home(){
-  let f=DB.articles.filter(a=>a.featured).slice(0,3);if(!f.length)f=DB.articles.slice(0,3);
-  return `<div class="hero"><div class="hero-logos"><img class="hero-logo" src="logo-anos.png" alt="Barangay Anos seal" onerror="this.remove()"><img class="hero-logo" src="logo-lupon.png" alt="Lupong Tagapamayapa seal" onerror="this.remove()"></div><h1>Maligayang pagdating sa LuponConnect</h1>
-  <p>A digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos—reliable information on Katarungang Pambarangay, dispute resolution and relevant laws.</p><div class="vc-pill">${visitText()}</div>${quizBanner()}</div>
-  ${newsFeat(DB.news[0])}
+let f=DB.articles.filter(a=>a.featured).slice(0,3);
+if(!f.length)f=DB.articles.slice(0,3);
+return `<div class="hero">
+  <div class="hero-logos">
+    <img class="hero-logo" src="logo-anos.png" alt="Barangay Anos seal" onerror="this.remove()">
+    <img class="hero-logo" src="logo-lupon.png" alt="Lupong Tagapamayapa seal" onerror="this.remove()">
+  </div>
+  <h1>Maligayang pagdating sa LuponConnect</h1>
+  <p>
+    A digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos—reliable information on Katarungang Pambarangay, dispute resolution and relevant laws.
+  </p>
+  <div class="vc-pill">${visitText()}</div>
+  <div style="margin:12px 0;">
+    <a href="https://github.com/barangayanoslupon-dot/luponconnect-android/releases/download/v1.0.2/LuponConnect.apk"
+       target="_blank"
+       rel="noopener noreferrer"
+       style="display:inline-block;background:#198754;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">
+       📱 Download LuponConnect App for your Android Phone
+    </a>
+  </div>
+${quizBanner()}
+</div>`;  ${newsFeat(DB.news[0])}
   <h2 class="sec">Latest Updates</h2><div class="grid">${DB.news.slice(0,3).map(newsCard).join("")}</div>
   <h2 class="sec">Featured Ating Alamin</h2>${f.length?`<div class="grid">${f.map(artCard).join("")}</div>`:""}
   ${quizHome()}<h2 class="sec">Quick Links</h2><div class="grid">
