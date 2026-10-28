@@ -305,9 +305,7 @@ return `<div class="hero">
        style="display:inline-block;background:#198754;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">
        📱 Download LuponConnect App for your Android Phone
     </a>
-  </div>
-${quizBanner()}
-</div>`;  ${newsFeat(DB.news[0])}
+  </div>${quizBanner()}</div> ${newsFeat(DB.news[0])}
   <h2 class="sec">Latest Updates</h2><div class="grid">${DB.news.slice(0,3).map(newsCard).join("")}</div>
   <h2 class="sec">Featured Ating Alamin</h2>${f.length?`<div class="grid">${f.map(artCard).join("")}</div>`:""}
   ${quizHome()}<h2 class="sec">Quick Links</h2><div class="grid">
