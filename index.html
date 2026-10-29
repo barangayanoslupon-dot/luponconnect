@@ -78,6 +78,9 @@ nav a{transition:background .15s}
 .qban{display:block;max-width:560px;margin:14px auto 0;padding:12px 18px;border-radius:14px;background:var(--accent);color:#fff;text-decoration:none;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.25);transition:transform .15s}
 .qban:hover{transform:translateY(-2px)}.qban span{display:block}
 .qb1{font-weight:800;font-size:1.05rem;letter-spacing:.2px}.qb2{font-size:.92rem;margin-top:3px;opacity:.97}.qb3{font-size:.85rem;margin-top:4px;font-weight:700;text-decoration:underline}
+.dlapp{display:block;max-width:560px;margin:12px auto 0;padding:10px 16px;border-radius:12px;border:2px solid rgba(255,255,255,.75);color:#fff;text-decoration:none;font-weight:700;text-align:center;font-size:.95rem;transition:transform .15s}
+.dlapp:hover{transform:translateY(-2px)}.dlapp.upd{background:var(--accent);border-color:var(--accent)}
+.appv{margin-top:6px;font-size:.78rem;opacity:.75}
 .chctl{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:8px 0}
 .seg{display:flex;align-items:center;gap:6px;font-size:.9rem;color:var(--mute)}
 .seg button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 14px;border-radius:99px;font:inherit;font-size:.9rem;cursor:pointer}
@@ -142,6 +145,7 @@ nav a{transition:background .15s}
   Lupon President: Mr. Dante R. Garcia, Ph.D.<br>
   Lupon Chairperson, Hon. Editha V. Lozano (Acting Punong Barangay)<br>
   Barangay Number: <a href="tel:09171469167">0917 146 9167</a>
+  <div id="appv" class="appv"></div>
   <div class="fine">Developed by: Daniel "Jigs" L. Garcia (Lupon Clerk)<br>LuponConnect · For general information only; not legal advice.<br>Sangguniang Barangay ng Anos · 2026 · All Rights Reserved.</div>
 </div></footer>
 <button class="fab" id="fbBtn" aria-label="Mag-iwan ng mensahe" title="Mag-iwan ng mensahe" hidden>💬</button>
@@ -164,6 +168,7 @@ nav a{transition:background .15s}
 <script>
 /* ===== CONFIG – edit these ===== */
 const CONFIG = {
+  appRepo: "barangayanoslupon-dot/luponconnect-android",   // GitHub repo of the Android app (for the download link)
   quizPlaces: ["Purok 1","Purok 2","Purok 3","Purok 4","Purok 5","Purok 6","Purok 7"],   // edit to match the real puroks of Barangay Anos
   SUPABASE_URL: "https://adragnnngictwxtslosy.supabase.co",       // e.g. https://xxxx.supabase.co
   SUPABASE_ANON_KEY: "sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd",  // anon public key only (never the service_role key)
@@ -286,26 +291,10 @@ const newsFeat=n=>{
   return `<article class="newsfeat"><h2 class="sec" style="margin-top:0">📢 Latest News</h2>${img(n.image,"hero-img")}<span class="tag">${esc(n.category||"Update")}</span><h2 class="nf-t">${esc(n.title)}</h2><div class="date">${fmt(n.created_at)}</div><div class="body">${rich(out.join("\n\n"))}</div><p><a class="btn" href="#/news/${esc(n.id)}">${clipped?"Basahin ang buong balita →":"Buksan ang balita →"}</a></p></article>`};
 const V={
 home(){
-let f=DB.articles.filter(a=>a.featured).slice(0,3);
-if(!f.length)f=DB.articles.slice(0,3);
-return `<div class="hero">
-  <div class="hero-logos">
-    <img class="hero-logo" src="logo-anos.png" alt="Barangay Anos seal" onerror="this.remove()">
-    <img class="hero-logo" src="logo-lupon.png" alt="Lupong Tagapamayapa seal" onerror="this.remove()">
-  </div>
-  <h1>Maligayang pagdating sa LuponConnect</h1>
-  <p>
-    A digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos—reliable information on Katarungang Pambarangay, dispute resolution and relevant laws.
-  </p>
-  <div class="vc-pill">${visitText()}</div>
-  <div style="margin:12px 0;">
-    <a href="https://github.com/barangayanoslupon-dot/luponconnect-android/releases/download/v1.0.11/LuponConnect.apk"
-       target="_blank"
-       rel="noopener noreferrer"
-       style="display:inline-block;background:#198754;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">
-       Download LuponConnect App for your Android Phone
-    </a>
-  </div>${quizBanner()}</div> ${newsFeat(DB.news[0])}
+  let f=DB.articles.filter(a=>a.featured).slice(0,3);if(!f.length)f=DB.articles.slice(0,3);
+  return `<div class="hero"><div class="hero-logos"><img class="hero-logo" src="logo-anos.png" alt="Barangay Anos seal" onerror="this.remove()"><img class="hero-logo" src="logo-lupon.png" alt="Lupong Tagapamayapa seal" onerror="this.remove()"></div><h1>Maligayang pagdating sa LuponConnect</h1>
+  <p>A digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos—reliable information on Katarungang Pambarangay, dispute resolution and relevant laws.</p><div class="vc-pill">${visitText()}</div>${appBanner()}${quizBanner()}</div>
+  ${newsFeat(DB.news[0])}
   <h2 class="sec">Latest Updates</h2><div class="grid">${DB.news.slice(0,3).map(newsCard).join("")}</div>
   <h2 class="sec">Featured Ating Alamin</h2>${f.length?`<div class="grid">${f.map(artCard).join("")}</div>`:""}
   ${quizHome()}<h2 class="sec">Quick Links</h2><div class="grid">
@@ -735,6 +724,33 @@ function chUndo(){
   if(!CH.st.over&&CH.s.turn!==CH.me)chAI();else chRender();
 }
 
+/* ===== ANDROID APP: download link + version ===== */
+const APP_UA=(navigator.userAgent.match(/LuponConnectApp\/([\d.]+)/)||[])[1]||null;
+let APP_LATEST=null;
+const verNum=v=>String(v||"").replace(/^v/i,"").split(".").map(n=>parseInt(n,10)||0);
+const verNewer=(a,b)=>{const x=verNum(a),y=verNum(b);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d>0}return false};
+const APK_URL=()=>"https://github.com/"+CONFIG.appRepo+"/releases/latest/download/LuponConnect.apk";
+async function loadAppVersion(){
+  if(!CONFIG.appRepo)return;
+  try{const r=await fetch("https://api.github.com/repos/"+CONFIG.appRepo+"/releases/latest");if(!r.ok)return;const j=await r.json();APP_LATEST=j.tag_name||null}catch(e){}
+}
+const appBanner=()=>{
+  if(!CONFIG.appRepo)return "";
+  if(APP_UA)return (APP_LATEST&&verNewer(APP_LATEST,APP_UA))?`<a class="dlapp upd" href="${esc(APK_URL())}">🔄 May bagong bersyon ng app (${esc(APP_LATEST)}). I-download</a>`:"";
+  if(/iPhone|iPad|iPod/i.test(navigator.userAgent))return "";
+  return `<a class="dlapp" href="${esc(APK_URL())}">📱 I-download ang LuponConnect App para sa Android</a>`;
+};
+function initApp(){
+  if(!APP_UA)return;
+  const el=document.getElementById("appv");if(el)el.textContent="LuponConnect App v"+APP_UA;
+  loadAppVersion().then(()=>{
+    if(APP_LATEST&&verNewer(APP_LATEST,APP_UA)){
+      if(el)el.textContent="LuponConnect App v"+APP_UA+" · may bagong bersyon: "+APP_LATEST;
+      if(!inGame()&&/^(#\/?)?$/.test(location.hash||""))route();
+    }
+  });
+}
+
 /* ===== ROUTER ===== */
 function route(){
   const [,p="",id]=(location.hash||"#/").slice(1).split("/");
@@ -792,6 +808,7 @@ window.addEventListener("hashchange",()=>{closeMenu();route()});
 route();
 loadRemote().then(route);
 initStats();
+initApp();
 loadBoard().then(()=>{if(!inGame())route()});
 </script>
 </body>
