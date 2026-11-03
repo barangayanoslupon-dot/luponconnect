@@ -146,7 +146,7 @@ nav a{transition:background .15s}
   Lupon Chairperson, Hon. Editha V. Lozano (Acting Punong Barangay)<br>
   Barangay Number: <a href="tel:09171469167">0917 146 9167</a>
   <div id="appv" class="appv"></div>
-  <div class="fine">Developed by: Daniel "Jigs" L. Garcia (Lupon Clerk)<br>LuponConnect · For general information only; not legal advice.<br>Sangguniang Barangay ng Anos · 2026 · All Rights Reserved.</div>
+  <div class="fine">Developed by: Daniel "Jigs" L. Garcia (Lupon Clerk)<br>LuponConnect · For general information only; not legal advice.<br>Sangguniang Barangay ng Anos · 2026 · All Rights Reserved.<br><a href="#/privacy" style="color:#f2c879">Privacy Notice</a></div>
 </div></footer>
 <button class="fab" id="fbBtn" aria-label="Mag-iwan ng mensahe" title="Mag-iwan ng mensahe" hidden>💬</button>
 <div class="modal" id="fbModal" hidden><div class="mbox" role="dialog" aria-modal="true" aria-labelledby="fbT">
@@ -158,7 +158,7 @@ nav a{transition:background .15s}
     <label for="fbEmail">Email *</label><input id="fbEmail" type="email" maxlength="200" autocomplete="email">
     <label for="fbMsg">Mensahe *</label><textarea id="fbMsg" maxlength="2000"></textarea>
     <input class="hp" id="fbHp" tabindex="-1" autocomplete="off" aria-hidden="true">
-    <p class="mnote">Ang iyong email ay gagamitin lamang para tumugon sa iyong mensahe.</p>
+    <p class="mnote">Ang iyong email ay gagamitin lamang para tumugon sa iyong mensahe. <a href="#/privacy" id="fbPriv">Privacy Notice</a></p>
     <p><button class="btn" id="fbSend" style="border:0;cursor:pointer">Ipadala</button><span id="fbSt"></span></p>
   </div>
   <div id="fbOk" hidden><p>✅ <b>Salamat po!</b> Natanggap na namin ang iyong mensahe.</p><p><button class="btn" id="fbDone" style="border:0;cursor:pointer">Isara</button></p></div>
@@ -337,6 +337,52 @@ contact(){const c=Object.assign({},CONFIG.contact,Object.fromEntries(Object.entr
 quiz(){return ""},
 lupon(){return ""},
 pahingahan(){return ""},
+privacy(){return `<h1>🔒 Privacy Notice</h1><p class="date">Alinsunod sa Data Privacy Act of 2012 (RA 10173) · Huling binago: Oktubre 30, 2026</p><div class="body">
+<p>Mahalaga sa Lupong Tagapamayapa ng Barangay Anos ang inyong privacy. Ipinapaliwanag dito kung anong impormasyon ang kinokolekta ng LuponConnect, bakit, at ano ang inyong mga karapatan.</p>
+<h2>1. Sino ang may hawak ng impormasyon</h2>
+<p>Ang <b>Lupong Tagapamayapa ng Barangay Anos, Los Baños, Laguna</b>. Para sa mga tanong tungkol sa privacy, tumawag sa <b>0917 146 9167</b> o pumunta sa Barangay Hall.</p>
+<h2>2. Anong impormasyon ang kinokolekta at bakit</h2>
+<ul>
+<li><b>Quiz para sa publiko:</b> palayaw, Purok o barangay, kategorya (optional), puntos, bilang ng tamang sagot, at oras ng pagsagot. Ginagamit ito para sa ranggo, Top 10, at Mga Kampeon ng Buwan. <i>Makikita ng publiko ang palayaw, Purok o barangay, at puntos.</i></li>
+<li><b>Quiz ng mga miyembro ng Lupon:</b> pangalan, barangay, at puntos. Makikita ito ng mga may passkey at ng mga awtorisadong staff.</li>
+<li><b>Message box:</b> pangalan (optional), email, at ang inyong mensahe. Gagamitin lamang ito para tumugon sa inyo, at makikita lamang ng mga awtorisadong staff ng Lupon.</li>
+<li><b>Staff ng Lupon:</b> pangalan, email, at tungkulin ng mga may login sa admin, para mapamahalaan ang laman ng portal.</li>
+<li><b>Bilang ng bumisita at Like:</b> binibilang lamang. Walang pangalan o personal na impormasyon na nakakabit dito.</li>
+</ul>
+<h2>2.1 Walang kailangang totoong pangalan sa pampublikong quiz</h2>
+<p>Gumamit lamang ng <b>palayaw</b>. Huwag maglagay ng totoong pangalan, address, o numero ng telepono sa palayaw.</p>
+<h2>3. Mga impormasyong itinatago sa inyong browser o phone</h2>
+<p>Nagtatago ang portal ng maliliit na tala sa inyong sariling browser o phone: ang huling palayaw at kategorya (para hindi na ulit i-type), ang petsa ng huling bilang ng bisita, ang mga ni-like, kung nakalaro na kayo sa linggong ito, at ang oras ng huling mensahe. Hindi ito para sundan ang inyong mga ginagawa. Maaari ninyo itong burahin sa settings ng browser.</p>
+<h2>4. Ang Android app</h2>
+<p>Ang app ay bintana ng parehong portal. Nagpapadala ito ng notification tungkol sa bagong balita, Ating Alamin, quiz, at Mga Kampeon ng Buwan. <b>Hindi nito kinukuha ang inyong lokasyon, contacts, litrato, o iba pang personal na datos ng phone.</b> Wala itong advertising o analytics tracker.</p>
+<h2>5. Mga serbisyong ginagamit namin</h2>
+<ul>
+<li><b>Cloudflare:</b> pagho-host ng website.</li>
+<li><b>Supabase:</b> database at login ng mga staff.</li>
+<li><b>GitHub:</b> pag-download ng Android app at pagsuri ng bagong bersyon nito.</li>
+<li><b>Google Maps:</b> ang mapa sa pahina ng Contact (maaaring mangolekta ng datos ang Google kapag ipinakita ang mapa).</li>
+<li><b>Facebook:</b> kapag pinili ninyong mag-share ng isang pahina.</li>
+</ul>
+<p>Hindi namin ibinebenta o ipinamamahagi ang inyong impormasyon sa iba para sa marketing.</p>
+<h2>6. Gaano katagal itinatago at paano pinoprotektahan</h2>
+<ul>
+<li>Itinatago lamang ang impormasyon hangga't kailangan para sa layunin nito. Ang mga mensahe ay maaaring burahin ng Lupon kapag natugunan na.</li>
+<li>Ang palayaw at puntos sa quiz ay maaaring manatili para sa talaan at sa Mga Kampeon ng Buwan, pero maaari ninyong hilingin na itago o burahin ang mga ito.</li>
+<li>Gumagamit ng ligtas na koneksyon (HTTPS) at limitadong access: ang mga mensahe, quiz, at admin ay para lamang sa mga awtorisadong staff. Walang sistemang lubos na ligtas, pero sinisikap naming protektahan ang inyong impormasyon.</li>
+</ul>
+<h2>7. Mga bata</h2>
+<p>Maaaring maglaro ang mga bata sa pampublikong quiz gamit ang palayaw lamang. Hinihikayat ang mga magulang na gabayan sila at tiyaking walang personal na impormasyon ang nakalagay sa palayaw.</p>
+<h2>8. Ang inyong mga karapatan</h2>
+<p>Ayon sa Data Privacy Act, may karapatan kayong:</p>
+<ul>
+<li>malaman kung anong impormasyon ang aming hawak;</li>
+<li>makakuha ng kopya at ituwid ang maling impormasyon;</li>
+<li>tumutol, o humiling na burahin o harangan ang inyong impormasyon;</li>
+<li>magreklamo sa <b>National Privacy Commission</b> (privacy.gov.ph) at, kung kinakailangan, humingi ng danyos.</li>
+</ul>
+<p>Para gamitin ang mga karapatang ito, makipag-ugnayan sa amin sa <b>0917 146 9167</b>, sa Barangay Hall, o sa pamamagitan ng message box sa portal.</p>
+<h2>9. Mga pagbabago</h2>
+<p>Maaaring baguhin ang notice na ito. Ang pinakabagong bersyon ay laging nasa pahinang ito.</p></div>`},
 nf(){return `<h1>Page not found</h1><p><a class="btn" href="#/">Go home</a></p>`}
 };
 
@@ -392,7 +438,7 @@ function quizIntro(){
    <label for="qPlace">Purok / Barangay</label><select id="qPlace">${QPLACES.map(p=>`<option>${esc(p)}</option>`).join("")}<option>Ibang Barangay</option></select>
    <input id="qOther" maxlength="30" placeholder="Pangalan ng inyong barangay" hidden style="margin-top:8px">
    <label for="qCat">Kategorya (optional)</label><select id="qCat"><option value="">—</option>${cats.map(c=>`<option${prof.cat===c?" selected":""}>${esc(c)}</option>`).join("")}</select>
-   <p class="mnote">Walang email o totoong pangalan na kailangan. Palayaw, Purok/Barangay, at puntos lang ang ipapakita. Kung naputol ang laro, ilagay ang parehong palayaw para magpatuloy.</p>
+   <p class="mnote">Walang email o totoong pangalan na kailangan. Palayaw, Purok/Barangay, at puntos lang ang ipapakita. Kung naputol ang laro, ilagay ang parehong palayaw para magpatuloy. <a href="#/privacy">Privacy Notice</a></p>
    <p><button class="btn" id="qGo" style="border:0;cursor:pointer">▶ Simulan ang Quiz</button> <span id="qMsg" class="qmsg"></span></p></div>`+board+lupLink;
 }
 function qHead(){return `<div class="qhead"><span>Tanong ${QS.pos} / ${QS.total}</span><span>⭐ ${QS.points}</span></div>`}
@@ -419,7 +465,7 @@ function lupIntro(){
   <div class="card qform"><label for="lKey">Passkey</label><input id="lKey" autocomplete="off" autocapitalize="off" spellcheck="false">
   <label for="lName">Pangalan</label><input id="lName" maxlength="40" autocomplete="name" value="${esc(prof.name||"")}">
   <label for="lPlace">Barangay</label><input id="lPlace" maxlength="40" value="${esc(prof.place||"Barangay Anos")}">
-  <p class="mnote">Ang inyong pangalan at puntos ay makikita ng mga may passkey. Kung naputol ang laro, ilagay ang parehong pangalan para magpatuloy.</p>
+  <p class="mnote">Ang inyong pangalan at puntos ay makikita ng mga may passkey. Kung naputol ang laro, ilagay ang parehong pangalan para magpatuloy. <a href="#/privacy">Privacy Notice</a></p>
   <p><button class="btn" id="lGo" style="border:0;cursor:pointer">▶ Simulan ang Quiz</button> <span id="qMsg" class="qmsg"></span></p></div>
   <p style="text-align:center;margin-top:12px"><a href="#/quiz">← Bumalik sa Quiz para sa Publiko</a></p>`;
 }
@@ -784,7 +830,7 @@ window.addEventListener("hashchange",()=>{closeMenu();route()});
   const $=id=>document.getElementById(id);$("fbBtn").hidden=false;
   const close=()=>{$("fbModal").hidden=true;$("fbForm").hidden=false;$("fbOk").hidden=true;$("fbSt").textContent="";["fbName","fbEmail","fbMsg"].forEach(i=>$(i).value="")};
   $("fbBtn").onclick=()=>{$("fbModal").hidden=false;$("fbEmail").focus()};
-  $("fbX").onclick=close;$("fbDone").onclick=close;
+  $("fbX").onclick=close;$("fbDone").onclick=close;$("fbPriv").onclick=close;
   $("fbModal").onclick=e=>{if(e.target.id==="fbModal")close()};
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("fbModal").hidden)close()});
   $("fbSend").onclick=async()=>{
