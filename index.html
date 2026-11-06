@@ -324,12 +324,40 @@ law(slug){
   <h2>Frequently Asked Questions</h2>${l.faq?rich(l.faq):"<p>None yet.</p>"}
   <h2>Related Ating Alamin Articles</h2>${rel.length?`<div class="grid">${rel.map(artCard).join("")}</div>`:"<p>None yet.</p>"}${l.pdf?`<p><a class="btn" href="${esc(l.pdf)}" target="_blank" rel="noopener">📄 Download PDF</a></p>`:""}</div>${shareBar(l.title)}`},
 faq(){return `<h1>❓ Frequently Asked Questions</h1>`+DB.faqs.map(f=>`<details><summary>${esc(f.question)}</summary><div class="body">${rich(f.answer)}</div></details>`).join("")},
-about(){return `<h1>🏛 About the Lupon</h1><div class="body">
-  <h2>Role of the Lupong Tagapamayapa</h2><p>The Lupon is a body of respected community members organized in every barangay to help settle disputes amicably, keeping peace and order and reducing court congestion.</p>
-  <h2>Powers and Functions</h2><ul><li>Exercise administrative supervision over the conciliation panels (Pangkat).</li><li>Meet regularly to discuss mediation and conciliation work and ways to improve it.</li><li>Enable members to share experiences and recommend improvements.</li><li>Perform other duties assigned by law or by the Punong Barangay.</li></ul>
-  <h2>Mediation Process</h2><p>The complainant files a complaint with the Punong Barangay, who summons the respondent and mediates within fifteen (15) days of the first meeting.</p>
-  <h2>Conciliation Process</h2><p>If mediation fails, a Pangkat ng Tagapagkasundo of three Lupon members is constituted. It hears the parties and tries to settle within fifteen (15) days, extendable by another fifteen (15) days.</p>
-  <h2>Arbitration</h2><p>If conciliation fails, the parties may agree in writing to submit the dispute to arbitration by the Punong Barangay or Pangkat. The award is final after ten (10) days, unless a petition to nullify it is filed.</p></div>`},
+
+about(){return `<h1>🏛 About LuponConnect</h1><div class="body">
+
+  <h2>Our Purpose</h2>
+  <p>LuponConnect is an educational and information-sharing platform dedicated to promoting public awareness, knowledge, and understanding of the Katarungang Pambarangay. It aims to provide accessible and relevant information to Lupon members, barangay officials, and the general public regarding the principles, processes, and responsibilities involved in the amicable settlement of disputes at the barangay level.</p>
+
+  <h2>Role of the Lupong Tagapamayapa</h2>
+  <p>The Lupong Tagapamayapa is a body of community members organized in every barangay to help resolve disputes amicably. It plays an important role in maintaining peace and harmony within the community while providing an accessible means of settling disputes and helping reduce the caseload of regular courts.</p>
+
+  <h2>Powers and Functions</h2>
+  <ul>
+    <li>Exercise administrative supervision over the conciliation panels (Pangkat ng Tagapagkasundo).</li>
+    <li>Meet regularly to discuss matters involving mediation and conciliation and identify ways to improve their implementation.</li>
+    <li>Provide opportunities for members to share experiences, knowledge, and recommendations.</li>
+    <li>Perform other duties and functions prescribed by law.</li>
+  </ul>
+
+  <h2>Mediation Process</h2>
+  <p>Upon receipt of a complaint, the Punong Barangay summons the parties for mediation in an effort to reach an amicable settlement. The mediation process is conducted within the period prescribed under the applicable rules of Katarungang Pambarangay.</p>
+
+  <h2>Conciliation Process</h2>
+  <p>If mediation before the Punong Barangay fails, a Pangkat ng Tagapagkasundo composed of three (3) Lupon members is constituted to assist the parties in reaching an amicable settlement. The Pangkat conducts conciliation proceedings within the period prescribed by law.</p>
+
+  <h2>Arbitration</h2>
+  <p>When the parties agree in writing to submit their dispute to arbitration, the Punong Barangay or Pangkat may act as arbitrator in accordance with the applicable provisions of law. The resulting arbitration award shall be governed by the requirements and periods established under the Katarungang Pambarangay law.</p>
+
+  <h2>Information and Educational Commitment</h2>
+  <p>LuponConnect is committed to sharing information that promotes awareness and understanding of the Katarungang Pambarangay. Its educational materials are developed from applicable laws, official government issuances, seminars, training sessions, educational discussions, and relevant community experiences.</p>
+
+  <p>Every reasonable effort is made to ensure that published information is accurate, relevant, and consistent with existing laws and official guidelines. Certain educational materials may also be prepared with the assistance of artificial intelligence (AI) tools and are subject to human review and verification before publication.</p>
+
+  <p>The platform aims to serve as a supplementary learning resource for the public and members of the Lupon Tagapamayapa. For specific legal concerns, case-related matters, or official interpretations, users are encouraged to consult the appropriate government authorities or qualified legal professionals.</p>
+
+</div>`},
 contact(){const c=Object.assign({},CONFIG.contact,Object.fromEntries(Object.entries(DB.contact||{}).filter(([,v])=>v)));const map=/embed/.test(c.mapUrl||"")?c.mapUrl:"https://www.google.com/maps?q="+encodeURIComponent(c.mapQuery)+"&output=embed";return `<h1>📞 Contact Information</h1><div class="grid">
   <div class="card"><h3>📍 Barangay Address</h3><p>${esc(c.address)}</p></div>
   <div class="card"><h3>🕗 Office Hours</h3><p>${esc(c.hours)}</p></div>
