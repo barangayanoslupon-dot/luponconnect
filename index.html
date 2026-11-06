@@ -350,7 +350,7 @@ privacy(){return `<h1>🔒 Privacy Notice</h1><p class="date">Alinsunod sa Data 
 <p>Ang <b>Lupong Tagapamayapa ng Barangay Anos, Los Baños, Laguna</b>. Para sa mga tanong tungkol sa privacy, tumawag sa <b>0917 146 9167</b> o pumunta sa Barangay Hall.</p>
 <h2>2. Anong impormasyon ang kinokolekta at bakit</h2>
 <ul>
-<li><b>Quiz para sa publiko:</b> palayaw, Purok o barangay, kategorya (optional), puntos, bilang ng tamang sagot, at oras ng pagsagot. Ginagamit ito para sa ranggo, Top 10, at Mga Kampeon ng Buwan. <i>Makikita ng publiko ang palayaw, Purok o barangay, at puntos.</i></li>
+<li><b>Quiz at laro (Ikaw ang Tagapamayapa) para sa publiko:</b> palayaw, Purok o barangay, kategorya (optional), puntos, bilang ng tamang sagot, oras ng pagsagot, at kung nakapasa sa laro. Ginagamit ito para sa ranggo, Top 10, talaan ng mga nakapasa, at Mga Kampeon ng Buwan. <i>Makikita ng publiko ang palayaw, Purok o barangay, puntos, at kung nakapasa.</i></li>
 <li><b>Quiz ng mga miyembro ng Lupon:</b> pangalan, barangay, at puntos. Makikita ito ng mga may passkey at ng mga awtorisadong staff.</li>
 <li><b>Message box:</b> pangalan (optional), email, at ang inyong mensahe. Gagamitin lamang ito para tumugon sa inyo, at makikita lamang ng mga awtorisadong staff ng Lupon.</li>
 <li><b>Staff ng Lupon:</b> pangalan, email, at tungkulin ng mga may login sa admin, para mapamahalaan ang laman ng portal.</li>
@@ -363,10 +363,8 @@ privacy(){return `<h1>🔒 Privacy Notice</h1><p class="date">Alinsunod sa Data 
 <h2>4. Ang Android app</h2>
 <p>Ang app ay bintana ng parehong portal. Nagpapadala ito ng notification tungkol sa bagong balita, Ating Alamin, quiz, at Mga Kampeon ng Buwan. <b>Hindi nito kinukuha ang inyong lokasyon, contacts, litrato, o iba pang personal na datos ng phone.</b> Wala itong advertising o analytics tracker.</p>
 <h2>5. Mga serbisyong ginagamit namin</h2>
+<p>Gumagamit kami ng mga ligtas na cloud service provider para sa pagho-host ng website, sa database, at sa pag-download ng Android app. Maaaring nasa labas ng Pilipinas ang kanilang mga server, at may sarili silang mga hakbang sa seguridad. Bukod dito, gumagamit kami ng:</p>
 <ul>
-<li><b>Cloudflare:</b> pagho-host ng website.</li>
-<li><b>Supabase:</b> database at login ng mga staff.</li>
-<li><b>GitHub:</b> pag-download ng Android app at pagsuri ng bagong bersyon nito.</li>
 <li><b>Google Maps:</b> ang mapa sa pahina ng Contact (maaaring mangolekta ng datos ang Google kapag ipinakita ang mapa).</li>
 <li><b>Facebook:</b> kapag pinili ninyong mag-share ng isang pahina.</li>
 </ul>
@@ -398,7 +396,7 @@ const LIM=20,QPLACES=(CONFIG.quizPlaces&&CONFIG.quizPlaces.length)?CONFIG.quizPl
 let QB=null,QS={step:"intro"},QT=null;
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-const inGame=()=>/^#\/(quiz|lupon)/.test(location.hash||"")&&(QS.step==="play"||QS.step==="fb");
+const inGame=()=>/^#\/(quiz|lupon|tagapamayapa)/.test(location.hash||"")&&(QS.step==="play"||QS.step==="fb");
 const mName=d=>{try{return new Date(d+"T00:00:00").toLocaleDateString("fil-PH",{month:"long",year:"numeric"})}catch(e){return d}};
 async function loadBoard(){
   if(!sb)return;
@@ -451,17 +449,18 @@ function quizIntro(){
 function qHead(){return `<div class="qhead"><span>Tanong ${QS.pos} / ${QS.total}</span><span>⭐ ${QS.points}</span></div>`}
 function quizPlay(){
   const q=QS.q,w=Math.max(0,(QS.deadline-performance.now())/(LIM*1000))*100;
-  return qHead()+`<div class="qtimer"><div id="qBar" class="qbar" style="width:${w}%"></div></div><div class="qsec">⏱ <b id="qSec">${Math.ceil(Math.max(0,QS.deadline-performance.now())/1000)}</b> segundo</div>
+  return (QS.mode==="case"?caseHead():"")+qHead()+`<div class="qtimer"><div id="qBar" class="qbar" style="width:${w}%"></div></div><div class="qsec">⏱ <b id="qSec">${Math.ceil(Math.max(0,QS.deadline-performance.now())/1000)}</b> segundo</div>
   <div class="card"><h3>${esc(q.question)}</h3><div class="qopts">${q.options.map((o,i)=>`<button class="qopt" data-i="${i}">${"ABCD"[i]}. ${esc(o)}</button>`).join("")}</div></div>`;
 }
 function quizFb(){
   const q=QS.q,f=QS.fb;
   const verdict=f.choice==null?"⏰ Naubos ang oras!":(f.correct?"✅ Tama! +"+f.points+" puntos":"❌ Mali po.");
-  return qHead()+`<div class="card"><h3>${esc(q.question)}</h3><div class="qopts">${q.options.map((o,i)=>`<button class="qopt${i===f.correct_index?" good":(i===f.choice?" bad":"")}" disabled>${"ABCD"[i]}. ${esc(o)}</button>`).join("")}</div></div>
+  return (QS.mode==="case"?caseHead():"")+qHead()+`<div class="card"><h3>${esc(q.question)}</h3><div class="qopts">${q.options.map((o,i)=>`<button class="qopt${i===f.correct_index?" good":(i===f.choice?" bad":"")}" disabled>${"ABCD"[i]}. ${esc(o)}</button>`).join("")}</div></div>
   <div class="card"><b>${verdict}</b>${f.explanation?`<p style="margin-top:8px">${esc(f.explanation)}</p>`:""}${f.article?`<p><a href="${esc(location.pathname)}#/alamin/${esc(f.article)}" target="_blank" rel="noopener">📚 Basahin pa sa Ating Alamin</a></p>`:""}
   <p style="margin-top:12px"><button class="btn" id="qNext" style="border:0;cursor:pointer">${f.finished?"Tingnan ang resulta →":"Susunod →"}</button></p></div>`;
 }
 function quizResult(){
+  if(QS.mode==="case")return caseResult();
   if(QS.mode==="private")return lupResult();
   return `<h1>🎉 Tapos na!</h1><div class="card qres"><div class="big">${esc(QS.points)}</div><p>puntos · ${esc(QS.correct)} sa ${esc(QS.total)} ang tama</p><p>Salamat, <b>${esc(QS.nick)}</b> (${esc(QS.place)})!</p></div>`
    +boardHTML(QB&&QB.week,QS.nick,"🏅 Top 10 ngayong linggo")+`<p style="text-align:center;margin-top:10px">Hamunin ang kapitbahay mo!</p>`+shareBar("LuponConnect Quiz – kaya mo bang talunin ako?")+pahLink+`<p style="text-align:center"><a class="btn" href="#/">Bumalik sa Home</a></p>`;
@@ -495,6 +494,7 @@ async function lupStart(){
   loadQuestion();
 }
 function quizRender(){
+  if(QS.mode==="case"&&QS.step==="intro"){gRender();return}
   const app=document.getElementById("app");
   if(!sb){app.innerHTML=`<h1>🎯 Quiz</h1><p>Hindi pa available ang quiz.</p>`;return}
   const s=QS.step;
@@ -507,6 +507,7 @@ function quizBind(){
   if(s==="play")document.querySelectorAll(".qopt").forEach(b=>b.onclick=()=>submitAnswer(+b.dataset.i));
   if(s==="fb"&&$("qNext"))$("qNext").onclick=quizNext;
   if($("qRetry"))$("qRetry").onclick=()=>{QS={step:"intro",mode:QS.mode};quizRender()};
+  if($("cBack"))$("cBack").onclick=ev=>{ev.preventDefault();QS={step:"intro",mode:"case"};GM.sel=null;GM.board=null;gRender()};
 }
 function quizFail(msg){
   stopTimer();QS={step:"intro",mode:QS.mode};
@@ -531,7 +532,7 @@ async function loadQuestion(){
   if(error||!data||data.error)return quizFail("Hindi makuha ang tanong. Pakisubukan ulit.");
   QS.q=data;QS.step="play";QS.busy=false;
   QS.deadline=performance.now()+Math.max(0,LIM*1000-(data.elapsed_ms||0));
-  if(/^#\/(quiz|lupon)/.test(location.hash||"")){quizRender();startTimer()}
+  if(/^#\/(quiz|lupon|tagapamayapa)/.test(location.hash||"")){quizRender();startTimer()}
 }
 async function submitAnswer(choice){
   if(QS.busy)return;QS.busy=true;stopTimer();
@@ -542,6 +543,7 @@ async function submitAnswer(choice){
   QS.step="fb";QS.busy=false;quizRender();
 }
 async function quizNext(){
+  if(QS.fb.finished&&QS.mode==="case"){const {data}=await sb.rpc("case_board",{p_case:QS.caseId});QS.cboard=data;QS.step="result";quizRender();return}
   if(QS.fb.finished&&QS.mode==="private"){const {data}=await sb.rpc("quiz_board_private",{p_passkey:QS.key});QS.pboard=(data&&data.rows)||[];QS.step="result";quizRender();return}
   if(QS.fb.finished){await loadBoard();if(QB&&QB.quiz)lsSet("lc_quiz_done",QB.quiz.start);QS.step="result";quizRender();return}
   QS.pos++;await loadQuestion();
@@ -804,10 +806,11 @@ function initApp(){
   });
 }
 
-/* ===== IKAW ANG TAGAPAMAYAPA (decision game) ===== */
+/* ===== IKAW ANG TAGAPAMAYAPA (case game: recorded with timer, or practice) ===== */
 const gP=(x,skin,hair,shirt)=>`<g><circle cx="${x}" cy="118" r="24" fill="${skin}"/><path d="M${x-24} 114 Q${x-22} 90 ${x} 92 Q${x+22} 90 ${x+24} 114 Q${x} 102 ${x-24} 114Z" fill="${hair}"/><rect x="${x-26}" y="144" width="52" height="64" rx="18" fill="${shirt}"/></g>`;
 const gB=(x,y,t)=>`<g><rect x="${x-28}" y="${y-24}" width="56" height="36" rx="16" fill="#fff" stroke="#143f3c" stroke-width="2"/><text x="${x}" y="${y+3}" font-size="22" text-anchor="middle">${t}</text></g>`;
 const gHouse=(x,roof)=>`<g><rect x="${x}" y="142" width="92" height="62" fill="#fff"/><polygon points="${x-8},142 ${x+46},98 ${x+100},142" fill="${roof}"/><rect x="${x+34}" y="166" width="22" height="38" rx="4" fill="#3b4f8f"/></g>`;
+const SCENE_ICON={fence:"🧱",debt:"💰",map:"🗺️",home:"🏠",noise:"🔊"};
 function gScene(t){
   let s=`<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Eksena"><defs><linearGradient id="gsk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe3f5"/><stop offset="1" stop-color="#f1f8fb"/></linearGradient></defs><rect width="600" height="240" fill="url(#gsk)"/><rect y="204" width="600" height="36" fill="#a9b35a"/>`;
   if(t==="fence"){
@@ -819,6 +822,11 @@ function gScene(t){
     s+=gP(190,"#f1c8a6","#2b2f55","#5f8f7f")+gP(410,"#f4d29a","#3a2a1a","#c8892b")
       +`<circle cx="300" cy="160" r="30" fill="#e0a34a" stroke="#a8721c" stroke-width="3"/><text x="300" y="171" font-size="32" font-weight="700" text-anchor="middle" fill="#fff">₱</text>`
       +`<text x="300" y="52" font-size="30" text-anchor="middle">📄</text>`+gB(190,76,"💬")+gB(410,76,"😟");
+  }else if(t==="home"){
+    s+=gHouse(254,"#6b7a8f")+gP(140,"#f1c8a6","#2b2f55","#c06a8a")+gB(140,76,"😟")+`<text x="470" y="170" font-size="54" text-anchor="middle">🛡️</text>`+`<text x="470" y="96" font-size="30" text-anchor="middle">🚓</text>`;
+  }else if(t==="noise"){
+    s+=gHouse(24,"#c9594a")+gHouse(484,"#2f3f78")+`<text x="70" y="94" font-size="36" text-anchor="middle">🔊</text><text x="300" y="120" font-size="30" text-anchor="middle">🎵</text><text x="250" y="80" font-size="22" text-anchor="middle">🎶</text>`
+      +gP(190,"#e8b894","#1f2540","#8fa3d8")+gP(410,"#f1c8a6","#6c6c78","#e07a5f")+gB(190,76,"🎤")+gB(410,76,"😫");
   }else{
     s+=gHouse(40,"#c9594a")+gHouse(468,"#6b7a8f")
       +`<path d="M150 200 Q300 160 450 200" stroke="#8d6a3f" stroke-width="4" stroke-dasharray="10 8" fill="none"/>`
@@ -859,15 +867,40 @@ const GAMES=[
    {q:"Ano ang makabubuting gawin ni Ramil?",o:["Magsangguni sa abogado o sa PAO (kung kwalipikado) para malaman ang tamang daan, tulad ng korte.","Pilitin si Joel na pumunta sa Anos.","Kalimutan na lang ang utang.","Magpataw ng sariling parusa kay Joel."],ok:0,
     why:"Hindi na kailangang dumaan sa Lupon ang alitang hindi sakop ng KP. Makabubuting magsangguni sa abogado o sa PAO para sa tamang hakbang."},
    {q:"Paano kung magkatabi pala ang mga barangay nila at pumayag silang dalawa?",o:["Maaari itong dalhin sa Lupon.","Hindi pa rin puwede kailanman.","Kailangan muna ng utos ng korte.","Sa barangay lang ni Joel puwede."],ok:0,
-    why:"Kapag magkatabi ang mga barangay at pumayag ang magkabilang panig, maaaring dalhin ang alitan sa angkop na Lupon, kahit magkaiba ang lungsod o munisipyo."}]}
+    why:"Kapag magkatabi ang mga barangay at pumayag ang magkabilang panig, maaaring dalhin ang alitan sa angkop na Lupon, kahit magkaiba ang lungsod o munisipyo."}]},
+ {id:"tahanan",icon:"🏠",title:"Karahasan sa Tahanan",scene:"home",teaser:"Hindi ito idinadaan sa mediation.",learn:["what-cases"],
+  intro:"Madalas saktan at sigawan si Maria ng kanyang asawa. Natatakot siya, kaya lumapit siya sa barangay para humingi ng tulong.",
+  steps:[
+   {q:"Dapat ba itong idaan sa mediation o conciliation ng Lupon?",o:["Hindi. Hindi idinadaan sa mediation ang mga kaso ng karahasan sa tahanan (RA 9262).","Oo, para magkaayos ang mag-asawa.","Oo, kung pumayag ang asawa.","Oo, pero sa pangalawang pagdinig lang."],ok:0,
+    why:"Ang karahasan laban sa kababaihan at mga anak (RA 9262) ay hindi idinadaan sa mediation o conciliation. Mahalaga ang kaligtasan ng biktima."},
+   {q:"Ano ang maaaring ibigay ng Punong Barangay para sa proteksyon ni Maria?",o:["Barangay Protection Order (BPO)","Certificate to File Action","Multa kay Maria","Subpoena para kay Maria"],ok:0,
+    why:"Maaaring mag-isyu ang Punong Barangay ng Barangay Protection Order (BPO) para protektahan ang biktima ayon sa RA 9262."},
+   {q:"Saan pa maaaring humingi ng tulong si Maria?",o:["Sa pulis, sa social welfare office, at sa korte para sa karagdagang proteksyon.","Sa kapitbahay lang.","Wala nang ibang lalapitan.","Maghintay hanggang humupa ang galit ng asawa."],ok:0,
+    why:"Maaaring humingi ng tulong sa pulis, sa social welfare office, at sa korte, na maaaring mag-isyu ng karagdagang protection order. Kung nasa panganib, tumawag agad sa pulis."}]},
+ {id:"ingay",icon:"🔊",title:"Ang Ingay ng Karaoke",scene:"noise",teaser:"Paano ipatupad ang kasunduan kapag nilabag?",learn:["what-is-kp"],
+  intro:"Madalas mag-karaoke si Mang Tonyo hanggang hatinggabi sa Purok 3. Nagreklamo ang kapitbahay niyang si Aling Nena dahil hindi siya makatulog.",
+  steps:[
+   {q:"Sakop ba ito ng Katarungang Pambarangay?",o:["Oo. Magkapitbahay sila sa iisang munisipyo.","Hindi, para lang sa pulis ang ingay.","Hindi, kailangan muna ng utos ng korte.","Hindi, dahil hindi ito alitan."],ok:0,
+    why:"Ang alitan ng magkapitbahay sa iisang munisipyo ay sakop ng KP (Sec. 408, RA 7160)."},
+   {q:"Ano ang magandang laman ng kanilang kasunduan?",o:["Nakasulat na oras kung hanggang kailan lang puwedeng mag-karaoke, na nilagdaan ng dalawa.","Pasalita lang na pangako.","Magbabayad ng multa si Mang Tonyo sa barangay.","Bawal nang mag-karaoke habambuhay, kahit ayaw niya."],ok:0,
+    why:"Maganda ang malinaw, nakasulat, at pinagkasunduang kasunduan na nilagdaan ng magkabilang panig. Dapat itong bukal sa loob at hindi pinipilit."},
+   {q:"Pagkalipas ng dalawang buwan, nilabag ni Mang Tonyo ang kasunduan. Ano ang magagawa ni Aling Nena?",o:["Humiling sa Lupon na ipatupad ang kasunduan (sa loob ng anim na buwan mula nang mapagkasunduan).","Magpataw ng sariling multa kay Mang Tonyo.","Wala nang magagawa.","Gumawa ng bagong kasunduan na walang bisa."],ok:0,
+    why:"Maaaring ipatupad ng Lupon ang kasunduan sa loob ng anim (6) na buwan mula sa petsa nito. Pagkatapos nito, sa pamamagitan ng korte (Sec. 417, RA 7160)."}]}
 ];
-let GM={sc:null,i:0,pts:0,fb:null,order:null};
+/* --- practice (offline) version: used only when the database cases are not available --- */
+let GM={sc:null,i:0,pts:0,fb:null,order:null,sel:null,board:null,form:{}};
+let CASES=null;
 const gBest=()=>{try{return JSON.parse(lsGet("lc_game_best")||"{}")}catch(e){return{}}};
 const gShuffle=n=>{const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
-function gHTML(){
+const useDb=()=>!!(sb&&CASES&&CASES.length);
+async function loadCases(){
+  if(!sb){CASES=[];return}
+  try{const {data,error}=await sb.rpc("case_list");CASES=(!error&&Array.isArray(data))?data:[]}catch(e){CASES=[]}
+}
+function gStaticHTML(){
   if(!GM.sc){
     const best=gBest();
-    return `<h1>🧩 Ikaw ang Tagapamayapa</h1><p class="date" style="text-align:center">Ikaw ang Lupon! Basahin ang eksena at piliin ang tamang hakbang. Gawa-gawa lang ang mga kaso at hindi galing sa totoong residente.</p>
+    return `<h1>🧩 Ikaw ang Tagapamayapa</h1><p class="date" style="text-align:center">Practice: ikaw ang Lupon! Basahin ang eksena at piliin ang tamang hakbang. Gawa-gawa lang ang mga kaso.</p>
     <div class="grid" style="margin-top:14px">${GAMES.map(g=>`<div class="card gcard" data-g="${g.id}" style="cursor:pointer"><h3>${g.icon} ${esc(g.title)}</h3><p>${esc(g.teaser)}</p><p class="date" style="margin-top:6px">${best[g.id]!=null?"⭐ Pinakamataas mo: "+best[g.id]+" puntos":"Hindi pa nalalaro"}</p></div>`).join("")}</div>
     <p style="text-align:center;margin-top:16px"><a href="#/subukan" style="color:var(--brand)">← Bumalik sa Subukan Mo</a></p>`;
   }
@@ -888,24 +921,86 @@ function gHTML(){
   }
   return head+qh+`<div class="card"><h3>${esc(st.q)}</h3><div class="qopts">${GM.order.map(k=>`<button class="qopt" data-k="${k}">${esc(st.o[k])}</button>`).join("")}</div></div>`;
 }
-function gRender(){
-  if(!/^#\/tagapamayapa/.test(location.hash||""))return;
-  document.getElementById("app").innerHTML=gHTML();gBind();
-}
-function gBind(){
+function gStaticBind(){
   const a=document.getElementById("app");
-  a.querySelectorAll("[data-g]").forEach(e=>e.onclick=()=>{GM={sc:GAMES.find(x=>x.id===e.dataset.g),i:0,pts:0,fb:null,order:null};GM.order=gShuffle(GM.sc.steps[0].o.length);gRender();window.scrollTo(0,0)});
+  a.querySelectorAll("[data-g]").forEach(e=>e.onclick=()=>{GM={...GM,sc:GAMES.find(x=>x.id===e.dataset.g),i:0,pts:0,fb:null,order:null};GM.order=gShuffle(GM.sc.steps[0].o.length);gRender();window.scrollTo(0,0)});
   a.querySelectorAll(".qopt[data-k]").forEach(b=>b.onclick=()=>{const st=GM.sc.steps[GM.i],pick=+b.dataset.k;if(pick===st.ok)GM.pts+=100;GM.fb={pick};gRender()});
   const nx=document.getElementById("gNext");if(nx)nx.onclick=()=>{GM.i++;GM.fb=null;
     if(GM.i>=GM.sc.steps.length){const b=gBest();if(b[GM.sc.id]==null||GM.pts>b[GM.sc.id]){b[GM.sc.id]=GM.pts;lsSet("lc_game_best",JSON.stringify(b))}}
     else GM.order=gShuffle(GM.sc.steps[GM.i].o.length);gRender();window.scrollTo(0,0)};
-  const ag=document.getElementById("gAgain");if(ag)ag.onclick=()=>{const sc=GM.sc;GM={sc,i:0,pts:0,fb:null,order:gShuffle(sc.steps[0].o.length)};gRender();window.scrollTo(0,0)};
-  ["gMenu","gMenu2"].forEach(id=>{const e=document.getElementById(id);if(e)e.onclick=ev=>{ev.preventDefault();GM={sc:null,i:0,pts:0,fb:null,order:null};gRender()}});
+  const ag=document.getElementById("gAgain");if(ag)ag.onclick=()=>{const sc=GM.sc;GM={...GM,sc,i:0,pts:0,fb:null,order:gShuffle(sc.steps[0].o.length)};gRender();window.scrollTo(0,0)};
+  ["gMenu","gMenu2"].forEach(id=>{const e=document.getElementById(id);if(e)e.onclick=ev=>{ev.preventDefault();GM={...GM,sc:null,i:0,pts:0,fb:null,order:null};gRender()}});
+}
+/* --- recorded version (database cases: timer, points, who passed) --- */
+function gDbHTML(){
+  if(!GM.sel){
+    return `<h1>🧩 Ikaw ang Tagapamayapa</h1><p class="date" style="text-align:center">Ikaw ang Lupon! Basahin ang kaso at piliin ang tamang hakbang sa loob ng ${LIM} segundo. Gawa-gawa lang ang mga kaso at hindi galing sa totoong residente.</p>
+    <div class="grid" style="margin-top:14px">${CASES.map(c=>`<div class="card gcard" data-cid="${esc(c.id)}" style="cursor:pointer"><h3>${SCENE_ICON[c.scene]||"🧩"} ${esc(c.title)}</h3><p>${esc(c.teaser||"")}</p><p class="date" style="margin-top:6px">${esc(c.steps)} hakbang · Pasado: ${esc(c.pass)}% ang tama</p></div>`).join("")}</div>
+    <p style="text-align:center;margin-top:16px"><a href="#/subukan" style="color:var(--brand)">← Bumalik sa Subukan Mo</a></p>`;
+  }
+  const c=GM.sel,f=GM.form,cats=["Estudyante","Adult","Senior","Lupon/Opisyal"];
+  let prof={};try{prof=JSON.parse(lsGet("lc_quiz_prof")||"{}")}catch(e){}
+  const nick=f.nick!=null?f.nick:(prof.nick||""),cat=f.cat!=null?f.cat:(prof.cat||""),place=f.place||QPLACES[0],other=f.other||"";
+  const rows=GM.board&&GM.board.rows?GM.board.rows.map(r=>({...r,points:r.points+(r.passed?" ✅":"")})):null;
+  return `<p class="crumb"><a href="#/tagapamayapa" id="gMenu">← Iba pang kaso</a></p><h2 style="margin-top:4px">${SCENE_ICON[c.scene]||"🧩"} ${esc(c.title)}</h2><div class="gscene">${gScene(c.scene)}</div>
+  <div class="card"><p>${esc(c.intro||"")}</p><p class="date" style="margin-top:8px">${esc(c.steps)} hakbang · ${LIM} segundo bawat hakbang · Kailangan ng ${esc(c.pass)}% na tama para makapasa · Isang may-record na laro kada palayaw.</p></div>
+  <div class="card qform"><label for="cNick">Palayaw (makikita ng publiko)</label><input id="cNick" maxlength="20" placeholder="hal. Kuya Jun" value="${esc(nick)}">
+   <label for="cPlace">Purok / Barangay</label><select id="cPlace">${QPLACES.concat(["Ibang Barangay"]).map(p=>`<option${p===place?" selected":""}>${esc(p)}</option>`).join("")}</select>
+   <input id="cOther" maxlength="30" placeholder="Pangalan ng inyong barangay" value="${esc(other)}" ${place==="Ibang Barangay"?"":"hidden"} style="margin-top:8px">
+   <label for="cCat">Kategorya (optional)</label><select id="cCat"><option value="">—</option>${cats.map(x=>`<option${cat===x?" selected":""}>${esc(x)}</option>`).join("")}</select>
+   <p class="mnote">Palayaw, Purok/Barangay, puntos, at kung nakapasa ang makikita. <a href="#/privacy">Privacy Notice</a></p>
+   <p><button class="btn" id="cGo" style="border:0;cursor:pointer">▶ Simulan (may oras)</button> <span id="qMsg" class="qmsg"></span></p></div>
+  ${rows?boardHTML(rows,nick,"🏅 Top 10 at mga nakapasa ✅")+(GM.board.players!=null?`<p class="date" style="text-align:center">${esc(GM.board.passers)} ang nakapasa sa ${esc(GM.board.players)} na nakakumpleto.</p>`:""):`<p class="date" style="text-align:center">Naglo-load ng ranggo…</p>`}`;
+}
+function gDbBind(){
+  const a=document.getElementById("app");
+  a.querySelectorAll("[data-cid]").forEach(e=>e.onclick=()=>{
+    const c=CASES.find(x=>x.id===e.dataset.cid);GM.sel=c;GM.board=null;GM.form={};gRender();window.scrollTo(0,0);
+    sb.rpc("case_board",{p_case:c.id}).then(({data})=>{if(GM.sel===c){GM.board=(data&&data.rows)?data:{rows:[]};gRender()}}).catch(()=>{});
+  });
+  const m=document.getElementById("gMenu");if(m)m.onclick=ev=>{ev.preventDefault();GM.sel=null;GM.board=null;gRender()};
+  const pl=document.getElementById("cPlace"),ot=document.getElementById("cOther"),nk=document.getElementById("cNick"),ct=document.getElementById("cCat");
+  if(pl){
+    pl.onchange=()=>{GM.form.place=pl.value;ot.hidden=pl.value!=="Ibang Barangay"};
+    ot.oninput=()=>{GM.form.other=ot.value};nk.oninput=()=>{GM.form.nick=nk.value};ct.onchange=()=>{GM.form.cat=ct.value};
+    document.getElementById("cGo").onclick=caseStart;
+  }
+}
+async function caseStart(){
+  const $=id=>document.getElementById(id),msg=$("qMsg"),c=GM.sel,nick=$("cNick").value.trim(),sel=$("cPlace").value,cat=$("cCat").value;
+  const place=sel==="Ibang Barangay"?("Brgy. "+$("cOther").value.trim()):sel;
+  if(!/^[A-Za-zÀ-ÿ0-9 _.-]{2,20}$/.test(nick))return msg.textContent="Palayaw: 2–20 letra o numero lang po.";
+  if(sel==="Ibang Barangay"&&place.length<7)return msg.textContent="Isulat po ang pangalan ng inyong barangay.";
+  $("cGo").disabled=true;msg.textContent="Sandali lang…";
+  const {data,error}=await sb.rpc("quiz_start_case",{p_case:c.id,p_nickname:nick,p_place:place,p_category:cat||null});
+  $("cGo").disabled=false;
+  if(error||!data)return msg.textContent="Hindi makapagsimula. Pakisubukan ulit.";
+  if(data.error)return msg.textContent=({invalid:"Pakisuri po ang palayaw at barangay.",taken:"Nakalaro na ang palayaw na ito sa kasong ito. Gumamit ng ibang palayaw.",no_quiz:"Hindi na bukas ang kasong ito.",busy:"Maraming naglalaro ngayon. Subukan ulit mamaya."})[data.error]||"Hindi makapagsimula.";
+  lsSet("lc_quiz_prof",JSON.stringify({nick,cat}));
+  QS={step:"play",mode:"case",caseId:c.id,scene:c.scene,intro:c.intro,caseTitle:c.title,passPct:c.pass,attempt:data.attempt,total:data.total,title:data.title,nick,place,pos:data.next,points:data.points||0,correct:data.correct||0,busy:false};
+  loadQuestion();
+}
+const caseHead=()=>`<div class="gscene">${gScene(QS.scene)}</div><details class="card"><summary><b>📖 ${esc(QS.caseTitle)}</b> <span class="date">(basahin ulit ang kaso)</span></summary><p style="margin-top:8px">${esc(QS.intro||"")}</p></details>`;
+function caseResult(){
+  const passed=QS.correct*100>=QS.passPct*QS.total;
+  const rows=QS.cboard&&QS.cboard.rows?QS.cboard.rows.map(r=>({...r,points:r.points+(r.passed?" ✅":"")})):[];
+  return `<h1>🧩 ${esc(QS.caseTitle)}</h1><div class="card qres"><div style="font-size:2.4rem">${passed?"✅":"📘"}</div><div class="big">${esc(QS.points)}</div><p>puntos · ${esc(QS.correct)} sa ${esc(QS.total)} ang tama</p>
+  <p><b>${passed?"NAKAPASA ka! Magaling, "+esc(QS.nick)+"!":"Hindi pa nakapasa ("+esc(QS.passPct)+"% ang kailangan). Basahin ang mga paliwanag at subukan ang ibang kaso."}</b></p></div>`
+   +boardHTML(rows,QS.nick,"🏅 Top 10 at mga nakapasa ✅")+(QS.cboard&&QS.cboard.players!=null?`<p class="date" style="text-align:center">${esc(QS.cboard.passers)} ang nakapasa sa ${esc(QS.cboard.players)} na nakakumpleto.</p>`:"")
+   +`<p style="text-align:center;margin-top:12px"><a class="btn" href="#/tagapamayapa" id="cBack">Ibang kaso</a></p>`;
+}
+function gHTML(){return useDb()?gDbHTML():gStaticHTML()}
+function gBind(){useDb()?gDbBind():gStaticBind()}
+function gRender(){
+  if(!/^#\/tagapamayapa/.test(location.hash||""))return;
+  const app=document.getElementById("app");
+  if(sb&&CASES===null){app.innerHTML=`<h1>🧩 Ikaw ang Tagapamayapa</h1><p class="date" style="text-align:center">Naglo-load…</p>`;loadCases().then(gRender);return}
+  app.innerHTML=gHTML();gBind();
 }
 /* ===== ROUTER ===== */
 function route(){
   const [,p="",id]=(location.hash||"#/").slice(1).split("/");
-  if(p!=="quiz"&&p!=="lupon")stopTimer();
+  if(p!=="quiz"&&p!=="lupon"&&p!=="tagapamayapa")stopTimer();
   let h;
   if(p==="")h=V.home();else if(p==="alamin")h=id?V.article(id):V.alamin();
   else if(p==="laws")h=id?V.law(id):V.laws();else if(p==="news"&&id)h=V.post(id);else h=(V[p]&&p!=="nf")?V[p]():V.nf();
@@ -921,7 +1016,7 @@ function route(){
     b.disabled=false});
   if(p==="quiz"||p==="lupon"){const want=p==="lupon"?"private":"public";if(QS.step==="result"&&QS.mode!==want)QS={step:"intro"};if(QS.step==="intro")QS.mode=want;quizRender();if(QS.step==="play"&&!QT)startTimer()}
   if(p==="pahingahan"){if(!CH.s)chNew();chRender()}
-  if(p==="tagapamayapa")gRender();
+  if(p==="tagapamayapa"){if(QS.mode==="case"&&["play","fb","result"].includes(QS.step)){quizRender();if(QS.step==="play"&&!QT)startTimer()}else gRender()}
   const q=document.getElementById("q");
   if(q)q.oninput=()=>{const t=q.value.toLowerCase();
     document.getElementById("list").innerHTML=DB.articles.filter(a=>(a.title+a.summary+a.body).toLowerCase().includes(t)).map(artCard).join("")||"<p>No results.</p>"};
