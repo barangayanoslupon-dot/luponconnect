@@ -295,7 +295,7 @@ const V={
 home(){
   let f=DB.articles.filter(a=>a.featured).slice(0,3);if(!f.length)f=DB.articles.slice(0,3);
  return `<div class="hero"><div class="hero-logos"><img class="hero-logo" src="logo-anos.png" alt="Barangay Anos seal" onerror="this.remove()"><img class="hero-logo" src="logo-lupon.png" alt="Lupong Tagapamayapa seal" onerror="this.remove()"></div>
-  <p font-style:italic;">Maka-Diyos, Maka-Tao, at Pantay na Hustisya</p>
+  <p><i>"Maka-Diyos, Maka-Tao, at Pantay na Hustisya"</i></p>
   <h1>Maligayang pagdating sa LuponConnect</h1>
   <p>A digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos—reliable information on Katarungang Pambarangay, dispute resolution and relevant laws.</p><div class="vc-pill">${visitText()}</div>${appBanner()}${quizBanner()}</div>
   ${newsFeat(DB.news[0])}
