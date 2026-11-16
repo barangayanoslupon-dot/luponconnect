@@ -27,7 +27,7 @@ textarea{min-height:110px;resize:vertical}.hint{font-weight:400;color:#6a777b;fo
 <div class="w" id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
-const SUPABASE_URL="https://adragnnngictwxtslosy.supabase.co", SUPABASE_ANON_KEY="sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd";   // same values as index.html (anon key only)
+const SUPABASE_URL="", SUPABASE_ANON_KEY="";   // same values as index.html (anon key only)
 if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!window.supabase){document.getElementById("app").innerHTML='<div class="box" style="margin-top:30px"><h3 style="margin-top:0">Setup needed</h3><p>'+(window.supabase?'Open <b>admin.html</b> and fill in <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> at the top of the script, then upload it again.':'The Supabase library could not load. Check your internet connection or any ad-blocker.')+'</p></div>';throw new Error("Missing Supabase config")}
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -51,6 +51,7 @@ const T={
   ["sort_order","number","Sort order"],["published","check","Published"]]},
  quiz:{label:"🎯 Quiz",special:"quiz"},
  scores:{label:"🏅 Scores",special:"scores"},
+ chess:{label:"♟️ Chess",special:"chess"},
  messages:{label:"✉️ Messages",special:"messages"},
  backup:{label:"💾 Backup",special:1,adminOnly:1},
  contact_info:{label:"📞 Contact",table:"contact_info",single:1,fields:[
@@ -85,6 +86,7 @@ async function show(k,msg,isErr){
  if(t.special==="messages")return messagesView();
  if(t.special==="quiz")return quizAdmin();
  if(t.special==="scores")return scoresAdmin();
+ if(t.special==="chess")return chessAdmin();
  if(t.special)return backupView();
  let q=sb.from(t.table).select("*"); if(t.order)q=q.order(t.order,{ascending:!!t.asc});
  const {data,error}=await q; if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}</div>`;
@@ -205,6 +207,17 @@ ${isCase?`<label>Maikling paglalarawan <span class="hint">(lalabas sa listahan)<
   if(isCase)await sb.from("quiz_questions").delete().eq("quiz_id",id).gt("pos",items.length);
   show("quiz","Saved ✔ "+(o.published?(isCase?"Lalabas ito sa laro na Ikaw ang Tagapamayapa (Subukan Mo).":isPriv?"Bukas ito sa pahina ng Lupon (#/lupon) gamit ang passkey, simula sa petsa ng simula.":"Lalabas ito sa website kapag pumasok ang petsa ng simula."):"Draft pa ito at hindi pa lalabas."));
  };
+}
+async function chessAdmin(){
+ const {data,error}=await sb.from("chess_games").select("*").order("played_at",{ascending:false}).limit(150);
+ if(error)return $("#panel").innerHTML=`<div class="msg err">${esc(error.message)}<br>Naitakbo mo na ba ang supabase-chess-leaderboard.sql?</div>`;
+ const rows=data||[],RL={win:"Panalo",draw:"Tabla",loss:"Talo"};
+ $("#panel").innerHTML=`<p class="hint">Pinakabagong 150 na isinumiteng laro ng chess. I-hide ang hindi angkop na palayaw o kahina-hinalang resulta; mawawala ito sa leaderboard.</p><div class="box">${rows.length?rows.map((r,i)=>`<div class="row"><div><b>${esc(r.nickname)}</b> <small>${esc(r.place)}</small>${r.hidden?'<span class="pill draft">Hidden</span>':""}<br><small>${esc(r.level==="hard"?"Hard":"Easy")} · ${RL[r.result]||esc(r.result)} · ${esc(r.points)} pts · ${esc(r.moves)} galaw · Undo ${esc(r.undos)} · ${new Date(r.played_at).toLocaleString("en-PH")}</small></div><div class="acts"><button class="btn s" data-ch="${i}">${r.hidden?"Unhide":"Hide"}</button>${me.role==="admin"?`<button class="btn d" data-cx="${i}">Delete</button>`:""}</div></div>`).join(""):"<p>Wala pang naisumite.</p>"}</div>`;
+ document.querySelectorAll("[data-ch]").forEach(b=>b.onclick=async()=>{const r=rows[b.dataset.ch];
+  const {error}=await sb.from("chess_games").update({hidden:!r.hidden}).eq("id",r.id);show("chess",error?error.message:"",!!error)});
+ document.querySelectorAll("[data-cx]").forEach(b=>b.onclick=async()=>{const r=rows[b.dataset.cx];
+  if(!confirm("Delete this game of "+r.nickname+"? This cannot be undone."))return;
+  const {error}=await sb.from("chess_games").delete().eq("id",r.id);show("chess",error?error.message:"Deleted.",!!error)});
 }
 async function scoresAdmin(){
  const {data,error}=await sb.from("quiz_attempts").select("*, quizzes(*)").order("started_at",{ascending:false}).limit(150);

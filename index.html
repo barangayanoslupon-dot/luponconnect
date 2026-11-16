@@ -83,6 +83,11 @@ nav a{transition:background .15s}
 .appv{margin-top:6px;font-size:.78rem;opacity:.75}
 .gscene{border-radius:14px;overflow:hidden;border:1px solid var(--line);margin:10px 0}.gscene svg{display:block;width:100%;height:auto}
 .gcard:hover{border-color:var(--brand)}
+#chUndo[disabled]{opacity:.45;cursor:not-allowed!important}
+.chscore{margin:10px auto;max-width:480px}.chl{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line);font-size:.92rem}.chl:last-of-type{border:0}
+.chstats{max-width:480px;margin:12px auto}.chpts{font-size:1.25rem;font-weight:800;color:var(--brand);margin:4px 0}
+.chtb{width:100%;border-collapse:collapse;margin:6px 0;font-size:.92rem}.chtb th,.chtb td{padding:4px 6px;text-align:center;border-bottom:1px solid var(--line)}.chtb td:first-child,.chtb th:first-child{text-align:left}
+.chbadges{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.chbd{font-size:.8rem;padding:4px 10px;border-radius:99px;border:1px dashed var(--line);color:var(--mute);filter:grayscale(1);opacity:.7}.chbd.on{filter:none;opacity:1;border:1px solid var(--accent);color:var(--ink);background:rgba(200,137,43,.12)}
 .chctl{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:8px 0}
 .seg{display:flex;align-items:center;gap:6px;font-size:.9rem;color:var(--mute)}
 .seg button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 14px;border-radius:99px;font:inherit;font-size:.9rem;cursor:pointer}
@@ -371,7 +376,7 @@ lupon(){return ""},
 subukan(){const q=QB&&QB.quiz;return `<h1>🎮 Subukan Mo</h1><p class="date" style="text-align:center">Subukan ang iyong kaalaman at magpahinga sandali.</p><div class="grid" style="margin-top:14px">
 <a class="card" href="#/quiz"><h3>🎯 Quiz ng Linggo</h3><p>${q?esc(q.title):"Sagutin ang mga tanong tungkol sa Katarungang Pambarangay at pumasok sa Top 10."}</p></a>
 <a class="card" href="#/tagapamayapa"><h3>🧩 Ikaw ang Tagapamayapa</h3><p>Maging Lupon! Basahin ang eksena ng alitan at piliin ang tamang hakbang.</p></a>
-<a class="card" href="#/pahingahan"><h3>🌿 Pahingahan</h3><p>Maglaro ng chess laban sa computer (Easy at Hard).</p></a></div>`},
+<a class="card" href="#/pahingahan"><h3>🌿 Pahingahan</h3><p>Maglaro ng chess laban sa computer (Easy at Hard) at mangolekta ng puntos, badge, at ranggo sa leaderboard.</p></a></div>`},
 tagapamayapa(){return ""},
 pahingahan(){return ""},
 privacy(){return `<h1>🔒 Privacy Notice</h1><p class="date">Alinsunod sa Data Privacy Act of 2012 (RA 10173) · Huling binago: Oktubre 30, 2026</p><div class="body">
@@ -381,6 +386,7 @@ privacy(){return `<h1>🔒 Privacy Notice</h1><p class="date">Alinsunod sa Data 
 <h2>2. Anong impormasyon ang kinokolekta at bakit</h2>
 <ul>
 <li><b>Quiz at laro (Ikaw ang Tagapamayapa) para sa publiko:</b> palayaw, Purok o barangay, kategorya (optional), puntos, bilang ng tamang sagot, oras ng pagsagot, at kung nakapasa sa laro. Ginagamit ito para sa ranggo, Top 10, talaan ng mga nakapasa, at Mga Kampeon ng Buwan. <i>Makikita ng publiko ang palayaw, Purok o barangay, puntos, at kung nakapasa.</i></li>
+<li><b>Chess leaderboard (kung pipiliin ninyo):</b> palayaw, Purok o barangay, resulta ng laro, bilang ng galaw, at puntos. Isinusumite lamang ito kapag pinili ninyo. <i>Makikita ng publiko ang palayaw, Purok o barangay, at puntos.</i></li>
 <li><b>Quiz ng mga miyembro ng Lupon:</b> pangalan, barangay, at puntos. Makikita ito ng mga may passkey at ng mga awtorisadong staff.</li>
 <li><b>Message box:</b> pangalan (optional), email, at ang inyong mensahe. Gagamitin lamang ito para tumugon sa inyo, at makikita lamang ng mga awtorisadong staff ng Lupon.</li>
 <li><b>Staff ng Lupon:</b> pangalan, email, at tungkulin ng mga may login sa admin, para mapamahalaan ang laman ng portal.</li>
@@ -726,9 +732,84 @@ const chSqName=i=>String.fromCharCode(97+(i&7))+(8-(i>>3));
 
 /* ===== PAHINGAHAN (chess) ===== */
 const CHG={P:"♟",N:"♞",B:"♝",R:"♜",Q:"♛",K:"♚"};
-let CH={s:null,hist:[],keys:[],lvl:"easy",me:"w",sel:-1,last:null,busy:false,promo:null,st:null,tok:0};
+let CH={s:null,hist:[],keys:[],lvl:"easy",me:"w",sel:-1,last:null,busy:false,promo:null,st:null,tok:0,undos:0,scored:false,lastScore:null,gid:null,submitted:null};
+/* --- personal chess record: points, stats, badges (kept on this phone only) --- */
+const CHS_KEY="lc_chess";
+const chStatsDef=()=>({easy:{w:0,d:0,l:0},hard:{w:0,d:0,l:0},points:0,streak:0,best:0,games:0,fast:{easy:null,hard:null},badges:[]});
+function chLoad(){try{const s=JSON.parse(lsGet(CHS_KEY)||"null");return Object.assign(chStatsDef(),s||{})}catch(e){return chStatsDef()}}
+const CHB=[["win1","🥉","Unang Panalo","Manalo sa isang laro"],["hard","🥈","Natalo ang Hard","Manalo laban sa Hard"],["str5","🥇","5 Magkakasunod na Panalo","Manalo nang 5 beses nang sunud-sunod"],["g10","♟️","10 Laro","Tapusin ang 10 laro"]];
+function chScore(){
+  const s=CH.s,st=CH.st,res=st.res==="mate"?(s.turn===CH.me?"loss":"win"):"draw";
+  const plies=CH.hist.length-1,moves=CH.me==="w"?Math.ceil(plies/2):Math.floor(plies/2),lv=CH.lvl,lvn=lv==="hard"?"Hard":"Easy";
+  let pts=0;const lines=[];
+  if(res==="win"){
+    const base=lv==="hard"?300:100;pts=base;lines.push(["Panalo ("+lvn+")",base]);
+    const sp=Math.max(0,60-moves)*2;if(sp>0){pts+=sp;lines.push(["Bilis ("+moves+" galaw)",sp])}
+    if(CH.undos===0){pts+=50;lines.push(["Walang Undo",50])}else{const pen=25*CH.undos;pts-=pen;lines.push(["Undo ×"+CH.undos,-pen])}
+    pts=Math.max(0,pts);
+  }else if(res==="draw"){pts=lv==="hard"?120:40;lines.push(["Tabla ("+lvn+")",pts])}
+  else lines.push(["Talo",0]);
+  const D=chLoad();D.games++;D.points+=pts;D[lv][res==="win"?"w":res==="draw"?"d":"l"]++;
+  if(res==="win"){D.streak++;D.best=Math.max(D.best,D.streak);if(D.fast[lv]==null||moves<D.fast[lv])D.fast[lv]=moves}
+  else if(res==="loss")D.streak=0;
+  const had=new Set(D.badges),now=[];
+  if(D.easy.w+D.hard.w>=1)now.push("win1");if(D.hard.w>=1)now.push("hard");if(D.best>=5)now.push("str5");if(D.games>=10)now.push("g10");
+  D.badges=[...new Set([...D.badges,...now])];
+  lsSet(CHS_KEY,JSON.stringify(D));
+  CH.scored=true;CH.lastScore={res,pts,lines,fresh:now.filter(b=>!had.has(b)),moves,lv,undos:CH.undos};
+}
+function chScoreHTML(){
+  const L=CH.lastScore;if(!L||!CH.st.over)return "";
+  const lbl={win:"🎉 Panalo!",draw:"🤝 Tabla",loss:"😔 Talo"}[L.res];
+  return `<div class="card chscore"><b>${lbl} · +${L.pts} puntos</b>${L.lines.map(([a,b])=>`<div class="chl"><span>${esc(a)}</span><b>${b>=0?"+":""}${b}</b></div>`).join("")}${L.fresh.length?`<p style="margin-top:8px">🏅 Bagong badge: ${L.fresh.map(id=>{const x=CHB.find(b=>b[0]===id);return x[1]+" "+esc(x[2])}).join(", ")}</p>`:""}</div>`;
+}
+/* --- public chess leaderboard (optional, the player chooses to submit) --- */
+let CHBOARD=null;
+const chGid=()=>{try{if(self.crypto&&crypto.randomUUID)return crypto.randomUUID()}catch(e){}return "g"+Date.now().toString(36)+Math.random().toString(36).slice(2,10)};
+async function loadChessBoard(){if(!sb)return;try{const {data,error}=await sb.rpc("chess_board");if(!error&&data)CHBOARD=data}catch(e){}}
+function chSubmitHTML(){
+  if(!sb||!CH.lastScore||!CH.st.over)return "";
+  if(CH.submitted&&CH.submitted.ok)return `<div class="card chsub"><b>✅ Naisumite na sa leaderboard</b><p style="margin-top:6px">Ranggo mo ngayong buwan: <b>#${esc(CH.submitted.rank)}</b> · ${esc(CH.submitted.month_points)} puntos</p></div>`;
+  let prof={};try{prof=JSON.parse(lsGet("lc_chess_prof")||"{}")}catch(e){}
+  if(!prof.nick){try{prof.nick=(JSON.parse(lsGet("lc_quiz_prof")||"{}")).nick||""}catch(e){}}
+  const place=prof.place||QPLACES[0];
+  return `<div class="card chsub qform"><b>🏆 Isama sa Leaderboard?</b><p class="mnote">Palayaw at Purok lang ang makikita. Hindi napapatunayan ang resulta, kaya para sa saya lang ito. <a href="#/privacy">Privacy Notice</a></p>
+  <label for="chNick">Palayaw</label><input id="chNick" maxlength="20" value="${esc(prof.nick||"")}">
+  <label for="chPlace">Purok / Barangay</label><select id="chPlace">${QPLACES.concat(["Ibang Barangay"]).map(p=>`<option${p===place?" selected":""}>${esc(p)}</option>`).join("")}</select>
+  <input id="chOther" maxlength="30" placeholder="Pangalan ng inyong barangay" hidden style="margin-top:8px">
+  <p><button class="btn" id="chSubmit" style="border:0;cursor:pointer">🏆 Isumite</button> <span id="chMsg" class="qmsg"></span></p></div>`;
+}
+async function chSubmit(){
+  const $=id=>document.getElementById(id),msg=$("chMsg"),L=CH.lastScore,nick=$("chNick").value.trim(),sel=$("chPlace").value;
+  const place=sel==="Ibang Barangay"?("Brgy. "+$("chOther").value.trim()):sel;
+  if(!/^[A-Za-zÀ-ÿ0-9 _.-]{2,20}$/.test(nick))return msg.textContent="Palayaw: 2–20 letra o numero lang po.";
+  if(sel==="Ibang Barangay"&&place.length<7)return msg.textContent="Isulat po ang pangalan ng inyong barangay.";
+  $("chSubmit").disabled=true;msg.textContent="Sandali lang…";
+  const {data,error}=await sb.rpc("chess_record",{p_game:CH.gid,p_nickname:nick,p_place:place,p_level:L.lv,p_result:L.res,p_moves:L.moves,p_undos:L.undos});
+  $("chSubmit").disabled=false;
+  if(error||!data)return msg.textContent="Hindi naisumite. Pakisubukan ulit.";
+  if(data.error)return msg.textContent=({invalid:"Pakisuri po ang palayaw at barangay.",implausible:"Hindi tinanggap ang resultang ito.",dup:"Naisumite na ang larong ito.",rate:"Sandali lang po, subukan ulit pagkalipas ng halos isang minuto.",daily:"Naabot na ang limitasyon ngayong araw para sa palayaw na ito.",busy:"Maraming isinusumite ngayon. Subukan ulit mamaya."})[data.error]||"Hindi naisumite.";
+  lsSet("lc_chess_prof",JSON.stringify({nick,place:sel}));
+  CH.submitted=data;await loadChessBoard();chRender();
+}
+function chBoardHTML(){
+  if(!sb||!CHBOARD)return "";
+  let me="";try{me=(JSON.parse(lsGet("lc_chess_prof")||"{}")).nick||""}catch(e){}
+  const map=a=>(a||[]).map(r=>({...r,points:r.points+" · "+r.wins+" panalo"}));
+  return `<div class="card chlb">${boardHTML(map(CHBOARD.month),me,"🏆 Top 10 ng Chess ngayong buwan")}${(CHBOARD.last&&CHBOARD.last.length)?boardHTML(map(CHBOARD.last),null,"🥇 Mga Kampeon ng "+esc(mName(CHBOARD.last_month))):""}<p class="date" style="text-align:center;margin-top:8px">Para sa saya lang. Hindi napapatunayan ang mga resulta.</p></div>`;
+}
+function chStatsHTML(){
+  const D=chLoad(),fast=l=>D.fast[l]!=null?D.fast[l]+" galaw":"—";
+  const row=(lb,x)=>`<tr><td>${lb}</td><td>${x.w}</td><td>${x.d}</td><td>${x.l}</td></tr>`;
+  return `<div class="card chstats"><h3>📊 Aking Tala</h3><div class="chpts">⭐ ${D.points} puntos · ${D.games} laro</div>
+  <table class="chtb"><tr><th></th><th>Panalo</th><th>Tabla</th><th>Talo</th></tr>${row("Easy",D.easy)}${row("Hard",D.hard)}</table>
+  <p class="date">🔥 Streak: ${D.streak} (pinakamataas: ${D.best}) · ⚡ Pinakamabilis na panalo: Easy ${fast("easy")}, Hard ${fast("hard")}</p>
+  <div class="chbadges">${CHB.map(([id,ic,nm,hint])=>`<span class="chbd${D.badges.includes(id)?" on":""}" title="${esc(hint)}">${ic} ${esc(nm)}</span>`).join("")}</div>
+  <p class="date" style="margin-top:8px">Naka-save sa phone na ito ang tala; ang leaderboard ay para sa mga isinumite lamang. <a href="#" id="chReset">Burahin ang tala</a></p></div>`;
+}
+
 function chNew(){
-  CH.tok++;CH.s=chParse(CH_START);CH.hist=[CH.s];CH.keys=[chKey(CH.s)];CH.sel=-1;CH.last=null;CH.promo=null;CH.busy=false;
+  CH.tok++;CH.s=chParse(CH_START);CH.hist=[CH.s];CH.keys=[chKey(CH.s)];CH.sel=-1;CH.last=null;CH.promo=null;CH.busy=false;CH.undos=0;CH.scored=false;CH.lastScore=null;CH.gid=chGid();CH.submitted=null;
   CH.st=chStatus(CH.s,CH.keys);
   if(CH.me==="b")chAI();
 }
@@ -759,8 +840,9 @@ function chHTML(){
   return `<h1>🌿 Pahingahan</h1><p class="date" style="text-align:center;margin-bottom:6px">Magpahinga muna at mag-chess laban sa computer.</p>
   <div class="chctl"><div class="seg"><span>Antas</span>${seg("lv",CH.lvl,[["easy","Easy"],["hard","Hard"]])}</div><div class="seg"><span>Kulay</span>${seg("me",CH.me,[["w","♔ Puti"],["b","♚ Itim"]])}</div></div>
   <div class="chstat" id="chStat">${chText()}</div><div class="cbd" id="cbd">${sq}</div>${promo}
-  <div class="chbtn"><button class="btn" id="chNew" style="border:0;cursor:pointer">♻️ Bagong Laro</button> <button class="btn s" id="chUndo" style="cursor:pointer">↩️ Undo</button></div>
-  <p class="note" style="text-align:center">Easy: mas pabaya ang computer. Hard: nag-iisip ito ng ilang galaw nang maaga. Walang puntos na itinatala; laro lang ito para magpahinga.</p>
+  <div class="chbtn"><button class="btn" id="chNew" style="border:0;cursor:pointer">♻️ Bagong Laro</button> <button class="btn s" id="chUndo" style="cursor:pointer"${CH.st.over?" disabled":""}>↩️ Undo</button></div>
+  ${chScoreHTML()}${chSubmitHTML()}${chStatsHTML()}${chBoardHTML()}
+  <p class="note" style="text-align:center">Easy: mas pabaya ang computer. Hard: nag-iisip ito ng ilang galaw nang maaga. Puntos: panalo sa Easy 100 at sa Hard 300, tabla 40 at 120, may dagdag sa mabilis na panalo at kapag walang Undo. Laro lang ito para magpahinga.</p>
   <p style="text-align:center;margin-top:10px"><a href="#/subukan" style="color:var(--brand)">← Bumalik sa Subukan Mo</a></p>`;
 }
 function chRender(){
@@ -775,6 +857,8 @@ function chBind(){
   a.querySelectorAll("[data-me]").forEach(b=>b.onclick=()=>{if(b.dataset.me!==CH.me)restart(()=>{CH.me=b.dataset.me})});
   document.getElementById("chNew").onclick=()=>restart(()=>{});
   document.getElementById("chUndo").onclick=chUndo;
+  const sbm=document.getElementById("chSubmit");if(sbm){const pl=document.getElementById("chPlace"),ot=document.getElementById("chOther");pl.onchange=()=>{ot.hidden=pl.value!=="Ibang Barangay"};sbm.onclick=chSubmit}
+  const rs=document.getElementById("chReset");if(rs)rs.onclick=ev=>{ev.preventDefault();if(confirm("Burahin ang lahat ng iyong puntos at badge sa chess?")){lsSet(CHS_KEY,"");chRender()}};
   a.querySelectorAll("[data-pm]").forEach(b=>b.onclick=()=>chApply(CH.promo[+b.dataset.pm]));
 }
 function chClick(i){
@@ -790,7 +874,9 @@ function chClick(i){
 }
 function chApply(m){
   CH.s=chMake(CH.s,m);CH.hist.push(CH.s);CH.keys.push(chKey(CH.s));CH.last=[m.f,m.t];CH.sel=-1;CH.promo=null;
-  CH.st=chStatus(CH.s,CH.keys);chRender();
+  CH.st=chStatus(CH.s,CH.keys);
+  if(CH.st.over&&!CH.scored)chScore();
+  chRender();
   if(!CH.st.over&&CH.s.turn!==CH.me)chAI();
 }
 function chAI(){
@@ -802,9 +888,10 @@ function chAI(){
   },90);
 }
 function chUndo(){
-  if(CH.busy||CH.hist.length<2)return;
+  if(CH.busy||CH.hist.length<2||CH.st.over)return;
   let n=CH.s.turn===CH.me?2:1;n=Math.min(n,CH.hist.length-1);
   for(let i=0;i<n;i++){CH.hist.pop();CH.keys.pop()}
+  CH.undos++;
   CH.s=CH.hist[CH.hist.length-1];CH.last=null;CH.sel=-1;CH.promo=null;CH.st=chStatus(CH.s,CH.keys);
   if(!CH.st.over&&CH.s.turn!==CH.me)chAI();else chRender();
 }
@@ -1045,7 +1132,7 @@ function route(){
       b.classList.toggle("on",!on);b.innerHTML=(on?"♡ Like":"♥ Liked")+" · <span>"+LIKES[k]+"</span>"}catch(e){console.warn(e)}
     b.disabled=false});
   if(p==="quiz"||p==="lupon"){const want=p==="lupon"?"private":"public";if(QS.step==="result"&&QS.mode!==want)QS={step:"intro"};if(QS.step==="intro")QS.mode=want;quizRender();if(QS.step==="play"&&!QT)startTimer()}
-  if(p==="pahingahan"){if(!CH.s)chNew();chRender()}
+  if(p==="pahingahan"){if(!CH.s)chNew();chRender();if(sb&&!CHBOARD)loadChessBoard().then(chRender)}
   if(p==="tagapamayapa"){if(QS.mode==="case"&&["play","fb","result"].includes(QS.step)){quizRender();if(QS.step==="play"&&!QT)startTimer()}else gRender()}
   const q=document.getElementById("q");
   if(q)q.oninput=()=>{const t=q.value.toLowerCase();
