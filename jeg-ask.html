@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="fil">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JEG">
+<meta name="theme-color" content="#0B0B0F">
+<title>JEG – Joy · Empathy · Goodwill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0B0F; --eye:#F2FBFF; --pupil:#1C2A4D; --blush:#FF7FA8; --mouth:#FFB3C7;
+    --ink:#C9D2E3; --soft:#9FB0C8; --cyan:#7FD6F5;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;
+    font-family:'Baloo 2',system-ui,sans-serif;color:var(--ink);
+    -webkit-user-select:none;user-select:none;touch-action:manipulation}
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #face{width:100vw;height:100vh;height:100dvh;display:block;cursor:pointer}
+
+  /* show only the active expression */
+  .xp{display:none}
+  body[data-state="idle"] .xp-idle,
+  body[data-state="worried"] .xp-worried,
+  body[data-state="breathe"] .xp-breathe,
+  body[data-state="happy"] .xp-happy,
+  body[data-state="sleep"] .xp-sleep,
+  body[data-state="hello"] .xp-hello,
+  body[data-state="quiet"] .xp-quiet,
+  body[data-state="shh"] .xp-shh,
+  body[data-state="music"] .xp-music,
+  body[data-state="think"] .xp-think,
+  body[data-state="lying"] .xp-lying,
+  body[data-state="refreshed"] .xp-refreshed,
+  body[data-state="answer"] .xp-idle{display:inline}
+
+  /* lying down / refreshed */
+  @keyframes dizzy{0%,100%{transform:rotate(-7deg) translateY(0)}50%{transform:rotate(7deg) translateY(4px)}}
+  .dizzy{animation:dizzy 1.8s ease-in-out infinite;transform-origin:50% 60%}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spin{animation:spin 1.6s linear infinite;transform-origin:center}
+  @keyframes sparkle{0%,100%{transform:scale(.4);opacity:0}50%{transform:scale(1);opacity:1}}
+  .sp1{animation:sparkle 1.4s ease-in-out infinite;transform-origin:center}
+  .sp2{animation:sparkle 1.4s ease-in-out .45s infinite;transform-origin:center}
+  .sp3{animation:sparkle 1.4s ease-in-out .9s infinite;transform-origin:center}
+  @keyframes stretch{0%{transform:scaleY(.85)}40%{transform:scaleY(1.08)}100%{transform:scaleY(1)}}
+  .stretch{animation:stretch 1.2s ease-out 1;transform-origin:50% 100%}
+
+  /* thinking + answer */
+  @keyframes dot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-10px);opacity:1}}
+  .d1{animation:dot 1s ease-in-out infinite}
+  .d2{animation:dot 1s ease-in-out .15s infinite}
+  .d3{animation:dot 1s ease-in-out .3s infinite}
+  #bubble{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    width:min(760px,92vw);max-height:40vh;overflow:auto;background:rgba(20,23,31,.94);border-radius:20px;
+    padding:14px 20px;font-size:clamp(16px,2.4vw,22px);line-height:1.35;color:#E6ECF7;display:none;z-index:2}
+  body[data-state="answer"] #bubble{display:block}
+  #face{transition:transform .4s ease}
+  body[data-state="answer"] #face{transform:translateY(-14vh) scale(.8)}
+  #askBtn{position:fixed;left:calc(12px + env(safe-area-inset-left));bottom:calc(12px + env(safe-area-inset-bottom));
+    width:48px;height:48px;border-radius:50%;border:0;background:transparent;opacity:.28;cursor:pointer;z-index:3}
+  #askBtn:hover,#askBtn:focus-visible{opacity:.8}
+  #askBar{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    width:min(640px,94vw);display:none;gap:8px;align-items:center;background:#14171F;border-radius:999px;padding:6px;z-index:4}
+  #askBar.open{display:flex}
+  #askInput{flex:1;min-width:0;font:inherit;font-size:17px;border:0;outline:0;background:transparent;color:#F2FBFF;padding:8px 12px}
+  #askInput::placeholder{color:#8A97AD}
+  .iconbtn{width:44px;height:44px;border-radius:50%;border:0;background:#1F2430;cursor:pointer;display:grid;place-items:center;flex:none}
+  .iconbtn.live{background:#FF8FB1}
+
+  /* music */
+  @keyframes sway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+  @keyframes noteUp{0%{transform:translate(0,20px);opacity:0}20%{opacity:1}100%{transform:translate(18px,-90px);opacity:0}}
+  .sway{animation:sway 3s ease-in-out infinite;transform-origin:50% 90%}
+  .n1{animation:noteUp 3.2s ease-out infinite}
+  .n2{animation:noteUp 3.2s ease-out 1.1s infinite}
+  .n3{animation:noteUp 3.2s ease-out 2.1s infinite}
+
+  /* shhh */
+  @keyframes press{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+  @keyframes shhFloat{0%{transform:translate(0,0);opacity:0}25%{opacity:1}100%{transform:translate(26px,-34px);opacity:0}}
+  .press{animation:press 1.2s ease-in-out infinite}
+  .shh1{animation:shhFloat 2s ease-out infinite}
+  .shh2{animation:shhFloat 2s ease-out .7s infinite}
+  @keyframes tilt{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-4deg)}}
+  .tilt{animation:tilt 2.4s ease-in-out infinite;transform-origin:center}
+
+  /* hello (wave / "Hey JEG") */
+  @keyframes waveHand{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(22deg)}}
+  .wave-hand{animation:waveHand .45s ease-in-out infinite;transform-origin:50% 100%}
+
+  /* hearing mode */
+  @keyframes calm{0%,100%{opacity:.75}50%{opacity:1}}
+  .calm{animation:calm 6s ease-in-out infinite}
+  #hearingBtn.on{background:#7FD6F5;color:#0B1A22}
+
+  svg *{transform-box:fill-box}
+  .eye-shape{fill:var(--eye)}
+  .eye-glow{filter:drop-shadow(0 0 14px rgba(150,220,255,.45))}
+
+  /* idle */
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @keyframes blink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.08)}}
+  @keyframes twinkle{0%,100%{opacity:1}50%{opacity:.5}}
+  .bob{animation:bob 3.2s ease-in-out infinite}
+  .blink{animation:blink 4.5s ease-in-out infinite;transform-origin:center}
+  .twinkle{animation:twinkle 2.4s ease-in-out infinite}
+  .pupils{transition:transform .5s cubic-bezier(.3,.8,.3,1)}
+
+  /* talking mouth */
+  @keyframes talk{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+  .talk-mouth{display:none;transform-origin:center;animation:talk .22s ease-in-out infinite}
+  body.talking .talk-mouth{display:inline}
+  body.talking .rest-mouth{display:none}
+
+  /* worried */
+  @keyframes wobble{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+  @keyframes drip{0%{transform:translateY(0);opacity:0}20%{opacity:1}100%{transform:translateY(24px);opacity:0}}
+  .wobble{animation:wobble 1.6s ease-in-out infinite}
+  .drip{animation:drip 2.2s ease-in infinite}
+
+  /* breathe */
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+  @keyframes ring{0%,100%{transform:scale(.82);opacity:.25}50%{transform:scale(1.08);opacity:.65}}
+  .breathe{animation:breathe 8s ease-in-out infinite;transform-origin:center}
+  .ring{animation:ring 8s ease-in-out infinite;transform-origin:center}
+
+  /* happy */
+  @keyframes hop{0%,100%{transform:translateY(0)}40%,60%{transform:translateY(-12px)}}
+  @keyframes floatUp{0%{transform:translateY(20px) scale(.7);opacity:0}25%{opacity:1}100%{transform:translateY(-80px) scale(1);opacity:0}}
+  .hop{animation:hop 1.4s ease-in-out infinite}
+  .f1{animation:floatUp 2.6s ease-out infinite}
+  .f2{animation:floatUp 2.6s ease-out .9s infinite}
+  .f3{animation:floatUp 2.6s ease-out 1.7s infinite}
+
+  /* sleep */
+  @keyframes snooze{0%{transform:translate(0,0);opacity:0}30%{opacity:1}100%{transform:translate(30px,-50px);opacity:0}}
+  @keyframes slowbob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+  .slowbob{animation:slowbob 5s ease-in-out infinite}
+  .z1{animation:snooze 3s ease-out infinite}
+  .z2{animation:snooze 3s ease-out 1s infinite}
+  .z3{animation:snooze 3s ease-out 2s infinite}
+  .deep-note{display:none}
+  body.deep .deep-note{display:inline}
+
+  .cap{font-family:'Baloo 2',system-ui,sans-serif;text-anchor:middle}
+
+  /* start screen */
+  #start{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:6px;text-align:center;padding:24px;z-index:5}
+  #start h1{margin:0;font-size:64px;line-height:1;font-weight:800;color:#F2FBFF;letter-spacing:4px}
+  #start p{margin:0;color:var(--soft);font-size:18px}
+  .btn{font:inherit;font-weight:700;font-size:20px;border:0;border-radius:999px;
+    padding:12px 28px;min-height:48px;background:#FF8FB1;color:#2A1420;cursor:pointer}
+  .btn.ghost{background:#1A1D26;color:#E6ECF7;font-size:16px;padding:10px 18px;min-height:44px}
+  .btn:active{transform:scale(.97)}
+  #start .btn{margin-top:22px}
+  #start small{margin-top:14px;color:#8A97AD;font-size:14px;max-width:340px}
+
+  /* settings */
+  #gear{position:fixed;right:calc(12px + env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));
+    width:48px;height:48px;border-radius:50%;border:0;background:transparent;opacity:.28;cursor:pointer;z-index:3}
+  #gear:hover,#gear:focus-visible{opacity:.8}
+  #panel{position:fixed;inset:0;background:rgba(5,6,10,.86);display:none;z-index:4;
+    align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
+  #panel.open{display:flex}
+  .card{background:#14171F;border-radius:22px;padding:20px;width:min(560px,100%);max-height:100%;overflow:auto;
+    display:flex;flex-direction:column;gap:14px}
+  .card h2{margin:0;font-size:22px;color:#F2FBFF}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .meter{height:10px;border-radius:5px;background:#252A36;overflow:hidden;flex:1;min-width:120px}
+  .meter i{display:block;height:100%;width:0;background:var(--cyan);transition:width .08s}
+  .meter i.loud{background:#FF8FB1}
+  label{font-size:16px;color:#DDE4F0;display:flex;align-items:center;gap:8px}
+  input[type=range]{flex:1;min-width:140px;accent-color:#FF8FB1}
+  input[type=checkbox]{width:22px;height:22px;accent-color:#FF8FB1}
+  .note{font-size:14px;color:#9FB0C8;margin:0}
+</style>
+</head>
+<body data-state="idle">
+
+<div id="stage">
+<svg id="face" viewBox="0 0 844 390" preserveAspectRatio="xMidYMid meet" role="img" aria-label="JEG, ang cute na kasama sa Lupon">
+  <defs>
+    <clipPath id="mouthClip"><path d="M377 190 H467 Q467 242 422 242 Q377 242 377 190Z"/></clipPath>
+    <path id="note1" d="M10 34a7 6 0 1 1-1-12V2l18-4v26a7 6 0 1 1-2-5V5L11 8v22z"/>
+    <path id="note2" d="M10 30a7 6 0 1 1-1-12V0h3c0 6 9 8 9 16-3-4-6-5-9-5v19z"/>
+    <path id="heart" d="M12 21s-9-6-9-12a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-9 12-9 12z"/>
+  </defs>
+
+  <!-- IDLE -->
+  <g class="xp xp-idle">
+    <g class="bob">
+      <g class="blink eye-glow">
+        <rect class="eye-shape" x="232" y="96" width="120" height="140" rx="60"/>
+        <rect class="eye-shape" x="492" y="96" width="120" height="140" rx="60"/>
+      </g>
+      <g class="blink">
+        <g class="pupils" id="pupils">
+          <rect x="250" y="126" width="86" height="100" rx="43" fill="#1C2A4D"/>
+          <rect x="508" y="126" width="86" height="100" rx="43" fill="#1C2A4D"/>
+          <circle class="twinkle" cx="309" cy="151" r="15" fill="#fff"/>
+          <circle cx="285" cy="204" r="6.5" fill="#fff"/>
+          <circle class="twinkle" cx="567" cy="151" r="15" fill="#fff"/>
+          <circle cx="543" cy="204" r="6.5" fill="#fff"/>
+        </g>
+      </g>
+      <ellipse cx="223" cy="267" rx="37" ry="15" fill="#FF7FA8" opacity=".55"/>
+      <ellipse cx="621" cy="267" rx="37" ry="15" fill="#FF7FA8" opacity=".55"/>
+      <path class="rest-mouth" d="M398 254 Q422 280 446 254" stroke="#FFB3C7" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <ellipse class="talk-mouth" cx="422" cy="264" rx="17" ry="13" fill="#2A1420" stroke="#FFB3C7" stroke-width="5"/>
+    </g>
+  </g>
+
+  <!-- WORRIED -->
+  <g class="xp xp-worried">
+    <g class="wobble">
+      <rect x="236" y="56" width="92" height="12" rx="6" fill="#F2FBFF" transform="rotate(-14 282 62)"/>
+      <rect x="516" y="56" width="92" height="12" rx="6" fill="#F2FBFF" transform="rotate(14 562 62)"/>
+      <g class="eye-glow">
+        <rect class="eye-shape" x="240" y="108" width="104" height="118" rx="52"/>
+        <rect class="eye-shape" x="500" y="108" width="104" height="118" rx="52"/>
+      </g>
+      <rect x="260" y="142" width="64" height="72" rx="32" fill="#1C2A4D"/>
+      <rect x="520" y="142" width="64" height="72" rx="32" fill="#1C2A4D"/>
+      <circle cx="303" cy="153" r="11" fill="#fff"/>
+      <circle cx="563" cy="153" r="11" fill="#fff"/>
+      <path class="drip" d="M636 84 C627 100 625 108 636 115 C647 108 645 100 636 84Z" fill="#8FD8FF"/>
+      <ellipse cx="229" cy="261" rx="33" ry="13" fill="#FF7FA8" opacity=".35"/>
+      <ellipse cx="615" cy="261" rx="33" ry="13" fill="#FF7FA8" opacity=".35"/>
+      <path class="rest-mouth" d="M400 274 Q422 254 444 274" stroke="#FFB3C7" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <ellipse class="talk-mouth" cx="422" cy="268" rx="15" ry="11" fill="#2A1420" stroke="#FFB3C7" stroke-width="5"/>
+    </g>
+    <text class="cap" x="422" y="352" font-size="28" font-weight="500" fill="#C9D2E3">Uy… kalma lang po tayo</text>
+  </g>
+
+  <!-- BREATHE -->
+  <g class="xp xp-breathe">
+    <rect class="ring" x="172" y="20" width="500" height="300" rx="150" fill="none" stroke="#7FD6F5" stroke-width="3"/>
+    <g class="breathe">
+      <path d="M246 128 Q295 176 344 128" stroke="#F2FBFF" stroke-width="12" stroke-linecap="round" fill="none"/>
+      <path d="M500 128 Q549 176 598 128" stroke="#F2FBFF" stroke-width="12" stroke-linecap="round" fill="none"/>
+      <ellipse cx="229" cy="220" rx="35" ry="14" fill="#FF7FA8" opacity=".5"/>
+      <ellipse cx="615" cy="220" rx="35" ry="14" fill="#FF7FA8" opacity=".5"/>
+      <ellipse cx="422" cy="220" rx="14" ry="16" fill="none" stroke="#FFB3C7" stroke-width="7"/>
+    </g>
+    <text class="cap" x="422" y="346" font-size="30" font-weight="700" fill="#DDF5FF">Hinga muna tayo…</text>
+    <text class="cap" id="breathHint" x="422" y="378" font-size="19" font-weight="500" fill="#9FB0C8">hinga papasok…</text>
+  </g>
+
+  <!-- HAPPY -->
+  <g class="xp xp-happy">
+    <g transform="translate(120 150) scale(1.5)"><use href="#heart" class="f1" fill="#FF7FA8"/></g>
+    <g transform="translate(700 120) scale(1.1)"><use href="#heart" class="f2" fill="#FFB3C7"/></g>
+    <g transform="translate(680 230) scale(1.7)"><use href="#heart" class="f3" fill="#FF7FA8"/></g>
+    <g transform="translate(150 60)"><use href="#heart" class="f2" fill="#FFB3C7"/></g>
+    <g class="hop">
+      <path d="M246 160 Q295 94 344 160" stroke="#F2FBFF" stroke-width="14" stroke-linecap="round" fill="none"/>
+      <path d="M500 160 Q549 94 598 160" stroke="#F2FBFF" stroke-width="14" stroke-linecap="round" fill="none"/>
+      <ellipse cx="226" cy="203" rx="40" ry="17" fill="#FF7FA8" opacity=".75"/>
+      <ellipse cx="618" cy="203" rx="40" ry="17" fill="#FF7FA8" opacity=".75"/>
+      <path d="M377 190 H467 Q467 242 422 242 Q377 242 377 190Z" fill="#2A1420"/>
+      <ellipse cx="422" cy="236" rx="22" ry="14" fill="#FF8FB1" clip-path="url(#mouthClip)"/>
+    </g>
+    <text class="cap" x="422" y="352" font-size="30" font-weight="700" fill="#FFD3E0">Yehey! Bati na po tayo!</text>
+  </g>
+
+  <!-- HELLO -->
+  <g class="xp xp-hello">
+    <g class="hop">
+      <path d="M246 160 Q295 94 344 160" stroke="#F2FBFF" stroke-width="14" stroke-linecap="round" fill="none"/>
+      <path d="M500 160 Q549 94 598 160" stroke="#F2FBFF" stroke-width="14" stroke-linecap="round" fill="none"/>
+      <ellipse cx="226" cy="203" rx="40" ry="17" fill="#FF7FA8" opacity=".7"/>
+      <ellipse cx="618" cy="203" rx="40" ry="17" fill="#FF7FA8" opacity=".7"/>
+      <path class="rest-mouth" d="M390 196 Q422 236 454 196" stroke="#FFB3C7" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <ellipse class="talk-mouth" cx="422" cy="214" rx="20" ry="15" fill="#2A1420" stroke="#FFB3C7" stroke-width="5"/>
+    </g>
+    <g transform="translate(676 150)">
+      <g class="wave-hand">
+        <path d="M30 96 C8 92 0 70 4 48 L8 28 C9 22 18 22 18 28 L18 46 L20 12 C21 5 31 5 31 12 L31 44 L34 6 C35 -1 45 -1 45 6 L45 44 L48 14 C49 7 59 8 58 15 L57 52 L64 38 C68 31 77 35 74 42 L62 74 C56 90 46 97 30 96Z" fill="#FFD3E0" stroke="#FF8FB1" stroke-width="3" stroke-linejoin="round"/>
+      </g>
+    </g>
+    <text class="cap" id="helloText" x="422" y="352" font-size="30" font-weight="700" fill="#FFD3E0">Hello po! Ako si JEG!</text>
+  </g>
+
+  <!-- LYING DOWN (dizzy) -->
+  <g class="xp xp-lying">
+    <g class="dizzy">
+      <g transform="translate(292 166)"><path class="spin" d="M0 0 m-6 0 a6 6 0 1 1 12 0 a12 12 0 1 1 -24 0 a18 18 0 1 1 36 0 a24 24 0 1 1 -48 0 a30 30 0 1 1 60 0" stroke="#F2FBFF" stroke-width="7" stroke-linecap="round" fill="none"/></g>
+      <g transform="translate(552 166)"><path class="spin" d="M0 0 m-6 0 a6 6 0 1 1 12 0 a12 12 0 1 1 -24 0 a18 18 0 1 1 36 0 a24 24 0 1 1 -48 0 a30 30 0 1 1 60 0" stroke="#F2FBFF" stroke-width="7" stroke-linecap="round" fill="none"/></g>
+      <path class="drip" d="M640 92 C631 108 629 116 640 123 C651 116 649 108 640 92Z" fill="#8FD8FF"/>
+      <ellipse cx="229" cy="250" rx="33" ry="13" fill="#FF7FA8" opacity=".4"/>
+      <ellipse cx="615" cy="250" rx="33" ry="13" fill="#FF7FA8" opacity=".4"/>
+      <path class="rest-mouth" d="M394 262 Q404 252 414 262 Q424 272 434 262 Q444 252 452 262" stroke="#FFB3C7" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <ellipse class="talk-mouth" cx="422" cy="262" rx="15" ry="11" fill="#2A1420" stroke="#FFB3C7" stroke-width="5"/>
+    </g>
+    <text class="cap" x="422" y="346" font-size="28" font-weight="700" fill="#DDF5FF">Pakitayo po ako ulit…</text>
+    <text class="cap" x="422" y="376" font-size="17" font-weight="500" fill="#9FB0C8">nahihilo na po ako</text>
+  </g>
+
+  <!-- STOOD BACK UP (refreshed) -->
+  <g class="xp xp-refreshed">
+    <g class="stretch">
+      <path d="M246 160 Q295 94 344 160" stroke="#F2FBFF" stroke-width="14" stroke-linecap="round" fill="none"/>
+      <path d="M500 160 Q549 94 598 160" stroke="#F2FBFF" stroke-width="14" stroke-linecap="round" fill="none"/>
+      <ellipse cx="226" cy="203" rx="40" ry="17" fill="#FF7FA8" opacity=".7"/>
+      <ellipse cx="618" cy="203" rx="40" ry="17" fill="#FF7FA8" opacity=".7"/>
+      <path class="rest-mouth" d="M386 196 Q422 240 458 196" stroke="#FFB3C7" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <ellipse class="talk-mouth" cx="422" cy="214" rx="20" ry="15" fill="#2A1420" stroke="#FFB3C7" stroke-width="5"/>
+    </g>
+    <path class="sp1" d="M170 90 l6 16 16 6 -16 6 -6 16 -6 -16 -16 -6 16 -6z" fill="#FFE9A8"/>
+    <path class="sp2" d="M672 70 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5z" fill="#BFF0FF"/>
+    <path class="sp3" d="M700 230 l6 16 16 6 -16 6 -6 16 -6 -16 -16 -6 16 -6z" fill="#FFE9A8"/>
+    <path class="sp2" d="M140 240 l4 11 11 4 -11 4 -4 11 -4 -11 -11 -4 11 -4z" fill="#BFF0FF"/>
+    <text class="cap" x="422" y="352" font-size="30" font-weight="700" fill="#FFE9A8">Ahh… refreshing! Salamat po!</text>
+  </g>
+
+  <!-- THINKING -->
+  <g class="xp xp-think">
+    <g class="eye-glow">
+      <rect class="eye-shape" x="232" y="96" width="120" height="140" rx="60"/>
+      <rect class="eye-shape" x="492" y="96" width="120" height="140" rx="60"/>
+    </g>
+    <rect x="262" y="106" width="78" height="92" rx="39" fill="#1C2A4D"/>
+    <rect x="522" y="106" width="78" height="92" rx="39" fill="#1C2A4D"/>
+    <circle cx="314" cy="128" r="13" fill="#fff"/>
+    <circle cx="574" cy="128" r="13" fill="#fff"/>
+    <ellipse cx="223" cy="267" rx="37" ry="15" fill="#FF7FA8" opacity=".45"/>
+    <ellipse cx="621" cy="267" rx="37" ry="15" fill="#FF7FA8" opacity=".45"/>
+    <path d="M404 262 Q414 256 424 262 Q434 268 444 262" stroke="#FFB3C7" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <circle class="d1" cx="392" cy="330" r="9" fill="#7FD6F5"/>
+    <circle class="d2" cx="422" cy="330" r="9" fill="#7FD6F5"/>
+    <circle class="d3" cx="452" cy="330" r="9" fill="#7FD6F5"/>
+    <text class="cap" x="422" y="376" font-size="18" font-weight="500" fill="#9FB0C8">nag-iisip si JEG…</text>
+  </g>
+
+  <!-- MUSIC -->
+  <g class="xp xp-music">
+    <g transform="translate(140 220)"><use href="#note1" class="n1" fill="#7FD6F5"/></g>
+    <g transform="translate(670 200)"><use href="#note2" class="n2" fill="#FFB3C7"/></g>
+    <g transform="translate(700 260)"><use href="#note1" class="n3" fill="#D9C8FF"/></g>
+    <g transform="translate(110 130)"><use href="#note2" class="n3" fill="#FFB3C7"/></g>
+    <g class="sway">
+      <path d="M246 150 Q295 104 344 150" stroke="#F2FBFF" stroke-width="13" stroke-linecap="round" fill="none"/>
+      <path d="M500 150 Q549 104 598 150" stroke="#F2FBFF" stroke-width="13" stroke-linecap="round" fill="none"/>
+      <ellipse cx="228" cy="205" rx="38" ry="16" fill="#FF7FA8" opacity=".6"/>
+      <ellipse cx="616" cy="205" rx="38" ry="16" fill="#FF7FA8" opacity=".6"/>
+      <path d="M396 214 Q422 242 448 214" stroke="#FFB3C7" stroke-width="7" stroke-linecap="round" fill="none"/>
+    </g>
+    <text class="cap" x="422" y="346" font-size="28" font-weight="700" fill="#DDF5FF">Soft music muna tayo…</text>
+    <text class="cap" x="422" y="376" font-size="17" font-weight="500" fill="#9FB0C8">sabihin "JEG, stop music" para tumigil</text>
+  </g>
+
+  <!-- SHHH (reply to the "quiet" gesture) -->
+  <g class="xp xp-shh">
+    <g class="tilt">
+      <!-- wink: left eye closed ^, right eye open -->
+      <path d="M248 166 Q295 118 342 166" stroke="#F2FBFF" stroke-width="13" stroke-linecap="round" fill="none"/>
+      <rect class="eye-shape eye-glow" x="496" y="104" width="108" height="124" rx="54"/>
+      <rect x="514" y="132" width="74" height="86" rx="37" fill="#1C2A4D"/>
+      <circle cx="565" cy="152" r="13" fill="#fff"/>
+      <circle cx="532" cy="200" r="5.5" fill="#fff"/>
+      <ellipse cx="226" cy="222" rx="38" ry="16" fill="#FF7FA8" opacity=".7"/>
+      <ellipse cx="618" cy="256" rx="38" ry="16" fill="#FF7FA8" opacity=".7"/>
+      <!-- pursed lips -->
+      <ellipse cx="422" cy="248" rx="13" ry="10" fill="none" stroke="#FFB3C7" stroke-width="7"/>
+      <!-- tiny finger over the lips -->
+      <g class="press">
+        <rect x="410" y="196" width="24" height="86" rx="12" fill="#FFD3E0" stroke="#FF8FB1" stroke-width="3"/>
+        <path d="M416 210 Q422 205 428 210" stroke="#FF8FB1" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      </g>
+    </g>
+    <text class="cap shh1" x="480" y="214" font-size="26" font-weight="800" fill="#9FB0C8">sh</text>
+    <text class="cap shh2" x="500" y="186" font-size="20" font-weight="800" fill="#9FB0C8">hh</text>
+    <text class="cap" x="422" y="352" font-size="28" font-weight="700" fill="#DDF5FF">Shhh… tahimik na po ako</text>
+  </g>
+
+  <!-- HEARING MODE (camera + mic off) -->
+  <g class="xp xp-quiet">
+    <g class="calm">
+      <path d="M248 150 Q295 170 342 150" stroke="#F2FBFF" stroke-width="10" stroke-linecap="round" fill="none"/>
+      <path d="M502 150 Q549 170 596 150" stroke="#F2FBFF" stroke-width="10" stroke-linecap="round" fill="none"/>
+      <ellipse cx="229" cy="212" rx="33" ry="13" fill="#FF7FA8" opacity=".35"/>
+      <ellipse cx="615" cy="212" rx="33" ry="13" fill="#FF7FA8" opacity=".35"/>
+      <path d="M404 214 Q422 228 440 214" stroke="#FFB3C7" stroke-width="7" stroke-linecap="round" fill="none"/>
+    </g>
+    <g transform="translate(330 316)" aria-hidden="true">
+      <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3zM5 10v1a7 7 0 0 0 14 0v-1M12 18v4M2 2l20 20" stroke="#9FB0C8" stroke-width="2" stroke-linecap="round" fill="none" transform="scale(1.4)"/>
+    </g>
+    <text class="cap" x="452" y="345" font-size="24" font-weight="500" fill="#C9D2E3">Hearing Mode · tahimik si JEG</text>
+    <text class="cap" x="422" y="376" font-size="17" font-weight="500" fill="#9FB0C8">naka-off ang camera at mic</text>
+  </g>
+
+  <!-- SLEEP -->
+  <g class="xp xp-sleep">
+    <g class="slowbob">
+      <path d="M248 168 Q295 186 342 168" stroke="#F2FBFF" stroke-width="10" stroke-linecap="round" fill="none" opacity=".85"/>
+      <path d="M502 168 Q549 186 596 168" stroke="#F2FBFF" stroke-width="10" stroke-linecap="round" fill="none" opacity=".85"/>
+      <ellipse cx="229" cy="226" rx="33" ry="13" fill="#FF7FA8" opacity=".35"/>
+      <ellipse cx="615" cy="226" rx="33" ry="13" fill="#FF7FA8" opacity=".35"/>
+      <ellipse cx="422" cy="236" rx="9" ry="7" fill="#FFB3C7" opacity=".8"/>
+    </g>
+    <text class="cap z1" x="640" y="120" font-size="30" font-weight="700" fill="#9FB0C8">z</text>
+    <text class="cap z2" x="664" y="100" font-size="38" font-weight="700" fill="#9FB0C8">z</text>
+    <text class="cap z3" x="692" y="78" font-size="46" font-weight="700" fill="#9FB0C8">Z</text>
+    <text class="cap deep-note" x="422" y="352" font-size="20" font-weight="500" fill="#8A97AD">camera off · tawagin lang ako: "JEG, gising"</text>
+  </g>
+</svg>
+</div>
+
+<button id="gear" aria-label="Settings">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C9D2E3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+
+<button id="askBtn" aria-label="Magtanong kay JEG">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C9D2E3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5M12 16.5h.01"/>
+  </svg>
+</button>
+
+<form id="askBar" autocomplete="off">
+  <label for="askInput" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Tanong kay JEG</label>
+  <input id="askInput" maxlength="300" placeholder="Itanong kay JEG… (hal. Ano ang RA 7160?)">
+  <button type="button" class="iconbtn" id="dictBtn" aria-label="Magsalita" hidden>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F2FBFF" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3zM5 10v1a7 7 0 0 0 14 0v-1M12 18v4"/></svg>
+  </button>
+  <button type="submit" class="iconbtn" aria-label="Itanong">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF8FB1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+  </button>
+  <button type="button" class="iconbtn" id="askClose" aria-label="Isara">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9FB0C8" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+</form>
+
+<div id="bubble" role="status" aria-live="polite"><span id="bubbleText"></span></div>
+
+<div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
+  <div class="card">
+    <h2 id="ptitle">JEG · Settings</h2>
+    <div class="row">
+      <span style="font-size:15px;min-width:64px">Ingay</span>
+      <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
+    </div>
+    <button class="btn ghost" id="hearingBtn">Hearing Mode: OFF</button>
+    <p class="note" id="micStatus">Mic: hindi pa naka-on</p>
+    <p class="note" id="camStatus">Camera (kaway): hindi pa naka-on</p>
+    <p class="note" id="wakeStatus">"Hey JEG": hindi pa naka-on</p>
+    <label>Sensitivity
+      <input type="range" id="sens" min="6" max="30" step="1" value="16" aria-label="Sensitivity">
+    </label>
+    <div class="row">
+      <label><input type="checkbox" id="chkSound" checked> Tunog (chirps)</label>
+      <label><input type="checkbox" id="chkVoice"> Boses</label>
+      <label><input type="checkbox" id="chkWave" checked> Kaway (camera)</label>
+      <label><input type="checkbox" id="chkWake" checked> "Hey JEG"</label>
+    </div>
+    <div class="row">
+      <button class="btn ghost" data-go="idle">Idle</button>
+      <button class="btn ghost" data-go="worried">Worried</button>
+      <button class="btn ghost" data-go="breathe">Hinga</button>
+      <button class="btn ghost" data-go="happy">Bati na!</button>
+      <button class="btn ghost" data-go="shh">Shhh</button>
+      <button class="btn ghost" data-go="music">Music</button>
+      <button class="btn ghost" data-go="lying">Nakahiga</button>
+      <button class="btn ghost" data-go="refreshed">Itinayo</button>
+      <button class="btn ghost" data-go="sleep">Tulog</button>
+    </div>
+    <p class="note">Walang nire-record o sine-save. Ang camera ay kamay lang ang hinahanap, at ang mic ay volume at "Hey JEG" lang. Gamitin ang Hearing Mode tuwing may pagdinig.</p>
+    <button class="btn" id="closePanel">Sige, balik kay JEG</button>
+  </div>
+</div>
+
+<div id="start">
+  <h1>JEG</h1>
+  <p>Joy · Empathy · Goodwill</p>
+  <button class="btn" id="wake">Gisingin si JEG</button>
+  <small>Ilagay ang phone nang pahiga (landscape). Hihingi ng mic at camera: para marinig kung lumalakas ang boses, makita ang kaway, at marinig ang "Hey JEG". Walang nire-record o sine-save.</small>
+</div>
+
+<video id="cam" playsinline muted autoplay aria-hidden="true" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none"></video>
+
+<script>
+/* ===== JEG brain settings =====
+   Leave brainUrl empty to test with Claude (works only inside the Claude preview page).
+   For the free version: deploy the Supabase function "jeg-ask" (it talks to Groq),
+   then paste its URL and your Supabase *anon* key here. Never put the Groq key in this file. */
+const JEG_CONFIG = {
+  brainUrl: 'https://adragnnngictwxtslosy.supabase.co',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
+  supabaseAnonKey: 'sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd',   // Supabase > Project Settings > API > anon public key
+};
+(() => {
+  const body = document.body;
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- settings ----------
+  const prefs = { sens: 16, sound: true, voice: false, wave: true, wake: true };
+  try { Object.assign(prefs, JSON.parse(localStorage.getItem('jeg-prefs') || '{}')); } catch (e) {}
+  const savePrefs = () => { try { localStorage.setItem('jeg-prefs', JSON.stringify(prefs)); } catch (e) {} };
+  $('sens').value = prefs.sens; $('chkSound').checked = prefs.sound; $('chkVoice').checked = prefs.voice;
+  $('chkWave').checked = prefs.wave; $('chkWake').checked = prefs.wake;
+  $('sens').oninput = (e) => { prefs.sens = +e.target.value; savePrefs(); };
+  $('chkSound').onchange = (e) => { prefs.sound = e.target.checked; savePrefs(); };
+  $('chkVoice').onchange = (e) => { prefs.voice = e.target.checked; savePrefs(); };
+  $('chkWave').onchange = (e) => { prefs.wave = e.target.checked; savePrefs(); if (prefs.wave) startHands(); else stopHands(); };
+  $('chkWake').onchange = (e) => { prefs.wake = e.target.checked; savePrefs(); if (prefs.wake) startWake(); else stopWake(); };
+
+  // ---------- sounds ----------
+  let ac = null, muteUntil = 0;
+  function tone(freqs, dur = 0.12, type = 'sine', vol = 0.18) {
+    if (!prefs.sound || !ac || performance.now() < quietUntil) return;
+    let t = ac.currentTime;
+    freqs.forEach((f) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(Array.isArray(f) ? f[0] : f, t);
+      if (Array.isArray(f)) o.frequency.exponentialRampToValueAtTime(f[1], t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(ac.destination);
+      o.start(t); o.stop(t + dur + 0.02);
+      t += dur * 0.9;
+    });
+    muteUntil = performance.now() + freqs.length * dur * 1000 + 400;
+  }
+  const chirps = {
+    idle:    () => tone([[700, 1100], [900, 1300]], 0.11),
+    worried: () => tone([[900, 600], [700, 450]], 0.16, 'triangle', 0.14),
+    breathe: () => tone([[330, 440]], 0.9, 'sine', 0.08),
+    happy:   () => tone([[800, 1200], [1000, 1500], [1200, 1800]], 0.09),
+    hello:   () => tone([[600, 1000], [1000, 800], [900, 1400]], 0.1),
+    sleep:   () => tone([[500, 300]], 0.5, 'sine', 0.06),
+    quiet:   () => tone([[440, 330]], 0.4, 'sine', 0.06),
+    shh:     () => shhSound(),
+  };
+  // a soft little "shhh" made from filtered noise
+  function shhSound() {
+    if (!prefs.sound || !ac) return;
+    const len = Math.floor(ac.sampleRate * 0.7);
+    const nb = ac.createBuffer(1, len, ac.sampleRate), d = nb.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = ac.createBufferSource(), bp = ac.createBiquadFilter(), g = ac.createGain();
+    src.buffer = nb; bp.type = 'bandpass'; bp.frequency.value = 3800; bp.Q.value = 1.2;
+    const t = ac.currentTime;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.12, t + 0.12);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+    src.connect(bp).connect(g).connect(ac.destination);
+    src.start(t);
+    muteUntil = performance.now() + 1200;
+  }
+
+  // ---------- voice ----------
+  const lines = {
+    idle: 'Magandang araw po! Upo po muna kayo.',
+    worried: 'Uy, kalma lang po tayo.',
+    breathe: 'Hinga muna tayo. Papasok... palabas...',
+    happy: 'Yehey! Bati na po tayo!',
+  };
+  let voice = null;
+  function pickVoice() {
+    const vs = (window.speechSynthesis && speechSynthesis.getVoices()) || [];
+    voice = vs.find(v => /^fil|^tl/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang)) || vs[0] || null;
+  }
+  if (window.speechSynthesis) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  function say(text) {
+    if (!prefs.voice || !window.speechSynthesis || !text || performance.now() < quietUntil) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      if (voice) { u.voice = voice; u.lang = voice.lang; }
+      u.pitch = 1.7; u.rate = 1.02;
+      u.onstart = () => body.classList.add('talking');
+      u.onend = u.onerror = () => { body.classList.remove('talking'); muteUntil = performance.now() + 600; };
+      muteUntil = performance.now() + 8000;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  // ---------- state machine ----------
+  let state = 'idle', stateAt = performance.now(), lastActivity = performance.now();
+  let hearing = false;
+  let quietUntil = 0; // after a "shhh", JEG keeps his sounds and voice off for a while
+  const BREATHE_MS = 24000, WORRIED_MS = 3500, HAPPY_MS = 4500, HELLO_MS = 3500, SHH_MS = 3800,
+        SHH_QUIET_MS = 60000, SLEEP_AFTER = 180000;
+
+  function setState(s, opts = {}) {
+    if (hearing && s !== 'quiet') return;      // nothing reacts during a hearing
+    state = s; stateAt = performance.now();
+    body.dataset.state = s;
+    if (s !== 'sleep' && deepSleep) wakeCamera();
+    if (s !== 'sleep') lastActivity = performance.now();
+    if (!opts.silent) { chirps[s] && chirps[s](); say(opts.line || lines[s]); }
+  }
+  // ---------- deep sleep: camera off, ears on ----------
+  let deepSleep = false;
+  function goDeepSleep() {
+    if (hearing) return;
+    stopMusic({ keepState: true });
+    deepSleep = true; body.classList.add('deep');
+    stopCamera();
+    $('camStatus').textContent = 'Camera: naka-off (tulog si JEG). Gigising sa "JEG, gising" o "Hey JEG".';
+    setState('sleep', { line: 'Sige po, tulog muna ako.' });
+  }
+  function wakeCamera() {
+    deepSleep = false; body.classList.remove('deep');
+    if (prefs.wave && !hearing) startCamera();
+  }
+
+  // ---------- JEG's brain: answers questions ----------
+  const PERSONA = `Ikaw si JEG (Joy · Empathy · Goodwill), isang cute at magalang na robot na kasama ng Lupon Tagapamayapa sa isang barangay sa Pilipinas.
+Mga patakaran:
+- Sumagot sa Taglish o sa wikang ginamit ng nagtanong, gamit ang "po". 2 hanggang 3 maikling pangungusap lang, hindi lalampas sa 60 salita.
+- Ipaliwanag ang mga batas ng Pilipinas, proseso ng barangay at Katarungang Pambarangay sa pangkalahatan lang.
+- Huwag magbigay ng legal advice para sa isang partikular na kaso at huwag pumanig sa anumang alitan. Sabihing "Itanong po natin sa Lupon."
+- Kung hindi sigurado, sabihing hindi ka sigurado. Huwag manghula ng numero o petsa.
+- Walang markdown, listahan o emoji. Payak na teksto lang na babasahin nang malakas.
+- Huwag humingi o ulitin ang personal na impormasyon.`;
+
+  const caps = {};
+  function claudeCap(name) {
+    if (!(name in caps)) {
+      caps[name] = (window.claude && typeof window.claude.use === 'function')
+        ? Promise.resolve(window.claude.use(name)).catch(() => null)
+        : Promise.resolve(null);
+    }
+    return caps[name];
+  }
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout' }), ms))]);
+
+  async function askBrain(q) {
+    if (JEG_CONFIG.brainUrl) {
+      const r = await fetch(JEG_CONFIG.brainUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + JEG_CONFIG.supabaseAnonKey,
+          apikey: JEG_CONFIG.supabaseAnonKey,
+        },
+        body: JSON.stringify({ question: q }),
+      });
+      if (r.status === 429) throw { code: 'rate_limited' };
+      if (!r.ok) throw { code: 'brain_error' };
+      const j = await r.json();
+      return String(j.answer || '').trim();
+    }
+    const sample = await withTimeout(claudeCap('sample'), 11000).catch(() => null);
+    if (!sample) throw { code: 'no_brain' };
+    const res = await sample(`${PERSONA}\n\nTanong: ${q}\n\nIsulat lang ang sagot ni JEG:`, { modelTier: 'quick', cache: false });
+    return String((res && res.text) || '').trim();
+  }
+
+  let asking = false, speaking = false, answerUntil = 0;
+  async function askQuestion(q) {
+    q = String(q || '').trim().slice(0, 300);
+    if (!q || hearing || asking) return;
+    asking = true;
+    closeAskBar();
+    stopMusic({ keepState: true });
+    try { speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
+    setState('think', { silent: true });
+    tone([[600, 900], [900, 700]], 0.12);
+    let ans;
+    try { ans = await withTimeout(askBrain(q), 25000); }
+    catch (e) {
+      const c = e && e.code;
+      ans = c === 'no_brain' ? 'Pasensya po, wala pa akong utak na naka-connect. Pakilagay muna ang brainUrl sa JEG.'
+          : c === 'rate_limited' ? 'Medyo pagod na po ako. Subukan po natin ulit mamaya.'
+          : 'Pasensya po, hindi ko masagot ngayon. Pakisubukan po ulit.';
+    }
+    asking = false;
+    if (hearing) return;
+    if (!ans) ans = 'Hindi ko po sigurado ang sagot diyan. Itanong po natin sa Lupon.';
+    showAnswer(ans);
+  }
+  function showAnswer(text) {
+    $('bubbleText').textContent = text;
+    setState('answer', { silent: true });
+    answerUntil = performance.now() + 4000 + text.split(/\s+/).length * 380;
+    speakAnswer(text);
+  }
+  async function speakAnswer(text) {
+    if (!prefs.sound || performance.now() < quietUntil) return;
+    const done = () => {
+      speaking = false; body.classList.remove('talking');
+      muteUntil = performance.now() + 800;
+      answerUntil = Math.max(answerUntil, performance.now() + 5000);
+    };
+    const tts = await claudeCap('tts');
+    if (tts) {
+      speaking = true; body.classList.add('talking'); muteUntil = performance.now() + 90000;
+      try { await tts.speak(text, { voice: 'airy' }); } catch (e) {}
+      done(); return;
+    }
+    if (!window.speechSynthesis) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      if (voice) { u.voice = voice; u.lang = voice.lang; }
+      u.pitch = 1.5; u.rate = 1;
+      speaking = true; body.classList.add('talking'); muteUntil = performance.now() + 90000;
+      u.onend = u.onerror = done;
+      speechSynthesis.speak(u);
+    } catch (e) { done(); }
+  }
+  function stopTalking() {
+    try { speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
+    claudeCap('tts').then(t => { try { t && t.stop(); } catch (e) {} });
+    speaking = false; body.classList.remove('talking');
+  }
+
+  // ask bar (type or dictate a question)
+  let dict = null, dictLive = false;
+  function openAskBar() { if (hearing) return; $('askBar').classList.add('open'); $('askInput').focus(); }
+  function closeAskBar() { $('askBar').classList.remove('open'); $('askInput').blur(); if (dict && dictLive) dict.stop().catch(() => {}); }
+  $('askBtn').onclick = (e) => { e.stopPropagation(); openAskBar(); };
+  $('askClose').onclick = closeAskBar;
+  $('askBar').addEventListener('submit', (e) => { e.preventDefault(); const q = $('askInput').value; $('askInput').value = ''; askQuestion(q); });
+  $('bubble').onclick = () => { stopTalking(); setState('idle', { silent: true }); };
+  setTimeout(() => {
+    claudeCap('dictation').then((d) => {
+      if (!d) return;
+      dict = d; $('dictBtn').hidden = false;
+      d.onPartial(({ text }) => { $('askInput').value = text; });
+      d.onFinal(({ text }) => { $('askInput').value = text; });
+      d.onState(({ state: st }) => { dictLive = st === 'listening'; $('dictBtn').classList.toggle('live', dictLive); });
+    });
+  }, 0);
+  $('dictBtn').onclick = () => {
+    if (!dict) return;
+    if (dictLive) { dict.stop().then(() => { const q = $('askInput').value; $('askInput').value = ''; askQuestion(q); }).catch(() => {}); return; }
+    $('askInput').value = '';
+    dict.start().catch(() => {});
+  };
+
+  // ---------- soft music (made live by JEG, original, no files or internet needed) ----------
+  let music = null;
+  const MUSIC_MAX_MS = 5 * 60 * 1000; // plays up to 5 minutes, then fades out by itself
+  const hz = (midi) => 440 * Math.pow(2, (midi - 69) / 12);
+  const CHORDS = [[48, 55, 64, 71], [45, 52, 60, 67], [41, 48, 57, 64], [43, 50, 59, 64]]; // Cmaj7 Am7 Fmaj7 G6
+  const SCALE = [72, 74, 76, 79, 81, 84, 86, 88];                                          // C pentatonic
+  function startMusic() {
+    if (!ac || hearing) return;
+    if (music) { setState('music', { silent: true }); return; }
+    try { speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
+    quietUntil = 0;
+    const master = ac.createGain(), lp = ac.createBiquadFilter(), delay = ac.createDelay(1), fb = ac.createGain();
+    lp.type = 'lowpass'; lp.frequency.value = 2200;
+    delay.delayTime.value = 0.42; fb.gain.value = 0.32;
+    master.gain.setValueAtTime(0.0001, ac.currentTime);
+    master.gain.exponentialRampToValueAtTime(0.5, ac.currentTime + 2.5);
+    lp.connect(master); lp.connect(delay); delay.connect(fb).connect(delay); delay.connect(master);
+    master.connect(ac.destination);
+    music = { master, lp, startedAt: performance.now(), nextChord: ac.currentTime + 0.1, chord: 0, nextNote: ac.currentTime + 1.2, timer: null };
+    music.timer = setInterval(scheduleMusic, 200);
+    scheduleMusic();
+    setState('music', { silent: true });
+  }
+  function pad(midiNotes, t, dur) {
+    midiNotes.forEach((m) => {
+      [-4, 4].forEach((cents) => {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.type = 'triangle'; o.frequency.value = hz(m); o.detune.value = cents;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.022, t + 1.8);
+        g.gain.setValueAtTime(0.022, t + dur - 1.6);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.6);
+        o.connect(g).connect(music.lp); o.start(t); o.stop(t + dur + 0.7);
+      });
+    });
+  }
+  function pluck(m, t) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.value = hz(m);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.07, t + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+    o.connect(g).connect(music.lp); o.start(t); o.stop(t + 1.9);
+  }
+  function scheduleMusic() {
+    if (!music) return;
+    if (performance.now() - music.startedAt > MUSIC_MAX_MS) { stopMusic(); return; }
+    const ahead = ac.currentTime + 0.6;
+    while (music.nextChord < ahead) {
+      pad(CHORDS[music.chord % CHORDS.length], music.nextChord, 8);
+      music.chord++; music.nextChord += 8;
+    }
+    while (music.nextNote < ahead) {
+      if (Math.random() < 0.7) pluck(SCALE[Math.floor(Math.random() * SCALE.length)], music.nextNote);
+      music.nextNote += [0.5, 0.75, 1, 1, 1.5][Math.floor(Math.random() * 5)];
+    }
+  }
+  function stopMusic(opts = {}) {
+    if (!music) return;
+    const m = music; music = null;
+    clearInterval(m.timer);
+    const t = ac.currentTime;
+    m.master.gain.cancelScheduledValues(t);
+    m.master.gain.setValueAtTime(Math.max(m.master.gain.value, 0.0001), t);
+    m.master.gain.exponentialRampToValueAtTime(0.0001, t + 2);
+    setTimeout(() => { try { m.master.disconnect(); } catch (e) {} }, 2600);
+    muteUntil = performance.now() + 2500;
+    if (!opts.keepState && state === 'music') setState('idle', { silent: true });
+  }
+
+  // ---------- feeling the phone lie down / stand up ----------
+  // Uses the phone's motion sensor (gravity). Flat on a table = strong gravity on the screen axis.
+  let tiltOn = false, flatSince = 0, upSince = 0, lyingAt = 0, nags = 0;
+  const TILT_LINES = {
+    lying: 'Uy! Nakahiga po ako. Pakitayo po ako ulit, please?',
+    nag: 'Hello po… pakitayo na po ako, nahihilo na ako.',
+    refreshed: 'Ahh, yes! Refreshing! Salamat po!',
+  };
+  function speakNow(text) {
+    if (!prefs.sound || performance.now() < quietUntil || hearing) return;
+    const done = () => { body.classList.remove('talking'); muteUntil = performance.now() + 800; };
+    claudeCap('tts').then(async (tts) => {
+      if (tts) {
+        body.classList.add('talking'); muteUntil = performance.now() + 15000;
+        try { await tts.speak(text, { voice: 'airy' }); } catch (e) {}
+        done(); return;
+      }
+      if (!window.speechSynthesis) return;
+      try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        if (voice) { u.voice = voice; u.lang = voice.lang; }
+        u.pitch = 1.7; u.rate = 1.02;
+        body.classList.add('talking'); muteUntil = performance.now() + 15000;
+        u.onend = u.onerror = done;
+        speechSynthesis.speak(u);
+      } catch (e) { done(); }
+    });
+  }
+  function onMotion(e) {
+    const g = e.accelerationIncludingGravity;
+    if (!g || g.z == null) return;
+    const z = Math.abs(g.z), now = performance.now();
+    const flat = z > 8.3, upright = z < 5.5;          // ~32° from flat vs. standing up
+    flatSince = flat ? (flatSince || now) : 0;
+    upSince = upright ? (upSince || now) : 0;
+
+    if (hearing || deepSleep || asking) return;      // no complaints during a hearing or deep sleep
+    if (state !== 'lying' && flatSince && now - flatSince > 1200) {
+      stopMusic({ keepState: true });
+      lyingAt = now; nags = 0;
+      setState('lying', { silent: true });
+      tone([[700, 420]], 0.35, 'triangle', 0.12);
+      speakNow(TILT_LINES.lying);
+    } else if (state === 'lying' && upSince && now - upSince > 700) {
+      setState('refreshed', { silent: true });
+      tone([[500, 900], [900, 1400], [1400, 1800]], 0.1);
+      speakNow(TILT_LINES.refreshed);
+    } else if (state === 'lying' && nags < 2 && now - lyingAt > 25000 * (nags + 1)) {
+      nags++; speakNow(TILT_LINES.nag);
+    }
+  }
+  function startTilt() {
+    if (tiltOn || !('DeviceMotionEvent' in window)) return;
+    tiltOn = true;
+    window.addEventListener('devicemotion', onMotion);
+  }
+
+  function greet(text) {
+    if (music) return; // don't interrupt the music
+    if (hearing || state === 'breathe' || state === 'worried' || state === 'lying') return; // calming comes first
+    if (state === 'hello' && performance.now() - stateAt < 1500) return;
+    $('helloText').textContent = text;
+    setState('hello', { line: text });
+  }
+
+  setInterval(() => {
+    if (state !== 'breathe') return;
+    const t = ((performance.now() - stateAt) % 8000);
+    $('breathHint').textContent = t < 4000 ? 'hinga papasok…' : 'hinga palabas…';
+  }, 250);
+
+  // eyes: follow a hand when one is seen, otherwise glance around
+  let lookUntil = 0;
+  function look(dx, dy) {
+    const p = $('pupils'); if (!p) return;
+    p.style.transform = `translate(${Math.round(dx)}px,${Math.round(dy)}px)`;
+  }
+  function glance() {
+    if (performance.now() > lookUntil) {
+      const dx = (Math.random() * 2 - 1) * 10, dy = (Math.random() * 2 - 1) * 6;
+      look(Math.random() < 0.35 ? 0 : dx, Math.random() < 0.35 ? 0 : dy);
+    }
+    setTimeout(glance, 1800 + Math.random() * 3200);
+  }
+  glance();
+
+  // ---------- one stream: mic (volume only) + front camera (hand only) ----------
+  // Nothing is recorded, saved or sent. Frames and sound are analysed in memory and thrown away.
+  let stream = null, analyser = null, buf = null, floor = -60, loudSince = 0, micReady = false, startedAt = 0;
+  async function startSensors() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no media api');
+    const wantVideo = prefs.wave;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+        video: wantVideo ? { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 15 } } : false,
+      });
+    } catch (e) {
+      // camera refused? try mic alone
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+    const audioTracks = stream.getAudioTracks();
+    if (audioTracks.length && ac) {
+      const src = ac.createMediaStreamSource(new MediaStream(audioTracks));
+      analyser = ac.createAnalyser();
+      analyser.fftSize = 1024;
+      buf = new Float32Array(analyser.fftSize);
+      src.connect(analyser); // not connected to the speaker, not stored
+      micReady = true; startedAt = performance.now(); floor = -60;
+      $('micStatus').textContent = 'Mic: naka-on. Volume lang ang naririnig ni JEG.';
+    }
+    const vt = stream.getVideoTracks();
+    if (vt.length) {
+      const v = $('cam');
+      v.srcObject = new MediaStream(vt);
+      try { await v.play(); } catch (e) {}
+      if (prefs.wave) startHands();
+    } else {
+      $('camStatus').textContent = 'Camera (kaway): hindi pinayagan o wala.';
+    }
+  }
+  async function startCamera() {
+    if (hearing || deepSleep || !prefs.wave) return;
+    if (stream && stream.getVideoTracks().some(t => t.readyState === 'live')) { startHands(); return; }
+    try {
+      const vs = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 15 } },
+      });
+      if (deepSleep || hearing) { vs.getTracks().forEach(t => t.stop()); return; }
+      vs.getVideoTracks().forEach(t => stream ? stream.addTrack(t) : null);
+      if (!stream) stream = vs;
+      const v = $('cam');
+      v.srcObject = new MediaStream(vs.getVideoTracks());
+      try { await v.play(); } catch (e) {}
+      startHands();
+    } catch (e) {
+      $('camStatus').textContent = 'Camera (kaway): hindi mabuksan ulit.';
+    }
+  }
+  function stopCamera() {
+    stopHands();
+    if (stream) stream.getVideoTracks().forEach(t => { t.stop(); stream.removeTrack(t); });
+    $('cam').srcObject = null;
+  }
+  function stopSensors() {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = null; micReady = false; analyser = null;
+    $('cam').srcObject = null;
+    stopHands(); stopWake();
+    $('micStatus').textContent = 'Mic: naka-off (Hearing Mode).';
+    $('camStatus').textContent = 'Camera (kaway): naka-off (Hearing Mode).';
+  }
+  function level() {
+    analyser.getFloatTimeDomainData(buf);
+    let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i];
+    return 20 * Math.log10(Math.sqrt(s / buf.length) + 1e-8);
+  }
+
+  // ---------- wave detection (MediaPipe Hand Landmarker, runs on the phone) ----------
+  const MP_VER = '0.10.3';
+  let hand = null, face = null, handsOn = false, handTimer = null, xs = [], shhSince = 0;
+  async function startHands() {
+    if (hearing || !prefs.wave || handsOn) return;
+    const v = $('cam');
+    if (!v.srcObject) return;
+    handsOn = true;
+    try {
+      if (!hand) {
+        $('camStatus').textContent = 'Camera (kaway): nilo-load ang hand tracker…';
+        const vision = await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}`);
+        const files = await vision.FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/wasm`);
+        const opts = (delegate) => ({
+          baseOptions: {
+            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+            delegate,
+          },
+          runningMode: 'VIDEO', numHands: 1,
+        });
+        try { hand = await vision.HandLandmarker.createFromOptions(files, opts('GPU')); }
+        catch (e) { hand = await vision.HandLandmarker.createFromOptions(files, opts('CPU')); }
+        // face finder: lets JEG look at people and know where the mouth is (for "shhh")
+        const fopts = (delegate) => ({
+          baseOptions: {
+            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite',
+            delegate,
+          },
+          runningMode: 'VIDEO', minDetectionConfidence: 0.5,
+        });
+        try { face = await vision.FaceDetector.createFromOptions(files, fopts('GPU')); }
+        catch (e) { try { face = await vision.FaceDetector.createFromOptions(files, fopts('CPU')); } catch (x) { face = null; } }
+      }
+      if (!handsOn) return;
+      $('camStatus').textContent = 'Camera (kaway): naka-on. Kamay lang ang hinahanap, walang recording.';
+      handTimer = setInterval(detectHand, 110); // about 9 checks per second, easy on the battery
+    } catch (e) {
+      handsOn = false;
+      $('camStatus').textContent = 'Camera (kaway): hindi ma-load ang hand tracker (kailangan ng internet sa unang bukas).';
+    }
+  }
+  function isShh(lm, fk) {
+    const indexUp = lm[8].y < lm[6].y && lm[6].y < lm[5].y;
+    let folded = 0;
+    [[12, 10], [16, 14], [20, 18]].forEach(([tip, pip]) => { if (lm[tip].y > lm[pip].y) folded++; });
+    const eyeDist = Math.hypot(fk[0].x - fk[1].x, fk[0].y - fk[1].y) || 0.1;
+    const mouth = fk[3];
+    const nearLips = Math.hypot(lm[8].x - mouth.x, lm[8].y - mouth.y) < eyeDist * 1.1
+                  || Math.hypot(lm[7].x - mouth.x, lm[7].y - mouth.y) < eyeDist * 0.9;
+    return indexUp && folded >= 2 && nearLips;
+  }
+  function doShh() {
+    if (hearing) return;
+    stopMusic({ keepState: true });
+    muteUntil = performance.now() + 2500;     // the person's own "shhh" sound won't count as loud
+    try { speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
+    body.classList.remove('talking');
+    quietUntil = 0;
+    setState('shh', { silent: true });
+    chirps.shh();
+    quietUntil = performance.now() + SHH_QUIET_MS; // stays silent (faces only) for a minute
+  }
+  function stopHands() { handsOn = false; clearInterval(handTimer); handTimer = null; xs = []; }
+
+  function openPalm(lm) {
+    // fingertips above their middle joints = fingers up
+    let up = 0;
+    [[8, 6], [12, 10], [16, 14], [20, 18]].forEach(([tip, pip]) => { if (lm[tip].y < lm[pip].y) up++; });
+    return up >= 3;
+  }
+  let tick = 0;
+  function detectHand() {
+    const v = $('cam');
+    if (!hand || !handsOn || v.readyState < 2) return;
+    if (state === 'sleep' && (++tick % 4)) return; // dozing: ~2 checks per second to save battery
+    let res;
+    try { res = hand.detectForVideo(v, performance.now()); } catch (e) { return; }
+    const now = performance.now();
+
+    // find the face (eyes + mouth) in the same frame
+    let fk = null;
+    if (face) {
+      try {
+        const fr = face.detectForVideo(v, now + 0.5);
+        const det = fr && fr.detections && fr.detections[0];
+        if (det && det.keypoints && det.keypoints.length >= 4) fk = det.keypoints;
+      } catch (e) {}
+    }
+    if (fk) {
+      // look at the person's face (front camera is mirrored)
+      lookUntil = now + 1500;
+      look((fk[2].x - 0.5) * -24, (fk[2].y - 0.5) * 14);
+      lastActivity = now;
+    }
+
+    const lm = res && res.landmarks && res.landmarks[0];
+    if (!lm) { xs = xs.filter(p => now - p.t < 1200); shhSince = 0; return; }
+
+    lastActivity = now;
+    if (state === 'sleep') setState('idle');
+    const cx = (lm[0].x + lm[9].x) / 2, cy = (lm[0].y + lm[9].y) / 2;
+    if (!fk) { lookUntil = now + 1500; look((cx - 0.5) * -24, (cy - 0.5) * 14); }
+
+    // "shhh": index finger up, other fingers folded, fingertip at the lips
+    if (fk && isShh(lm, fk)) {
+      xs = [];
+      if (!shhSince) shhSince = now;
+      if (now - shhSince > 450 && state !== 'shh') { shhSince = 0; doShh(); }
+      return;
+    }
+    shhSince = 0;
+
+    if (!openPalm(lm)) { xs = []; return; }
+    xs.push({ x: cx, t: now });
+    xs = xs.filter(p => now - p.t < 1400);
+
+    // a wave = palm swinging left-right at least 3 times
+    let flips = 0, dir = 0, anchor = xs[0] ? xs[0].x : 0;
+    for (const p of xs) {
+      const d = p.x - anchor;
+      if (Math.abs(d) > 0.035) {
+        const nd = Math.sign(d);
+        if (dir && nd !== dir) flips++;
+        dir = nd; anchor = p.x;
+      }
+    }
+    if (flips >= 2) { xs = []; greet('Hi po! Kumusta?'); }
+  }
+
+  // ---------- "Hey JEG" (browser speech recognition) ----------
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null, wakeOn = false, lastCmdAt = 0;
+  const NAME = '(?:jeg|jag|jig|jigs|jiggy|jeggy|jegg|jek|jeck|jack|jake|jed)';
+  const PLAY_MUSIC = new RegExp(`\\b${NAME}\\b.*\\b(?:play\\s+(?:some\\s+)?(?:soft\\s+)?music|music|musika|patugtog|tugtog|kanta)\\b`, 'i');
+  const SLEEP_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:sleep|go to sleep|tulog|matulog|pahinga)\\b`, 'i');
+  const WAKE_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:wake|wake up|gising|gumising|bangon)\\b`, 'i');
+  const ASK_CMD = new RegExp(`\\b${NAME}\\b[\\s,]+(.*\\b(?:what|who|where|when|why|how|explain|define|tell me|ano|anong|sino|saan|kailan|bakit|paano|ilan|magkano|ipaliwanag)\\b.*)`, 'i');
+  const STOP_MUSIC = new RegExp(`\\b${NAME}\\b.*\\b(?:stop|tama na|hinto|tigil|patayin|off)\\b`, 'i');
+  const WAKE = /\b(hey|hi|hello|helo|uy|oy|hoy)[\s,]*(jeg|jag|jig|jigs|jiggy|jeggy|jegg|jek|jeck|jack|jake|jed)\b/i;
+  function startWake() {
+    if (hearing || !prefs.wake || wakeOn) return;
+    if (!SR) { $('wakeStatus').textContent = '"Hey JEG": hindi suportado ng browser na ito.'; return; }
+    wakeOn = true;
+    rec = new SR();
+    rec.lang = 'fil-PH';
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = (e) => {
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const txt = e.results[i][0].transcript || '';
+        const now = performance.now();
+        if (now - lastCmdAt < 2500) break;              // one command at a time
+        if (STOP_MUSIC.test(txt) && music) { lastCmdAt = now; stopMusic(); tone([[700, 500]], 0.15); try { rec.abort(); } catch (x) {} break; }
+        if (PLAY_MUSIC.test(txt) && !STOP_MUSIC.test(txt)) { lastCmdAt = now; startMusic(); try { rec.abort(); } catch (x) {} break; }
+        if (SLEEP_CMD.test(txt) && state !== 'sleep') { lastCmdAt = now; goDeepSleep(); try { rec.abort(); } catch (x) {} break; }
+        if (WAKE_CMD.test(txt) && state === 'sleep') { lastCmdAt = now; setState('idle', { line: 'Gising na po ako!' }); try { rec.abort(); } catch (x) {} break; }
+        if (WAKE.test(txt) && state === 'sleep') { lastCmdAt = now; setState('idle', { silent: true }); greet('Hello po! Gising na ako!'); try { rec.abort(); } catch (x) {} break; }
+        const askM = e.results[i].isFinal && txt.match(ASK_CMD);
+        if (askM) { lastCmdAt = now; try { rec.abort(); } catch (x) {} askQuestion(askM[1]); break; }
+        if (WAKE.test(txt) && e.results[i].isFinal) { lastCmdAt = now; greet('Hello po! Ako si JEG!'); try { rec.abort(); } catch (x) {} break; }
+      }
+    };
+    rec.onerror = (e) => {
+      if (e.error === 'language-not-supported' && rec.lang !== 'en-US') { rec.lang = 'en-US'; return; }
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        wakeOn = false; $('wakeStatus').textContent = '"Hey JEG": hindi pinayagan.';
+      }
+    };
+    rec.onend = () => { if (wakeOn && !hearing) setTimeout(() => { try { rec.start(); } catch (x) {} }, 300); };
+    try { rec.start(); $('wakeStatus').textContent = '"Hey JEG": nakikinig sa pangalan lang. Gumagamit ng speech service ng phone.'; }
+    catch (e) { wakeOn = false; }
+  }
+  function stopWake() {
+    wakeOn = false;
+    if (rec) { try { rec.abort(); } catch (e) {} }
+    rec = null;
+    $('wakeStatus').textContent = '"Hey JEG": naka-off.';
+  }
+
+  // ---------- hearing mode ----------
+  function setHearing(on) {
+    hearing = on;
+    $('hearingBtn').classList.toggle('on', on);
+    $('hearingBtn').textContent = on ? 'Hearing Mode: ON (tapusin)' : 'Hearing Mode: OFF';
+    if (on) { stopMusic({ keepState: true }); stopTalking(); closeAskBar(); deepSleep = false; body.classList.remove('deep'); stopSensors(); body.dataset.state = 'quiet'; state = 'quiet'; chirps.quiet(); }
+    else {
+      state = 'idle'; setState('idle', { silent: true });
+      startSensors().then(() => { if (prefs.wake) startWake(); }).catch(() => {
+        $('micStatus').textContent = 'Mic: hindi magamit dito. Manual mode muna.';
+      });
+    }
+  }
+  $('hearingBtn').onclick = () => setHearing(!hearing);
+
+  // ---------- main loop ----------
+  function loop() {
+    const now = performance.now();
+    let loud = false;
+    if (micReady && !hearing) {
+      const db = level();
+      const warm = now - startedAt < 2500;
+      if (warm) floor = floor * 0.9 + db * 0.1;
+      else if (db < floor + 4) floor = floor * 0.995 + db * 0.005;
+      const margin = prefs.sens + (music ? 10 : 0); // JEG's own music shouldn't count as shouting
+      loud = !warm && now > muteUntil && db > floor + margin && db > -50;
+      const pct = Math.max(0, Math.min(100, ((db - floor) / (margin * 1.6)) * 100));
+      const bar = $('meterBar'); bar.style.width = pct + '%'; bar.classList.toggle('loud', loud);
+    }
+    if (loud) { if (!loudSince) loudSince = now; lastActivity = now; } else loudSince = 0;
+    const sustainedLoud = loudSince && now - loudSince > 700;
+    const inState = now - stateAt;
+
+    if (!hearing) {
+      if ((state === 'idle' || state === 'sleep' || state === 'hello' || state === 'happy') && sustainedLoud) setState('worried');
+      else if (state === 'worried' && inState > WORRIED_MS) setState('breathe');
+      else if (state === 'breathe' && inState > BREATHE_MS) setState('idle', { silent: true });
+      else if (state === 'happy' && inState > HAPPY_MS) setState('idle', { silent: true });
+      else if (state === 'hello' && inState > HELLO_MS) setState('idle', { silent: true });
+      else if (state === 'shh' && inState > SHH_MS) setState('idle', { silent: true });
+      else if (state === 'refreshed' && inState > 4200) setState('idle', { silent: true });
+      else if (state === 'answer' && !speaking && now > answerUntil) setState('idle', { silent: true });
+      else if (state === 'idle' && now - lastActivity > SLEEP_AFTER) setState('sleep');
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- keep screen awake ----------
+  async function keepAwake() {
+    try { if ('wakeLock' in navigator) await navigator.wakeLock.request('screen'); } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') { keepAwake(); if (ac && ac.state === 'suspended') ac.resume(); }
+  });
+
+  // ---------- taps (optional, for the staff) ----------
+  $('face').addEventListener('click', () => {
+    if (hearing || music) return;
+    if (state === 'sleep') { setState('idle'); return; }
+    if (state === 'breathe') return;
+    setState('happy');
+  });
+  $('gear').onclick = (e) => { e.stopPropagation(); $('panel').classList.add('open'); };
+  $('closePanel').onclick = () => $('panel').classList.remove('open');
+  $('panel').addEventListener('click', (e) => { if (e.target.id === 'panel') $('panel').classList.remove('open'); });
+  document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => {
+    if (hearing) setHearing(false);
+    const go = b.dataset.go;
+    if (go === 'shh') doShh();
+    else if (go === 'music') { if (music) stopMusic(); else startMusic(); }
+    else if (go === 'sleep') goDeepSleep();
+    else if (go === 'lying' || go === 'refreshed') {
+      stopMusic({ keepState: true }); quietUntil = 0;
+      if (go === 'lying') { lyingAt = performance.now(); nags = 0; }
+      setState(go, { silent: true }); speakNow(TILT_LINES[go]);
+    }
+    else { stopMusic({ keepState: true }); quietUntil = 0; setState(go); }
+    $('panel').classList.remove('open');
+  });
+
+  $('wake').onclick = async () => {
+    let motionAsk = null;
+    try {
+      if (window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === 'function') {
+        motionAsk = DeviceMotionEvent.requestPermission(); // iPhone asks once, must be inside the tap
+      }
+    } catch (e) {}
+    Promise.resolve(motionAsk).then((r) => { if (!motionAsk || r === 'granted') startTilt(); }).catch(() => {});
+    try { ac = new (window.AudioContext || window.webkitAudioContext)(); await ac.resume(); } catch (e) { ac = null; }
+    if (window.speechSynthesis) { try { speechSynthesis.speak(new SpeechSynthesisUtterance('')); } catch (e) {} }
+    try { await startSensors(); }
+    catch (e) {
+      $('micStatus').textContent = 'Mic: hindi magamit dito. Manual mode muna, gamitin ang mga button sa ibaba.';
+      $('camStatus').textContent = 'Camera (kaway): hindi magamit dito.';
+    }
+    if (prefs.wake) startWake();
+    keepAwake();
+    $('start').style.display = 'none';
+    setState('idle');
+    requestAnimationFrame(loop);
+  };
+})();
+</script>
+</body>
+</html>
