@@ -36,6 +36,12 @@
   body[data-state="music"] .xp-music,
   body[data-state="think"] .xp-think,
   body[data-state="lying"] .xp-lying,
+  body[data-state="bleh"] .xp-bleh,
+  body[data-state="peace"] .xp-peace,
+  body[data-state="heart"] .xp-heart,
+  body[data-state="horns"] .xp-horns,
+  body[data-state="fistbump"] .xp-fistbump,
+  body[data-state="dodge"] .xp-dodge,
   body[data-state="refreshed"] .xp-refreshed,
   body[data-state="answer"] .xp-idle{display:inline}
 
@@ -50,6 +56,24 @@
   .sp3{animation:sparkle 1.4s ease-in-out .9s infinite;transform-origin:center}
   @keyframes stretch{0%{transform:scaleY(.85)}40%{transform:scaleY(1.08)}100%{transform:scaleY(1)}}
   .stretch{animation:stretch 1.2s ease-out 1;transform-origin:50% 100%}
+
+  /* peace / finger heart */
+  @keyframes peaceWiggle{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+  .peace-hand{animation:peaceWiggle .8s ease-in-out infinite;transform-origin:50% 100%}
+  @keyframes heartBeat{0%,100%{transform:scale(1)}15%{transform:scale(1.18)}30%{transform:scale(1)}45%{transform:scale(1.12)}}
+  .beat{animation:heartBeat 1.2s ease-in-out infinite;transform-origin:center}
+
+  /* bleh / horns / fist bump / dodge */
+  @keyframes tongue{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.25)}}
+  .tongue{animation:tongue .5s ease-in-out infinite;transform-origin:50% 0}
+  @keyframes hornPop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+  .horn{animation:hornPop .5s ease-out both;transform-origin:50% 100%}
+  @keyframes bump{0%,100%{transform:scale(1)}30%{transform:scale(1.3)}}
+  .bump{animation:bump .9s ease-in-out infinite;transform-origin:center}
+  @keyframes dodge{0%{transform:translateX(0) rotate(0)}25%{transform:translateX(-120px) rotate(-12deg)}100%{transform:translateX(-40px) rotate(-5deg)}}
+  .dodge{animation:dodge .9s ease-out both;transform-origin:50% 80%}
+  @keyframes whoosh{0%{opacity:0;transform:translateX(30px)}40%{opacity:1}100%{opacity:0;transform:translateX(-30px)}}
+  .whoosh{animation:whoosh .8s ease-out infinite}
 
   /* thinking + answer */
   @keyframes dot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-10px);opacity:1}}
@@ -320,6 +344,145 @@
     <text class="cap" x="422" y="352" font-size="30" font-weight="700" fill="#FFE9A8">Ahh… refreshing! Salamat po!</text>
   </g>
 
+  <!-- PEACE -->
+  <g class="xp xp-peace">
+    <g class="hop">
+      <path d="M246 160 Q295 94 344 160" stroke="#F2FBFF" stroke-width="14" stroke-linecap="round" fill="none"/>
+      <rect class="eye-shape eye-glow" x="496" y="96" width="112" height="132" rx="56"/>
+      <rect x="512" y="124" width="80" height="94" rx="40" fill="#1C2A4D"/>
+      <circle cx="566" cy="146" r="14" fill="#fff"/>
+      <circle cx="532" cy="196" r="6" fill="#fff"/>
+      <ellipse cx="226" cy="214" rx="38" ry="16" fill="#FF7FA8" opacity=".7"/>
+      <ellipse cx="618" cy="252" rx="38" ry="16" fill="#FF7FA8" opacity=".7"/>
+      <path class="rest-mouth" d="M380 232 Q422 280 464 232" stroke="#FFB3C7" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <ellipse class="talk-mouth" cx="422" cy="250" rx="20" ry="15" fill="#2A1420" stroke="#FFB3C7" stroke-width="5"/>
+    </g>
+    <g transform="translate(660 120)">
+      <g class="peace-hand">
+        <rect x="-4" y="0" width="22" height="78" rx="11" fill="#FFD3E0" stroke="#FF8FB1" stroke-width="3" transform="rotate(-14 7 78)"/>
+        <rect x="30" y="0" width="22" height="78" rx="11" fill="#FFD3E0" stroke="#FF8FB1" stroke-width="3" transform="rotate(14 41 78)"/>
+        <rect x="-6" y="66" width="70" height="62" rx="24" fill="#FFD3E0" stroke="#FF8FB1" stroke-width="3"/>
+        <path d="M14 82 q10 8 22 0" stroke="#FF8FB1" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </g>
+    </g>
+    <path class="sp1" d="M150 100 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5z" fill="#FFE9A8"/>
+    <path class="sp2" d="M130 250 l4 11 11 4 -11 4 -4 11 -4 -11 -11 -4 11 -4z" fill="#BFF0FF"/>
+    <text class="cap" x="422" y="352" font-size="30" font-weight="800" fill="#BFF0FF">Peace tayo! Walang away!</text>
+  </g>
+
+  <!-- KOREAN FINGER HEART -->
+  <g class="xp xp-heart">
+    <g transform="translate(120 160) scale(1.3)"><use href="#heart" class="f1" fill="#FF7FA8"/></g>
+    <g transform="translate(700 110) scale(1.1)"><use href="#heart" class="f2" fill="#FFB3C7"/></g>
+    <g transform="translate(160 60)"><use href="#heart" class="f3" fill="#FFB3C7"/></g>
+    <g class="bob">
+      <g transform="translate(240 92) scale(4.6)"><use href="#heart" class="beat" fill="#FF7FA8"/></g>
+      <g transform="translate(494 92) scale(4.6)"><use href="#heart" class="beat" fill="#FF7FA8"/></g>
+      <circle cx="276" cy="122" r="9" fill="#fff" opacity=".85"/>
+      <circle cx="530" cy="122" r="9" fill="#fff" opacity=".85"/>
+      <ellipse cx="222" cy="232" rx="38" ry="16" fill="#FF7FA8" opacity=".8"/>
+      <ellipse cx="622" cy="232" rx="38" ry="16" fill="#FF7FA8" opacity=".8"/>
+      <path class="rest-mouth" d="M390 238 Q422 272 454 238" stroke="#FFB3C7" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <ellipse class="talk-mouth" cx="422" cy="252" rx="18" ry="14" fill="#2A1420" stroke="#FFB3C7" stroke-width="5"/>
+    </g>
+    <g transform="translate(682 214)">
+      <rect x="0" y="34" width="56" height="50" rx="20" fill="#FFD3E0" stroke="#FF8FB1" stroke-width="3"/>
+      <rect x="8" y="2" width="16" height="46" rx="8" fill="#FFD3E0" stroke="#FF8FB1" stroke-width="3" transform="rotate(-18 16 48)"/>
+      <rect x="22" y="6" width="16" height="44" rx="8" fill="#FFD3E0" stroke="#FF8FB1" stroke-width="3" transform="rotate(20 30 50)"/>
+      <g transform="translate(14 -26) scale(1.1)"><use href="#heart" class="beat" fill="#FF6F8E"/></g>
+    </g>
+    <text class="cap" x="422" y="352" font-size="30" font-weight="800" fill="#FFB3C7">Saranghae! Love you din po!</text>
+  </g>
+
+  <!-- BLEH (tongue out back at you) -->
+  <g class="xp xp-bleh">
+    <g class="tilt">
+      <path d="M262 118 L326 150 L262 182" stroke="#F2FBFF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <rect class="eye-shape eye-glow" x="496" y="96" width="112" height="132" rx="56"/>
+      <rect x="512" y="124" width="80" height="94" rx="40" fill="#1C2A4D"/>
+      <circle cx="566" cy="146" r="14" fill="#fff"/>
+      <circle cx="532" cy="196" r="6" fill="#fff"/>
+      <ellipse cx="229" cy="232" rx="36" ry="15" fill="#FF7FA8" opacity=".65"/>
+      <ellipse cx="615" cy="252" rx="36" ry="15" fill="#FF7FA8" opacity=".65"/>
+      <path d="M386 236 Q422 256 458 236" stroke="#FFB3C7" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <g class="tongue">
+        <path d="M402 244 h40 v26 a20 20 0 0 1 -40 0z" fill="#FF8FB1" stroke="#FF6F98" stroke-width="3"/>
+        <path d="M422 250 v18" stroke="#E2577F" stroke-width="3" stroke-linecap="round"/>
+      </g>
+    </g>
+    <text class="cap" x="422" y="352" font-size="30" font-weight="800" fill="#FFD3E0">Bleh! Ikaw din! Hihi!</text>
+  </g>
+
+  <!-- HORNS (playful little devil) -->
+  <g class="xp xp-horns">
+    <g class="bob">
+      <path class="horn" d="M262 92 Q246 44 284 18 Q282 54 306 86 Z" fill="#FF6F8E" stroke="#FF8FB1" stroke-width="3" stroke-linejoin="round"/>
+      <path class="horn" d="M582 92 Q598 44 560 18 Q562 54 538 86 Z" fill="#FF6F8E" stroke="#FF8FB1" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="240" y="96" width="92" height="12" rx="6" fill="#F2FBFF" transform="rotate(14 286 102)"/>
+      <rect x="512" y="96" width="92" height="12" rx="6" fill="#F2FBFF" transform="rotate(-14 558 102)"/>
+      <g class="eye-glow">
+        <rect class="eye-shape" x="240" y="122" width="104" height="110" rx="52"/>
+        <rect class="eye-shape" x="500" y="122" width="104" height="110" rx="52"/>
+      </g>
+      <rect x="262" y="150" width="66" height="72" rx="33" fill="#1C2A4D"/>
+      <rect x="516" y="150" width="66" height="72" rx="33" fill="#1C2A4D"/>
+      <circle cx="308" cy="164" r="11" fill="#fff"/>
+      <circle cx="562" cy="164" r="11" fill="#fff"/>
+      <ellipse cx="226" cy="262" rx="36" ry="15" fill="#FF7FA8" opacity=".6"/>
+      <ellipse cx="618" cy="262" rx="36" ry="15" fill="#FF7FA8" opacity=".6"/>
+      <path class="rest-mouth" d="M370 252 Q422 300 474 252" stroke="#FFB3C7" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <path class="rest-mouth" d="M392 262 l8 14 8 -12 M436 264 l8 12 8 -14" stroke="#F2FBFF" stroke-width="4" stroke-linejoin="round" fill="none"/>
+      <ellipse class="talk-mouth" cx="422" cy="270" rx="22" ry="15" fill="#2A1420" stroke="#FFB3C7" stroke-width="5"/>
+    </g>
+    <text class="cap" x="422" y="356" font-size="28" font-weight="800" fill="#FFB3C7">Rawr! May sungay din ako! Hehe!</text>
+  </g>
+
+  <!-- FIST BUMP -->
+  <g class="xp xp-fistbump">
+    <g class="hop">
+      <path d="M246 160 Q295 94 344 160" stroke="#F2FBFF" stroke-width="14" stroke-linecap="round" fill="none"/>
+      <path d="M500 160 Q549 94 598 160" stroke="#F2FBFF" stroke-width="14" stroke-linecap="round" fill="none"/>
+      <ellipse cx="226" cy="203" rx="40" ry="17" fill="#FF7FA8" opacity=".7"/>
+      <ellipse cx="618" cy="203" rx="40" ry="17" fill="#FF7FA8" opacity=".7"/>
+      <path class="rest-mouth" d="M390 196 Q422 236 454 196" stroke="#FFB3C7" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <ellipse class="talk-mouth" cx="422" cy="214" rx="20" ry="15" fill="#2A1420" stroke="#FFB3C7" stroke-width="5"/>
+    </g>
+    <g transform="translate(652 176)">
+      <g class="bump">
+        <rect x="0" y="0" width="96" height="78" rx="26" fill="#FFD3E0" stroke="#FF8FB1" stroke-width="4"/>
+        <path d="M30 6 v26 M54 6 v26 M76 10 v22" stroke="#FF8FB1" stroke-width="4" stroke-linecap="round"/>
+        <path d="M-6 40 q-16 -6 -14 -22" stroke="#FF8FB1" stroke-width="4" stroke-linecap="round" fill="none"/>
+      </g>
+      <path class="sp1" d="M-34 -20 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5z" fill="#FFE9A8"/>
+      <path class="sp3" d="M110 96 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5z" fill="#BFF0FF"/>
+    </g>
+    <text class="cap" x="422" y="352" font-size="30" font-weight="800" fill="#FFE9A8">Fist bump! Bati tayo!</text>
+  </g>
+
+  <!-- DODGE (a punch? no thanks!) -->
+  <g class="xp xp-dodge">
+    <g class="whoosh">
+      <path d="M690 130 h80 M700 175 h100 M690 220 h80" stroke="#7FD6F5" stroke-width="6" stroke-linecap="round"/>
+    </g>
+    <g class="dodge">
+      <g class="eye-glow">
+        <rect class="eye-shape" x="248" y="112" width="96" height="104" rx="48"/>
+        <rect class="eye-shape" x="500" y="112" width="96" height="104" rx="48"/>
+      </g>
+      <circle cx="296" cy="164" r="18" fill="#1C2A4D"/>
+      <circle cx="548" cy="164" r="18" fill="#1C2A4D"/>
+      <circle cx="302" cy="158" r="6" fill="#fff"/>
+      <circle cx="554" cy="158" r="6" fill="#fff"/>
+      <path class="drip" d="M620 96 C611 112 609 120 620 127 C631 120 629 112 620 96Z" fill="#8FD8FF"/>
+      <ellipse cx="229" cy="246" rx="33" ry="13" fill="#FF7FA8" opacity=".45"/>
+      <ellipse cx="615" cy="246" rx="33" ry="13" fill="#FF7FA8" opacity=".45"/>
+      <ellipse class="rest-mouth" cx="422" cy="252" rx="16" ry="18" fill="#2A1420" stroke="#FFB3C7" stroke-width="6"/>
+      <ellipse class="talk-mouth" cx="422" cy="252" rx="16" ry="14" fill="#2A1420" stroke="#FFB3C7" stroke-width="5"/>
+    </g>
+    <text class="cap" x="422" y="346" font-size="26" font-weight="800" fill="#DDF5FF">Whoa! Bawal po ang suntok dito!</text>
+    <text class="cap" x="422" y="376" font-size="18" font-weight="500" fill="#9FB0C8">fist bump na lang tayo</text>
+  </g>
+
   <!-- THINKING -->
   <g class="xp xp-think">
     <g class="eye-glow">
@@ -443,7 +606,7 @@
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">JEG · Settings</h2>
+    <h2 id="ptitle">JEG · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v10</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -451,6 +614,7 @@
     <button class="btn ghost" id="hearingBtn">Hearing Mode: OFF</button>
     <p class="note" id="micStatus">Mic: hindi pa naka-on</p>
     <p class="note" id="camStatus">Camera (kaway): hindi pa naka-on</p>
+    <p class="note" id="seeStatus" style="color:#BFF0FF">Nakikita ni JEG: —</p>
     <p class="note" id="wakeStatus">"Hey JEG": hindi pa naka-on</p>
     <label>Sensitivity
       <input type="range" id="sens" min="6" max="30" step="1" value="16" aria-label="Sensitivity">
@@ -468,6 +632,13 @@
       <button class="btn ghost" data-go="happy">Bati na!</button>
       <button class="btn ghost" data-go="shh">Shhh</button>
       <button class="btn ghost" data-go="music">Music</button>
+      <button class="btn ghost" data-go="bye">Bye</button>
+      <button class="btn ghost" data-go="peace">Peace</button>
+      <button class="btn ghost" data-go="heart">Finger heart</button>
+      <button class="btn ghost" data-go="bleh">Bleh</button>
+      <button class="btn ghost" data-go="horns">Sungay</button>
+      <button class="btn ghost" data-go="fistbump">Fist bump</button>
+      <button class="btn ghost" data-go="dodge">Suntok</button>
       <button class="btn ghost" data-go="lying">Nakahiga</button>
       <button class="btn ghost" data-go="refreshed">Itinayo</button>
       <button class="btn ghost" data-go="sleep">Tulog</button>
@@ -492,8 +663,8 @@
    For the free version: deploy the Supabase function "jeg-ask" (it talks to Groq),
    then paste its URL and your Supabase *anon* key here. Never put the Groq key in this file. */
 const JEG_CONFIG = {
-  brainUrl: 'https://adragnnngictwxtslosy.supabase.co',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
-  supabaseAnonKey: 'sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd',   // Supabase > Project Settings > API > anon public key
+  brainUrl: '',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
+  supabaseAnonKey: '',   // Supabase > Project Settings > API > anon public key
 };
 (() => {
   const body = document.body;
@@ -955,6 +1126,49 @@ Mga patakaran:
     if (stream) stream.getVideoTracks().forEach(t => { t.stop(); stream.removeTrack(t); });
     $('cam').srcObject = null;
   }
+  // ---------- camera + mic watchdog ----------
+  // iPhone can pause the camera when JEG talks, the phone rotates, or another sound plays.
+  // Every 2 seconds JEG checks that the camera is still sending pictures and restarts it if not.
+  let lastVideoTime = -1, lastFrameAt = performance.now(), visionErrors = 0, restarting = false, mutedSince = 0;
+  async function restartCamera(why) {
+    if (restarting) return;
+    restarting = true;
+    try {
+      stopCamera();
+      await new Promise(r => setTimeout(r, 400));
+      lastFrameAt = performance.now();
+      await startCamera();
+    } finally { restarting = false; }
+  }
+  async function restartMic() {
+    try {
+      const a = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      if (stream) { stream.getAudioTracks().forEach(t => { t.stop(); stream.removeTrack(t); }); a.getAudioTracks().forEach(t => stream.addTrack(t)); }
+      const src = ac.createMediaStreamSource(new MediaStream(a.getAudioTracks()));
+      analyser = ac.createAnalyser(); analyser.fftSize = 1024; buf = new Float32Array(analyser.fftSize);
+      src.connect(analyser); micReady = true; startedAt = performance.now(); floor = -60;
+    } catch (e) { micReady = false; }
+  }
+  setInterval(() => {
+    if (!stream || hearing || restarting) return;
+    if (ac && ac.state === 'suspended') ac.resume().catch(() => {});
+    // camera
+    if (prefs.wave && !deepSleep) {
+      const v = $('cam');
+      const vt = stream.getVideoTracks()[0];
+      if (!vt || vt.readyState === 'ended') { restartCamera('ended'); }
+      else if (vt.muted) { mutedSince = mutedSince || performance.now(); if (performance.now() - mutedSince > 2500) { mutedSince = 0; restartCamera('muted'); } }
+      else if (v.paused) { mutedSince = 0; v.play().catch(() => {}); }
+      else if (handsOn && performance.now() - lastFrameAt > 3000) { restartCamera('frozen'); }
+      else if (visionErrors > 15) { visionErrors = 0; restartCamera('errors'); }
+    }
+    // mic
+    const at = stream.getAudioTracks()[0];
+    if (micReady && (!at || at.readyState === 'ended')) restartMic();
+  }, 2000);
+  window.addEventListener('orientationchange', () => { const v = $('cam'); setTimeout(() => v.play().catch(() => {}), 300); lastFrameAt = performance.now(); });
+  window.addEventListener('resize', () => { lastFrameAt = performance.now(); });
+
   function stopSensors() {
     if (stream) stream.getTracks().forEach(t => t.stop());
     stream = null; micReady = false; analyser = null;
@@ -969,9 +1183,15 @@ Mga patakaran:
     return 20 * Math.log10(Math.sqrt(s / buf.length) + 1e-8);
   }
 
-  // ---------- wave detection (MediaPipe Hand Landmarker, runs on the phone) ----------
+  // ---------- camera gestures (MediaPipe hand + face trackers, run on the phone) ----------
   const MP_VER = '0.10.3';
   let hand = null, face = null, handsOn = false, handTimer = null, xs = [], shhSince = 0;
+  let lastFace = null, lastFaceAt = 0, lastHelloAt = 0;
+  const holds = {};                 // how long each gesture has been held
+  let reactCooldownUntil = 0;
+  const snap = document.createElement('canvas'); snap.width = 160; snap.height = 120;
+  const snapCtx = snap.getContext('2d', { willReadFrequently: true });
+
   async function startHands() {
     if (hearing || !prefs.wave || handsOn) return;
     const v = $('cam');
@@ -979,101 +1199,215 @@ Mga patakaran:
     handsOn = true;
     try {
       if (!hand) {
-        $('camStatus').textContent = 'Camera (kaway): nilo-load ang hand tracker…';
+        $('camStatus').textContent = 'Camera: nilo-load ang hand at face tracker…';
         const vision = await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}`);
         const files = await vision.FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/wasm`);
-        const opts = (delegate) => ({
+        const hopts = (delegate) => ({
           baseOptions: {
             modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
             delegate,
           },
-          runningMode: 'VIDEO', numHands: 1,
+          runningMode: 'VIDEO', numHands: 2,
         });
-        try { hand = await vision.HandLandmarker.createFromOptions(files, opts('GPU')); }
-        catch (e) { hand = await vision.HandLandmarker.createFromOptions(files, opts('CPU')); }
-        // face finder: lets JEG look at people and know where the mouth is (for "shhh")
+        try { hand = await vision.HandLandmarker.createFromOptions(files, hopts('GPU')); }
+        catch (e) { hand = await vision.HandLandmarker.createFromOptions(files, hopts('CPU')); }
+        // face mesh: where the eyes, lips and head are (for looking, "shhh", horns and "bleh")
         const fopts = (delegate) => ({
           baseOptions: {
-            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite',
+            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
             delegate,
           },
-          runningMode: 'VIDEO', minDetectionConfidence: 0.5,
+          runningMode: 'VIDEO', numFaces: 1, outputFaceBlendshapes: true,
         });
-        try { face = await vision.FaceDetector.createFromOptions(files, fopts('GPU')); }
-        catch (e) { try { face = await vision.FaceDetector.createFromOptions(files, fopts('CPU')); } catch (x) { face = null; } }
+        try { face = await vision.FaceLandmarker.createFromOptions(files, fopts('GPU')); }
+        catch (e) { try { face = await vision.FaceLandmarker.createFromOptions(files, fopts('CPU')); } catch (x) { face = null; } }
       }
       if (!handsOn) return;
-      $('camStatus').textContent = 'Camera (kaway): naka-on. Kamay lang ang hinahanap, walang recording.';
-      handTimer = setInterval(detectHand, 110); // about 9 checks per second, easy on the battery
+      $('camStatus').textContent = 'Camera: naka-on. Kamay at mukha lang ang tinitingnan, walang recording.';
+      handTimer = setInterval(detectHand, 110); // about 9 checks per second
     } catch (e) {
       handsOn = false;
-      $('camStatus').textContent = 'Camera (kaway): hindi ma-load ang hand tracker (kailangan ng internet sa unang bukas).';
+      $('camStatus').textContent = 'Camera: hindi ma-load ang tracker (kailangan ng internet sa unang bukas).';
     }
   }
-  function isShh(lm, fk) {
+  function stopHands() { handsOn = false; clearInterval(handTimer); handTimer = null; xs = []; flaps = []; sizes = []; }
+
+  // ---- small helpers ----
+  let ASP = 4 / 3; // camera width / height, so left-right and up-down distances compare fairly
+  const dist = (a, b) => Math.hypot((a.x - b.x) * ASP, a.y - b.y);
+  // a finger is folded when its tip is closer to the wrist than its middle joint
+  const FINGERS = { index: [8, 6], middle: [12, 10], ring: [16, 14], pinky: [20, 18] };
+  const folded = (lm, f) => dist(lm[FINGERS[f][0]], lm[0]) < dist(lm[FINGERS[f][1]], lm[0]);
+  const extended = (lm, f) => dist(lm[FINGERS[f][0]], lm[0]) > dist(lm[FINGERS[f][1]], lm[0]) * 1.12;
+  const foldedCount = (lm) => Object.keys(FINGERS).filter(f => folded(lm, f)).length;
+  const palm = (lm) => dist(lm[0], lm[9]) || 0.1;
+  // how far each fingertip is from the wrist, compared to the palm (open ≈ 1.8+, folded ≈ 1.1)
+  const reach = (lm, tip) => dist(lm[tip], lm[0]) / palm(lm);
+  function openPalm(lm) {
+    let up = 0;
+    [[8, 6], [12, 10], [16, 14], [20, 18]].forEach(([tip, pip]) => { if (lm[tip].y < lm[pip].y) up++; });
+    return up >= 3;
+  }
+  function isFist(lm) { return foldedCount(lm) === 4; }
+  function openness(lm) { return [8, 12, 16, 20].reduce((s, t) => s + reach(lm, t), 0) / 4; }
+  function held(name, on, now, ms) {
+    if (!on) { holds[name] = 0; return false; }
+    if (!holds[name]) holds[name] = now;
+    if (now - holds[name] >= ms) { holds[name] = 0; return true; }
+    return false;
+  }
+  function canReact() {
+    return !hearing && !asking && !music && performance.now() > reactCooldownUntil &&
+      !['breathe', 'worried', 'lying', 'think', 'answer', 'shh'].includes(state);
+  }
+  function react(st, text, sound) {
+    if (!canReact()) return;
+    reactCooldownUntil = performance.now() + 3500;
+    if (st === 'hello') { $('helloText').textContent = text; }
+    setState(st, { silent: true });
+    sound && sound();
+    speakNow(text);
+  }
+
+  // face points we use: eyes, nose tip, upper/lower inner lip, lower lip edge, chin, cheeks, forehead
+  function facePoints(f) {
+    return {
+      rEye: f[33], lEye: f[263], nose: f[1], lipTop: f[13], lipBot: f[14],
+      lipEdge: f[17], chin: f[152], cheekR: f[205], cheekL: f[425], brow: f[9],
+    };
+  }
+
+  // "bleh": tongue out — a red patch just below the lips (and the model's tongue score, if it has one)
+  function redness(x, y, r) {
+    const W = snap.width, H = snap.height;
+    const x0 = Math.max(0, Math.round((x - r) * W)), y0 = Math.max(0, Math.round((y - r) * H));
+    const w = Math.max(2, Math.round(2 * r * W)), h = Math.max(2, Math.round(2 * r * H));
+    let d; try { d = snapCtx.getImageData(x0, y0, Math.min(w, W - x0), Math.min(h, H - y0)).data; } catch (e) { return 0; }
+    let R = 0, S = 0;
+    for (let i = 0; i < d.length; i += 4) { R += d[i]; S += d[i] + d[i + 1] + d[i + 2] + 1; }
+    return R / S;
+  }
+  function isBleh(p, shapes, v) {
+    if (shapes) {
+      const t = shapes.find(c => c.categoryName === 'tongueOut');
+      if (t && t.score > 0.45) return true;
+    }
+    const eyeDist = dist(p.rEye, p.lEye) || 0.1;
+    const mouthOpen = dist(p.lipTop, p.lipBot) / eyeDist;
+    try { snapCtx.drawImage(v, 0, 0, snap.width, snap.height); } catch (e) { return false; }
+    const below = { x: p.lipEdge.x, y: p.lipEdge.y + (p.chin.y - p.lipEdge.y) * 0.35 }; // just under the lower lip
+    const r = eyeDist * 0.12;
+    const tongue = redness(below.x, below.y, r);
+    const skin = (redness(p.cheekR.x, p.cheekR.y, r) + redness(p.cheekL.x, p.cheekL.y, r)) / 2;
+    return mouthOpen > 0.08 && tongue - skin > 0.04;
+  }
+
+  // peace / V sign: index + middle up and spread, ring + pinky folded
+  function isPeace(lm) {
+    return extended(lm, 'index') && extended(lm, 'middle') && folded(lm, 'ring') && folded(lm, 'pinky') &&
+      dist(lm[8], lm[12]) > dist(lm[5], lm[9]) * 1.4;
+  }
+  // Korean finger heart: thumb tip and index tip pinched together above the knuckles, other fingers folded
+  function isFingerHeart(lm) {
+    const pinch = dist(lm[4], lm[8]) < palm(lm) * 0.45 || dist(lm[4], lm[7]) < palm(lm) * 0.35;
+    const othersFolded = folded(lm, 'middle') && folded(lm, 'ring') && folded(lm, 'pinky');
+    const indexOut = dist(lm[8], lm[0]) > dist(lm[6], lm[0]) * 0.95;   // index not tucked like a fist
+    const thumbOut = dist(lm[4], lm[0]) > dist(lm[3], lm[0]);          // thumb tip pushed forward
+    return pinch && othersFolded && indexOut && thumbOut;
+  }
+
+  // "sungay": both hands up on the head with fingers pointing up
+  function isHorns(hands, p) {
+    if (hands.length < 2 || !p) return false;
+    const eyeDist = dist(p.rEye, p.lEye) || 0.1;
+    const eyeY = (p.rEye.y + p.lEye.y) / 2, midX = p.nose.x;
+    const ok = hands.map(lm => {
+      const up = lm[8].y < lm[6].y;
+      const aboveHead = lm[8].y < eyeY - eyeDist * 0.6 && lm[8].y > eyeY - eyeDist * 5;
+      const nearHead = Math.abs(lm[5].x - midX) * ASP < eyeDist * 4;
+      return up && aboveHead && nearHead ? Math.sign(lm[5].x - midX) : 0;
+    });
+    return ok[0] !== 0 && ok[1] !== 0 && ok[0] !== ok[1]; // one on each side
+  }
+
+  // "shhh": index up, others folded, fingertip at the lips
+  function isShh(lm, p) {
     const indexUp = lm[8].y < lm[6].y && lm[6].y < lm[5].y;
     let folded = 0;
     [[12, 10], [16, 14], [20, 18]].forEach(([tip, pip]) => { if (lm[tip].y > lm[pip].y) folded++; });
-    const eyeDist = Math.hypot(fk[0].x - fk[1].x, fk[0].y - fk[1].y) || 0.1;
-    const mouth = fk[3];
-    const nearLips = Math.hypot(lm[8].x - mouth.x, lm[8].y - mouth.y) < eyeDist * 1.1
-                  || Math.hypot(lm[7].x - mouth.x, lm[7].y - mouth.y) < eyeDist * 0.9;
+    const eyeDist = dist(p.rEye, p.lEye) || 0.1;
+    const mouth = { x: (p.lipTop.x + p.lipBot.x) / 2, y: (p.lipTop.y + p.lipBot.y) / 2 };
+    const nearLips = dist(lm[8], mouth) < eyeDist * 1.1 || dist(lm[7], mouth) < eyeDist * 0.9;
     return indexUp && folded >= 2 && nearLips;
   }
   function doShh() {
     if (hearing) return;
     stopMusic({ keepState: true });
-    muteUntil = performance.now() + 2500;     // the person's own "shhh" sound won't count as loud
+    muteUntil = performance.now() + 2500;
     try { speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
     body.classList.remove('talking');
     quietUntil = 0;
     setState('shh', { silent: true });
     chirps.shh();
-    quietUntil = performance.now() + SHH_QUIET_MS; // stays silent (faces only) for a minute
+    quietUntil = performance.now() + SHH_QUIET_MS;
   }
-  function stopHands() { handsOn = false; clearInterval(handTimer); handTimer = null; xs = []; }
 
-  function openPalm(lm) {
-    // fingertips above their middle joints = fingers up
-    let up = 0;
-    [[8, 6], [12, 10], [16, 14], [20, 18]].forEach(([tip, pip]) => { if (lm[tip].y < lm[pip].y) up++; });
-    return up >= 3;
-  }
-  let tick = 0;
+  let tick = 0, flaps = [], sizes = [];
   function detectHand() {
     const v = $('cam');
     if (!hand || !handsOn || v.readyState < 2) return;
-    if (state === 'sleep' && (++tick % 4)) return; // dozing: ~2 checks per second to save battery
-    let res;
-    try { res = hand.detectForVideo(v, performance.now()); } catch (e) { return; }
+    tick++;
+    if (state === 'sleep' && (tick % 4)) return; // dozing: ~2 checks per second
     const now = performance.now();
+    let res;
+    if (v.videoWidth && v.videoHeight) ASP = v.videoWidth / v.videoHeight;
+    if (v.currentTime !== lastVideoTime) { lastVideoTime = v.currentTime; lastFrameAt = now; }
+    try { res = hand.detectForVideo(v, now); visionErrors = 0; } catch (e) { visionErrors++; return; }
 
-    // find the face (eyes + mouth) in the same frame
-    let fk = null;
-    if (face) {
+    // face every other check (saves battery)
+    let shapes = null;
+    if (face && tick % 2 === 0) {
       try {
         const fr = face.detectForVideo(v, now + 0.5);
-        const det = fr && fr.detections && fr.detections[0];
-        if (det && det.keypoints && det.keypoints.length >= 4) fk = det.keypoints;
+        if (fr && fr.faceLandmarks && fr.faceLandmarks[0]) {
+          lastFace = facePoints(fr.faceLandmarks[0]); lastFaceAt = now;
+          shapes = fr.faceBlendshapes && fr.faceBlendshapes[0] && fr.faceBlendshapes[0].categories;
+        }
       } catch (e) {}
     }
-    if (fk) {
-      // look at the person's face (front camera is mirrored)
+    const p = (lastFace && now - lastFaceAt < 500) ? lastFace : null;
+    if (p) {
       lookUntil = now + 1500;
-      look((fk[2].x - 0.5) * -24, (fk[2].y - 0.5) * 14);
+      look((p.nose.x - 0.5) * -24, (p.nose.y - 0.5) * 14);
       lastActivity = now;
+      if (shapes !== null && held('bleh', isBleh(p, shapes, v), now, 450)) {
+        react('bleh', 'Bleh! Ikaw din! Hihi!', () => tone([[900, 500], [500, 900]], 0.12, 'square', 0.06));
+      }
     }
 
-    const lm = res && res.landmarks && res.landmarks[0];
-    if (!lm) { xs = xs.filter(p => now - p.t < 1200); shhSince = 0; return; }
-
+    const hands = (res && res.landmarks) || [];
+    if ($('panel').classList.contains('open')) {
+      const h0 = hands[0];
+      const g = !h0 ? '—'
+        : isFingerHeart(h0) ? 'finger heart' : isPeace(h0) ? 'peace' : isFist(h0) ? 'kamao (fist)'
+        : (p && isShh(h0, p)) ? 'shhh' : isHorns(hands, p) ? 'sungay' : openPalm(h0) ? 'bukas na palad' : 'kamay';
+      $('seeStatus').textContent = `Nakikita ni JEG: mukha ${p ? '✓' : '✗'} · kamay ${hands.length} · ${g} · nakatiklop ${h0 ? foldedCount(h0) : 0}/4`;
+    }
+    if (!hands.length) { xs = xs.filter(q => now - q.t < 1200); flaps = []; sizes = []; holds.shh = holds.fist = holds.horns = holds.heart = holds.peace = 0; return; }
     lastActivity = now;
     if (state === 'sleep') setState('idle');
+    const lm = hands[0];
     const cx = (lm[0].x + lm[9].x) / 2, cy = (lm[0].y + lm[9].y) / 2;
-    if (!fk) { lookUntil = now + 1500; look((cx - 0.5) * -24, (cy - 0.5) * 14); }
+    if (!p) { lookUntil = now + 1500; look((cx - 0.5) * -24, (cy - 0.5) * 14); }
 
-    // "shhh": index finger up, other fingers folded, fingertip at the lips
-    if (fk && isShh(lm, fk)) {
+    // two hands on the head = horns
+    if (held('horns', isHorns(hands, p), now, 500)) {
+      react('horns', 'Rawr! May sungay din ako! Hehe!', () => tone([[300, 200], [900, 1300]], 0.14, 'sawtooth', 0.05));
+      return;
+    }
+
+    // "shhh"
+    if (p && isShh(lm, p)) {
       xs = [];
       if (!shhSince) shhSince = now;
       if (now - shhSince > 450 && state !== 'shh') { shhSince = 0; doShh(); }
@@ -1081,21 +1415,78 @@ Mga patakaran:
     }
     shhSince = 0;
 
+    // Korean finger heart
+    if (held('heart', isFingerHeart(lm), now, 500)) {
+      xs = []; flaps = [];
+      react('heart', 'Saranghae! Love you din po!', () => tone([[700, 1100], [1100, 1400], [1400, 1700]], 0.1));
+      return;
+    }
+    // peace sign
+    if (held('peace', isPeace(lm), now, 500)) {
+      xs = []; flaps = [];
+      react('peace', 'Peace tayo! Walang away!', () => tone([[600, 900], [900, 1200]], 0.12));
+      return;
+    }
+    if (holds.heart || holds.peace) return; // still holding one of them
+
+    // fist: a fast push toward the camera = punch (JEG dodges); held still = fist bump
+    const size = palm(lm);
+    sizes.push({ s: size, t: now }); sizes = sizes.filter(q => now - q.t < 500);
+    if (isFist(lm)) {
+      xs = []; flaps = [];
+      const grew = sizes.length > 2 && size / Math.min(...sizes.map(q => q.s)) > 1.35;
+      if (grew) { holds.fist = 0; sizes = []; react('dodge', 'Whoa! Bawal po ang suntok dito. Fist bump na lang tayo!', () => tone([[1200, 400]], 0.25, 'triangle', 0.1)); return; }
+      if (held('fist', true, now, 800)) react('fistbump', 'Fist bump! Bati tayo!', () => tone([[200, 120], [900, 1400]], 0.12, 'square', 0.07));
+      return;
+    }
+    holds.fist = 0;
+
+    // "bye bye" flap: fingers opening and closing while the hand stays put
+    const fc = foldedCount(lm);
+    flaps.push({ fc, x: cx, t: now }); flaps = flaps.filter(q => now - q.t < 1800);
+    let changes = 0, wasOpen = null;
+    for (const q of flaps) {
+      const st = q.fc <= 1 ? true : q.fc >= 3 ? false : null;
+      if (st === null) continue;
+      if (wasOpen !== null && st !== wasOpen) changes++;
+      wasOpen = st;
+    }
+    const steady = flaps.length && (Math.max(...flaps.map(q => q.x)) - Math.min(...flaps.map(q => q.x))) < 0.08;
+    if (changes >= 3 && steady) { flaps = []; xs = []; sayBye(); return; }
+
     if (!openPalm(lm)) { xs = []; return; }
     xs.push({ x: cx, t: now });
-    xs = xs.filter(p => now - p.t < 1400);
+    xs = xs.filter(q => now - q.t < 1400);
 
-    // a wave = palm swinging left-right at least 3 times
+    // side-to-side wave: first time = hello, again within 2 minutes = bye bye
     let flips = 0, dir = 0, anchor = xs[0] ? xs[0].x : 0;
-    for (const p of xs) {
-      const d = p.x - anchor;
+    for (const q of xs) {
+      const d = q.x - anchor;
       if (Math.abs(d) > 0.035) {
         const nd = Math.sign(d);
         if (dir && nd !== dir) flips++;
-        dir = nd; anchor = p.x;
+        dir = nd; anchor = q.x;
       }
     }
-    if (flips >= 2) { xs = []; greet('Hi po! Kumusta?'); }
+    if (flips >= 2) {
+      xs = [];
+      if (lastHelloAt && now - lastHelloAt < 120000) sayBye();
+      else if (canReact()) { lastHelloAt = now; react('hello', 'Hi po! Kumusta?', chirps.hello); }
+    }
+  }
+  const TEST_REACTIONS = {
+    bye: ['hello', 'Bye bye po! Ingat po!'],
+    bleh: ['bleh', 'Bleh! Ikaw din! Hihi!'],
+    peace: ['peace', 'Peace tayo! Walang away!'],
+    heart: ['heart', 'Saranghae! Love you din po!'],
+    horns: ['horns', 'Rawr! May sungay din ako! Hehe!'],
+    fistbump: ['fistbump', 'Fist bump! Bati tayo!'],
+    dodge: ['dodge', 'Whoa! Bawal po ang suntok dito. Fist bump na lang tayo!'],
+  };
+  function sayBye() {
+    if (!canReact()) return;
+    lastHelloAt = 0;
+    react('hello', 'Bye bye po! Ingat po!', () => tone([[1200, 900], [900, 600]], 0.14));
   }
 
   // ---------- "Hey JEG" (browser speech recognition) ----------
@@ -1189,6 +1580,7 @@ Mga patakaran:
       else if (state === 'hello' && inState > HELLO_MS) setState('idle', { silent: true });
       else if (state === 'shh' && inState > SHH_MS) setState('idle', { silent: true });
       else if (state === 'refreshed' && inState > 4200) setState('idle', { silent: true });
+      else if (['bleh', 'horns', 'fistbump', 'dodge', 'peace', 'heart'].includes(state) && inState > 4000) setState('idle', { silent: true });
       else if (state === 'answer' && !speaking && now > answerUntil) setState('idle', { silent: true });
       else if (state === 'idle' && now - lastActivity > SLEEP_AFTER) setState('sleep');
     }
@@ -1219,6 +1611,12 @@ Mga patakaran:
     if (go === 'shh') doShh();
     else if (go === 'music') { if (music) stopMusic(); else startMusic(); }
     else if (go === 'sleep') goDeepSleep();
+    else if (TEST_REACTIONS[go]) {
+      stopMusic({ keepState: true }); quietUntil = 0;
+      const [st, text] = TEST_REACTIONS[go];
+      if (st === 'hello') $('helloText').textContent = text;
+      setState(st, { silent: true }); speakNow(text);
+    }
     else if (go === 'lying' || go === 'refreshed') {
       stopMusic({ keepState: true }); quietUntil = 0;
       if (go === 'lying') { lyingAt = performance.now(); nags = 0; }
