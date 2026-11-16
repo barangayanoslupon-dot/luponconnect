@@ -38,6 +38,9 @@
   body[data-state="lying"] .xp-lying,
   body[data-state="bleh"] .xp-bleh,
   body[data-state="peace"] .xp-peace,
+  body[data-state="bigsmile"] .xp-bigsmile,
+  body[data-state="spin"] .xp-idle,
+  body[data-state="dizzy"] .xp-dizzy,
   body[data-state="heart"] .xp-heart,
   body[data-state="horns"] .xp-horns,
   body[data-state="fistbump"] .xp-fistbump,
@@ -56,6 +59,12 @@
   .sp3{animation:sparkle 1.4s ease-in-out .9s infinite;transform-origin:center}
   @keyframes stretch{0%{transform:scaleY(.85)}40%{transform:scaleY(1.08)}100%{transform:scaleY(1)}}
   .stretch{animation:stretch 1.2s ease-out 1;transform-origin:50% 100%}
+
+  /* big smile / spin */
+  @keyframes jegSpin{0%{transform:rotate(0)}100%{transform:rotate(720deg)}}
+  body[data-state="spin"] #face{animation:jegSpin 1.8s cubic-bezier(.45,.05,.4,1) 1}
+  @keyframes grin{0%{transform:scale(.6)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+  .grin{animation:grin .6s ease-out both;transform-origin:center}
 
   /* peace / finger heart */
   @keyframes peaceWiggle{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
@@ -344,6 +353,38 @@
     <text class="cap" x="422" y="352" font-size="30" font-weight="700" fill="#FFE9A8">Ahh… refreshing! Thank you!</text>
   </g>
 
+  <!-- BIG SMILE -->
+  <g class="xp xp-bigsmile">
+    <g class="hop">
+      <path d="M240 168 Q295 92 350 168" stroke="#F2FBFF" stroke-width="15" stroke-linecap="round" fill="none"/>
+      <path d="M494 168 Q549 92 604 168" stroke="#F2FBFF" stroke-width="15" stroke-linecap="round" fill="none"/>
+      <ellipse cx="214" cy="214" rx="42" ry="18" fill="#FF7FA8" opacity=".8"/>
+      <ellipse cx="630" cy="214" rx="42" ry="18" fill="#FF7FA8" opacity=".8"/>
+      <g class="grin">
+        <path d="M330 196 H514 Q514 300 422 300 Q330 300 330 196Z" fill="#2A1420" stroke="#FFB3C7" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M336 200 H508 V222 Q422 232 336 222Z" fill="#F2FBFF"/>
+        <ellipse cx="422" cy="278" rx="46" ry="18" fill="#FF8FB1"/>
+      </g>
+    </g>
+    <path class="sp1" d="M150 90 l6 16 16 6 -16 6 -6 16 -6 -16 -16 -6 16 -6z" fill="#FFE9A8"/>
+    <path class="sp2" d="M690 80 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5z" fill="#BFF0FF"/>
+    <path class="sp3" d="M700 260 l6 16 16 6 -16 6 -6 16 -6 -16 -16 -6 16 -6z" fill="#FFE9A8"/>
+    <text class="cap" x="422" y="356" font-size="30" font-weight="800" fill="#FFE9A8">Big smile! Hehe!</text>
+  </g>
+
+  <!-- DIZZY after spinning -->
+  <g class="xp xp-dizzy">
+    <g class="dizzy">
+      <g transform="translate(292 166)"><path class="spin" d="M0 0 m-6 0 a6 6 0 1 1 12 0 a12 12 0 1 1 -24 0 a18 18 0 1 1 36 0 a24 24 0 1 1 -48 0 a30 30 0 1 1 60 0" stroke="#F2FBFF" stroke-width="7" stroke-linecap="round" fill="none"/></g>
+      <g transform="translate(552 166)"><path class="spin" d="M0 0 m-6 0 a6 6 0 1 1 12 0 a12 12 0 1 1 -24 0 a18 18 0 1 1 36 0 a24 24 0 1 1 -48 0 a30 30 0 1 1 60 0" stroke="#F2FBFF" stroke-width="7" stroke-linecap="round" fill="none"/></g>
+      <ellipse cx="229" cy="250" rx="33" ry="13" fill="#FF7FA8" opacity=".55"/>
+      <ellipse cx="615" cy="250" rx="33" ry="13" fill="#FF7FA8" opacity=".55"/>
+      <path class="rest-mouth" d="M396 252 Q422 278 448 252" stroke="#FFB3C7" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <ellipse class="talk-mouth" cx="422" cy="262" rx="15" ry="11" fill="#2A1420" stroke="#FFB3C7" stroke-width="5"/>
+    </g>
+    <text class="cap" x="422" y="352" font-size="28" font-weight="700" fill="#DDF5FF">Wheee! I'm so dizzy… hehe</text>
+  </g>
+
   <!-- PEACE -->
   <g class="xp xp-peace">
     <g class="hop">
@@ -606,7 +647,7 @@
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">JEG · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v11</span></h2>
+    <h2 id="ptitle">JEG · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v12</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -625,6 +666,10 @@
       <label><input type="checkbox" id="chkVoice"> Boses (salita)</label>
       <label><input type="checkbox" id="chkWave" checked> Kaway (camera)</label>
       <label><input type="checkbox" id="chkWake" checked> "Hey JEG"</label>
+      <label><input type="checkbox" id="chkLite"> Lite mode (mabagal na phone)</label>
+    </div>
+    <div class="row">
+      <button class="btn ghost" id="soundTest">Test sound</button>
     </div>
     <div class="row">
       <button class="btn ghost" data-go="idle">Idle</button>
@@ -634,6 +679,8 @@
       <button class="btn ghost" data-go="shh">Shhh</button>
       <button class="btn ghost" data-go="music">Music</button>
       <button class="btn ghost" data-go="bye">Bye</button>
+      <button class="btn ghost" data-go="bigsmile">Smile</button>
+      <button class="btn ghost" data-go="spin">Spin</button>
       <button class="btn ghost" data-go="peace">Peace</button>
       <button class="btn ghost" data-go="heart">Finger heart</button>
       <button class="btn ghost" data-go="bleh">Bleh</button>
@@ -672,7 +719,7 @@ const JEG_CONFIG = {
   const $ = (id) => document.getElementById(id);
 
   // ---------- settings ----------
-  const prefs = { sens: 16, sound: true, voice: true, wave: true, wake: true };
+  const prefs = { sens: 16, sound: true, voice: true, wave: true, wake: true, lite: false };
   try { Object.assign(prefs, JSON.parse(localStorage.getItem('jeg-prefs-v11') || '{}')); } catch (e) {}
   const savePrefs = () => { try { localStorage.setItem('jeg-prefs-v11', JSON.stringify(prefs)); } catch (e) {} };
   $('sens').value = prefs.sens; $('chkSound').checked = prefs.sound; $('chkVoice').checked = prefs.voice;
@@ -681,6 +728,8 @@ const JEG_CONFIG = {
   $('chkSound').onchange = (e) => { prefs.sound = e.target.checked; savePrefs(); };
   $('chkVoice').onchange = (e) => { prefs.voice = e.target.checked; savePrefs(); };
   $('chkWave').onchange = (e) => { prefs.wave = e.target.checked; savePrefs(); if (prefs.wave) startHands(); else stopHands(); };
+  $('chkLite').checked = prefs.lite;
+  $('chkLite').onchange = (e) => { prefs.lite = e.target.checked; savePrefs(); if (handsOn) { stopHands(); startHands(); } };
   $('chkWake').onchange = (e) => { prefs.wake = e.target.checked; savePrefs(); if (prefs.wake) startWake(); else stopWake(); };
 
   // ---------- sounds ----------
@@ -727,6 +776,24 @@ const JEG_CONFIG = {
     src.connect(bp).connect(g).connect(ac.destination);
     src.start(t);
     muteUntil = performance.now() + 1200;
+  }
+
+  // ---------- iPhone sound unlock ----------
+  // iPhones keep web sound off until it is started inside a tap, and may play it quietly
+  // while the mic is on. This runs inside the "Gisingin si JEG" tap and the "Test sound" button.
+  function unlockSound() {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'play-and-record'; } catch (e) {}
+    try {
+      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+      ac.resume();
+      const b = ac.createBuffer(1, 1, 22050), src = ac.createBufferSource();
+      src.buffer = b; src.connect(ac.destination); src.start(0);
+    } catch (e) {}
+    try {
+      if (window.speechSynthesis) {
+        const u = new SpeechSynthesisUtterance('hi'); u.volume = 0; speechSynthesis.speak(u);
+      }
+    } catch (e) {}
   }
 
   // ---------- voice ----------
@@ -1220,7 +1287,7 @@ Rules:
       }
       if (!handsOn) return;
       $('camStatus').textContent = 'Camera: naka-on. Kamay at mukha lang ang tinitingnan, walang recording.';
-      handTimer = setInterval(detectHand, 110); // about 9 checks per second
+      handTimer = setInterval(detectHand, prefs.lite ? 220 : 110); // lite: ~4.5 checks per second for slower phones
     } catch (e) {
       handsOn = false;
       $('camStatus').textContent = 'Camera: hindi ma-load ang tracker (kailangan ng internet sa unang bukas).';
@@ -1362,7 +1429,7 @@ Rules:
 
     // face every other check (saves battery)
     let shapes = null;
-    if (face && tick % 2 === 0) {
+    if (face && tick % (prefs.lite ? 3 : 2) === 0) {
       try {
         const fr = face.detectForVideo(v, now + 0.5);
         if (fr && fr.faceLandmarks && fr.faceLandmarks[0]) {
@@ -1479,6 +1546,20 @@ Rules:
     fistbump: ['fistbump', "Fist bump! We're friends!"],
     dodge: ['dodge', "Whoa! No punching here. Let's fist bump instead!"],
   };
+  function doSmile() {
+    if (hearing) return;
+    stopMusic({ keepState: true }); quietUntil = 0;
+    setState('bigsmile', { silent: true });
+    tone([[700, 1100], [1100, 1500]], 0.1);
+    speakNow('Like this? Big smile! Hehe!');
+  }
+  function doSpin() {
+    if (hearing) return;
+    stopMusic({ keepState: true }); quietUntil = 0;
+    setState('spin', { silent: true });
+    tone([[400, 1400]], 1.4, 'sine', 0.07);
+    speakNow('Wheee!');
+  }
   function sayBye() {
     if (!canReact()) return;
     lastHelloAt = 0;
@@ -1495,6 +1576,8 @@ Rules:
   const SLEEP_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:sleep|go to sleep|tulog|matulog|pahinga)\\b`, 'i');
   const WAKE_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:wake|wake up|gising|gumising|bangon)\\b`, 'i');
   const ASK_CMD = new RegExp(`\\b${NAME}\\b[\\s,]+(.*\\b(?:what|what's|who|where|when|why|how|explain|define|tell me|can you|could you|do you know|is|are|does|ano|anong|sino|saan|kailan|bakit|paano|ilan|magkano|ipaliwanag)\\b.*)`, 'i');
+  const SMILE_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:smile|smiles|ngiti|ngumiti|say cheese)\\b`, 'i');
+  const SPIN_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:spin|spins|spinning|turn around|roll|ikot|umikot)\\b`, 'i');
   const STOP_MUSIC = new RegExp(`\\b${NAME}\\b.*\\b(?:stop|tama na|hinto|tigil|patayin|off)\\b`, 'i');
   function startWake() {
     if (hearing || !prefs.wake || wakeOn) return;
@@ -1520,6 +1603,8 @@ Rules:
         if (SLEEP_CMD.test(txt) && state !== 'sleep') { lastCmdAt = now; goDeepSleep(); try { rec.abort(); } catch (x) {} break; }
         if (WAKE_CMD.test(txt) && state === 'sleep') { lastCmdAt = now; setState('idle', { line: "I'm awake! Good morning!" }); try { rec.abort(); } catch (x) {} break; }
         if (WAKE.test(txt) && state === 'sleep') { lastCmdAt = now; setState('idle', { silent: true }); greet("Hello! I'm awake!"); try { rec.abort(); } catch (x) {} break; }
+        if (SMILE_CMD.test(txt)) { lastCmdAt = now; try { rec.abort(); } catch (x) {} doSmile(); break; }
+        if (SPIN_CMD.test(txt)) { lastCmdAt = now; try { rec.abort(); } catch (x) {} doSpin(); break; }
         const askM = e.results[i].isFinal && txt.match(ASK_CMD);
         if (askM) { lastCmdAt = now; try { rec.abort(); } catch (x) {} askQuestion(askM[1]); break; }
         if (WAKE.test(txt) && e.results[i].isFinal) { lastCmdAt = now; greet("Hello! I'm JEG!"); try { rec.abort(); } catch (x) {} break; }
@@ -1582,7 +1667,9 @@ Rules:
       else if (state === 'hello' && inState > HELLO_MS) setState('idle', { silent: true });
       else if (state === 'shh' && inState > SHH_MS) setState('idle', { silent: true });
       else if (state === 'refreshed' && inState > 4200) setState('idle', { silent: true });
-      else if (['bleh', 'horns', 'fistbump', 'dodge', 'peace', 'heart'].includes(state) && inState > 4000) setState('idle', { silent: true });
+      else if (['bleh', 'horns', 'fistbump', 'dodge', 'peace', 'heart', 'bigsmile'].includes(state) && inState > 4000) setState('idle', { silent: true });
+      else if (state === 'spin' && inState > 1850) { setState('dizzy', { silent: true }); speakNow("Whee! I'm so dizzy!"); tone([[900, 500], [700, 900], [900, 500]], 0.12, 'triangle', 0.08); }
+      else if (state === 'dizzy' && inState > 2800) setState('idle', { silent: true });
       else if (state === 'answer' && !speaking && now > answerUntil) setState('idle', { silent: true });
       else if (state === 'idle' && now - lastActivity > SLEEP_AFTER) setState('sleep');
     }
@@ -1604,6 +1691,11 @@ Rules:
     if (state === 'breathe') return;
     setState('happy');
   });
+  $('soundTest').onclick = () => {
+    unlockSound(); quietUntil = 0;
+    tone([[700, 1100], [900, 1300]], 0.12);
+    setTimeout(() => speakNow('Hello! Can you hear me?'), 300);
+  };
   $('gear').onclick = (e) => { e.stopPropagation(); $('panel').classList.add('open'); };
   $('closePanel').onclick = () => $('panel').classList.remove('open');
   $('panel').addEventListener('click', (e) => { if (e.target.id === 'panel') $('panel').classList.remove('open'); });
@@ -1613,6 +1705,8 @@ Rules:
     if (go === 'shh') doShh();
     else if (go === 'music') { if (music) stopMusic(); else startMusic(); }
     else if (go === 'sleep') goDeepSleep();
+    else if (go === 'bigsmile') doSmile();
+    else if (go === 'spin') doSpin();
     else if (TEST_REACTIONS[go]) {
       stopMusic({ keepState: true }); quietUntil = 0;
       const [st, text] = TEST_REACTIONS[go];
@@ -1637,7 +1731,7 @@ Rules:
     } catch (e) {}
     Promise.resolve(motionAsk).then((r) => { if (!motionAsk || r === 'granted') startTilt(); }).catch(() => {});
     try { ac = new (window.AudioContext || window.webkitAudioContext)(); await ac.resume(); } catch (e) { ac = null; }
-    if (window.speechSynthesis) { try { speechSynthesis.speak(new SpeechSynthesisUtterance('')); } catch (e) {} }
+    unlockSound();
     try { await startSensors(); }
     catch (e) {
       $('micStatus').textContent = 'Mic: hindi magamit dito. Manual mode muna, gamitin ang mga button sa ibaba.';
