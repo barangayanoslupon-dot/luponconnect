@@ -655,7 +655,7 @@
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">JEG · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v15</span></h2>
+    <h2 id="ptitle">JEG · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v16</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -1202,7 +1202,7 @@ Rules:
     const wantVideo = prefs.wave;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false },
         video: wantVideo ? { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 15 } } : false,
       });
     } catch (e) {
@@ -1268,7 +1268,7 @@ Rules:
   }
   async function restartMic() {
     try {
-      const a = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      const a = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
       if (stream) { stream.getAudioTracks().forEach(t => { t.stop(); stream.removeTrack(t); }); a.getAudioTracks().forEach(t => stream.addTrack(t)); }
       const src = ac.createMediaStreamSource(new MediaStream(a.getAudioTracks()));
       analyser = ac.createAnalyser(); analyser.fftSize = 1024; buf = new Float32Array(analyser.fftSize);
@@ -1679,6 +1679,8 @@ Rules:
     rec.onresult = (e) => {
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const txt = e.results[i][0].transcript || '';
+        if (body.classList.contains('talking')) continue;           // that's JEG's own voice
+        if (music && !STOP_MUSIC.test(txt)) continue;               // that's JEG's own music
         const now = performance.now();
         $('heardStatus').textContent = `Narinig ni JEG: "${txt.trim().slice(-80)}"`;
         if (e.results[i].isFinal && NAME_ONLY.test(txt) && now - lastCmdAt > 2500) {
