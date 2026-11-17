@@ -651,11 +651,11 @@
 </form>
 
 <div id="quietBadge" aria-live="polite">Quiet mode · thumbs up, tap me, or say "JEG, talk"</div>
-<div id="bubble" role="status" aria-live="polite"><span id="bubbleText"></span></div>
+<div id="bubble" role="status" aria-live="polite"><span id="bubbleText"></span><small id="bubbleNote" style="display:block;color:#8A97AD;font-size:13px;margin-top:4px"></small></div>
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">JEG · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v16</span></h2>
+    <h2 id="ptitle">JEG · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v17</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -664,6 +664,7 @@
     <p class="note" id="micStatus">Mic: hindi pa naka-on</p>
     <p class="note" id="camStatus">Camera (kaway): hindi pa naka-on</p>
     <p class="note" id="seeStatus" style="color:#BFF0FF">Nakikita ni JEG: —</p>
+    <p class="note" id="brainStatus" style="color:#D9C8FF">Brain: hindi pa nasusubukan</p>
     <p class="note" id="heardStatus" style="color:#FFE9A8">Narinig ni JEG: —</p>
     <p class="note" id="wakeStatus">"Hey JEG": hindi pa naka-on</p>
     <label>Sensitivity
@@ -719,7 +720,7 @@
    For the free version: deploy the Supabase function "jeg-ask" (it talks to Groq),
    then paste its URL and your Supabase *anon* key here. Never put the Groq key in this file. */
 const JEG_CONFIG = {
-  brainUrl: 'https://adragnnngictwxtslosy.supabase.co',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
+   brainUrl: 'https://adragnnngictwxtslosy.supabase.co',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
   supabaseAnonKey: 'sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd',   // Supabase > Project Settings > API > anon public key
 };
 (() => {
@@ -912,7 +913,7 @@ Rules:
 
   async function askBrain(q) {
     if (JEG_CONFIG.brainUrl) {
-      const r = await fetch(JEG_CONFIG.brainUrl, {
+      const r = await fetch(JEG_CONFIG.brainUrl.trim(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -922,7 +923,11 @@ Rules:
         body: JSON.stringify({ question: q }),
       });
       if (r.status === 429) throw { code: 'rate_limited' };
-      if (!r.ok) throw { code: 'brain_error' };
+      if (!r.ok) {
+        let detail = '';
+        try { const j = await r.json(); detail = j.error || j.message || j.msg || ''; } catch (e) {}
+        throw { code: 'brain_error', status: r.status, detail };
+      }
       const j = await r.json();
       return String(j.answer || '').trim();
     }
@@ -933,9 +938,41 @@ Rules:
   }
 
   let asking = false, speaking = false, answerUntil = 0;
+  let batteryPct = null;
+  try { navigator.getBattery && navigator.getBattery().then(b => { const u = () => { batteryPct = Math.round(b.level * 100); }; u(); b.addEventListener('levelchange', u); }); } catch (e) {}
+  // quick answers JEG knows by heart (instant, work even without internet)
+  function localAnswer(q) {
+    const t = ' ' + String(q || '').toLowerCase() + ' ';
+    if (/\b(who|what company|which company)\b.*\b(made|make|created|create|developed|develop|built|build|programmed|designed)\b.*\byou\b|\byour (developer|creator|maker|programmer)\b/.test(t))
+      return 'I was made by Adasoft CSDS, for the barangay and the Lupon Tagapamayapa.';
+    if (/\b(status|are you ok|are you okay|are you working|system check|check yourself)\b/.test(t)) {
+      const parts = [];
+      parts.push(handsOn ? 'camera on' : 'camera off');
+      parts.push(micReady ? 'ears on' : 'mic off');
+      parts.push(JEG_CONFIG.brainUrl ? 'brain connected' : 'brain not connected yet');
+      if (batteryPct !== null) parts.push(`battery ${batteryPct} percent`);
+      return `I'm feeling great! ${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}.`;
+    }
+    if (new RegExp(`\\b(?:what is|what's|whats|what does|meaning of|who is)\\s+(?:the\\s+)?${NAME}\\b`, 'i').test(t))
+      return "I'm JEG! It means Joy, Empathy and Goodwill. I'm the Lupon's helper, and I help everyone stay calm and friendly.";
+    if (/\b(who are you|what are you|your name|introduce yourself)\b/.test(t))
+      return "I'm JEG, short for Joy, Empathy and Goodwill. I'm the cute helper of the Lupon Tagapamayapa!";
+    if (/\bwhat can you do\b|\byour (features|skills)\b/.test(t))
+      return 'I can wave back, play soft music, answer simple questions, and help everyone calm down. Try a peace sign or a finger heart!';
+    if (/\bhow are you\b|\bhow do you feel\b/.test(t)) return "I'm happy and ready to help! How about you?";
+    if (/\bwhat time\b|\btime is it\b/.test(t))
+      return `It's ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}.`;
+    if (/\b(what day|what's the date|what is the date|date today|today's date)\b/.test(t))
+      return `Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}.`;
+    if (/\b(thank you|thanks|salamat)\b/.test(t)) return "You're welcome! Happy to help.";
+    if (/\b(i love you|love you)\b/.test(t)) return 'Aww, I love you too! Saranghae!';
+    return null;
+  }
   async function askQuestion(q) {
     q = String(q || '').trim().slice(0, 300);
     if (!q || hearing || asking) return;
+    const quick = localAnswer(q);
+    if (quick) { closeAskBar(); stopMusic({ keepState: true }); showAnswer(quick); return; }
     asking = true;
     closeAskBar();
     stopMusic({ keepState: true });
@@ -949,14 +986,25 @@ Rules:
       ans = c === 'no_brain' ? "Sorry, my brain isn't connected yet. Please add the brain URL to JEG."
           : c === 'rate_limited' ? "I'm a little tired. Let's try again later."
           : "Sorry, I can't answer right now. Please try again.";
+      // small technical note on screen so the developer knows what to fix
+      const why = e && e.status ? `brain error ${e.status}${e.detail ? ': ' + e.detail : ''}`
+        : e && e.code === 'timeout' ? 'brain took too long (timeout)'
+        : e && e.code ? e.code
+        : 'cannot reach the brain URL (wrong URL, no internet, or CORS)';
+      $('brainStatus').textContent = 'Brain: ' + why;
+      showAnswer(ans, why);
+      asking = false;
+      return;
     }
+    $('brainStatus').textContent = 'Brain: OK';
     asking = false;
     if (hearing) return;
     if (!ans) ans = "I'm not sure about that. Let's ask the Lupon.";
     showAnswer(ans);
   }
-  function showAnswer(text) {
+  function showAnswer(text, note) {
     $('bubbleText').textContent = text;
+    $('bubbleNote').textContent = note ? `(${note})` : '';
     setState('answer', { silent: true });
     answerUntil = performance.now() + 4000 + text.split(/\s+/).length * 380;
     speakAnswer(text);
@@ -1100,6 +1148,11 @@ Rules:
     nag: "Hello? Please stand me up. I'm getting dizzy.",
     refreshed: 'Ahh, yes! Refreshing! Thank you!',
   };
+  setInterval(() => {
+    if (body.classList.contains('talking') && !(window.speechSynthesis && speechSynthesis.speaking) && !JegSpeech) {
+      body.classList.remove('talking'); speaking = false;
+    }
+  }, 1500);
   function speakNow(text) {
     if (!prefs.voice || performance.now() < quietUntil || hearing) return;
     const done = () => { body.classList.remove('talking'); muteUntil = performance.now() + 800; };
@@ -1656,7 +1709,13 @@ Rules:
 
   // ---------- "Hey JEG" (browser speech recognition) ----------
   const SR = JegSpeech ? NativeSR : (window.SpeechRecognition || window.webkitSpeechRecognition);
-  let rec = null, wakeOn = false, lastCmdAt = 0;
+  let rec = null, wakeOn = false, lastCmdAt = 0, lastHeardStart = 0;
+  // listening watchdog: if the browser silently stopped listening, start again
+  setInterval(() => {
+    if (!prefs.wake || hearing || NATIVE || !SR) return;
+    if (!wakeOn) { startWake(); return; }
+    if (lastHeardStart && performance.now() - lastHeardStart > 60000) { stopWake(); startWake(); }
+  }, 5000);
   const NAME = '(?:jeg|jegg|jeggy|jag|jig|jigs|jiggy|jek|jeck|jack|jake|jed|jedd|jet|jess|jeff|greg|chegg|jay g|j e g|j\\.e\\.g\\.?)';
   const PLAY_MUSIC = new RegExp(`\\b${NAME}\\b.*\\b(?:play\\s+(?:some\\s+)?(?:soft\\s+)?music|music|musika|patugtog|tugtog|kanta)\\b`, 'i');
   const WAKE = new RegExp(`\\b(?:hey|hi|hello|helo|uy|oy|hoy)[\\s,]*${NAME}\\b`, 'i');
@@ -1697,19 +1756,26 @@ Rules:
         if (TALK_CMD.test(txt) && performance.now() < quietUntil) { lastCmdAt = now; try { rec.abort(); } catch (x) {} unquiet('Yay! I can talk again!'); break; }
         if (SMILE_CMD.test(txt)) { lastCmdAt = now; try { rec.abort(); } catch (x) {} doSmile(); break; }
         if (SPIN_CMD.test(txt)) { lastCmdAt = now; try { rec.abort(); } catch (x) {} doSpin(); break; }
+        if (e.results[i].isFinal && new RegExp(`\\b${NAME}\\b`, 'i').test(txt)) {
+          const quick = localAnswer(txt.replace(new RegExp(`^.*?\\b${NAME}\\b[\\s,]*`, 'i'), '')) || localAnswer(txt);
+          if (quick) { lastCmdAt = now; try { rec.abort(); } catch (x) {} stopMusic({ keepState: true }); showAnswer(quick); break; }
+        }
         const askM = e.results[i].isFinal && txt.match(ASK_CMD);
         if (askM) { lastCmdAt = now; try { rec.abort(); } catch (x) {} askQuestion(askM[1]); break; }
         if (WAKE.test(txt) && e.results[i].isFinal) { lastCmdAt = now; greet("Hello! I'm JEG!"); try { rec.abort(); } catch (x) {} break; }
       }
     };
+    rec.onstart = () => { lastHeardStart = performance.now(); };
     rec.onerror = (e) => {
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-        wakeOn = false; $('wakeStatus').textContent = '"Hey JEG": hindi pinayagan.';
+        // the browser refused (often on the very first start): try again on the next tap anywhere
+        wakeOn = false; $('wakeStatus').textContent = '"Hey JEG": hindi pa pinayagan. I-tap ang screen.';
+        document.addEventListener('pointerdown', () => { if (prefs.wake && !hearing) startWake(); }, { once: true });
       }
     };
     rec.onend = () => { if (wakeOn && !hearing) setTimeout(() => { try { rec.start(); } catch (x) {} }, 300); };
     try { rec.start(); $('wakeStatus').textContent = '"Hey JEG": nakikinig sa pangalan lang. Gumagamit ng speech service ng phone.'; }
-    catch (e) { wakeOn = false; }
+    catch (e) { wakeOn = false; setTimeout(() => { if (prefs.wake && !hearing) startWake(); }, 1500); }
   }
   function stopWake() {
     wakeOn = false;
@@ -1824,6 +1890,7 @@ Rules:
       }
     } catch (e) {}
     Promise.resolve(motionAsk).then((r) => { if (!motionAsk || r === 'granted') startTilt(); }).catch(() => {});
+    if (prefs.wake) startWake();                    // first start inside the tap itself
     try { ac = new (window.AudioContext || window.webkitAudioContext)(); await ac.resume(); } catch (e) { ac = null; }
     unlockSound();
     try { await startSensors(); }
@@ -1831,7 +1898,7 @@ Rules:
       $('micStatus').textContent = 'Mic: hindi magamit dito. Manual mode muna, gamitin ang mga button sa ibaba.';
       $('camStatus').textContent = 'Camera (kaway): hindi magamit dito.';
     }
-    if (prefs.wake) startWake();
+    if (prefs.wake) { stopWake(); startWake(); }   // start again now that the mic is ready
     keepAwake();
     $('start').style.display = 'none';
     setState('idle');
