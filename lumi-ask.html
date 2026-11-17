@@ -655,7 +655,7 @@
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">Lumi · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v25</span></h2>
+    <h2 id="ptitle">Lumi · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v27</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -874,8 +874,10 @@ const JEG_CONFIG = {
   }
 
   // ---------- voice ----------
+  // morning until 12 noon, afternoon until 6 PM, then evening
+  function partOfDay() { const h = new Date().getHours(); return h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening'; }
   const lines = {
-    idle: 'Hello! Please have a seat.',
+    idle: () => `Good ${partOfDay()}! Please have a seat.`,
     worried: "Hey... let's stay calm.",
     breathe: "Let's take a deep breath. In... and out...",
     happy: "Yay! Friends again!",
@@ -905,7 +907,7 @@ const JEG_CONFIG = {
     body.dataset.state = s;
     if (s !== 'sleep' && deepSleep) wakeCamera();
     if (s !== 'sleep') lastActivity = performance.now();
-    if (!opts.silent) { chirps[s] && chirps[s](); say(opts.line || lines[s]); }
+    if (!opts.silent) { chirps[s] && chirps[s](); say(opts.line || (typeof lines[s] === 'function' ? lines[s]() : lines[s])); }
   }
   // ---------- deep sleep: camera off, ears on ----------
   let deepSleep = false;
@@ -915,7 +917,7 @@ const JEG_CONFIG = {
     deepSleep = true; body.classList.add('deep');
     stopCamera();
     $('camStatus').textContent = 'Camera: naka-off (tulog si Lumi). Gigising sa "Lumi, wake up" o "Hey Lumi".';
-    setState('sleep', { line: 'Okay, going to sleep now. Good night!' });
+    setState('sleep', { line: partOfDay() === 'evening' ? 'Okay, going to sleep now. Good night!' : 'Okay, nap time. See you later!' });
   }
   function wakeCamera() {
     deepSleep = false; body.classList.remove('deep');
@@ -986,7 +988,7 @@ Rules:
       parts.push(micReady || wakeOn ? 'ears on' : 'mic off');
       parts.push(JEG_CONFIG.brainUrl ? 'brain connected' : 'brain not connected yet');
       if (batteryPct !== null) parts.push(`battery ${batteryPct} percent`);
-      return `I'm feeling great! ${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}.`;
+      return `Good ${partOfDay()}! I'm feeling great! ${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}.`;
     }
     if (new RegExp(`\\b(?:what does|what do)\\s+${NAME}\\s+(?:mean|stand for)\\b|\\bmeaning of\\s+${NAME}\\b|\\b${NAME}\\s+meaning\\b|\\bwhy\\b.*\\bcalled\\b|\\byour name mean\\b|\\bstand for\\b`, 'i').test(t))
       return LUMI_MEANING;
@@ -997,11 +999,12 @@ Rules:
     if (/\bwhat can you do\b|\byour (features|skills)\b/.test(t))
       return 'I can wave back, play soft music, answer simple questions, and help everyone calm down. Try a peace sign or a finger heart!';
     if (/\bhow are you\b|\bhow do you feel\b/.test(t)) return "I'm happy and ready to help! How about you?";
-    if (/\bwhat time\b|\btime is it\b/.test(t))
+    const short = t.trim().split(/\s+/).filter(Boolean).length <= 3; // e.g. "time", "time now", "date today"
+    if (/\btime is it\b|\bwhat'?s the time\b|\bwhat is the time\b|\bwhat time now\b/.test(t) || (short && /\b(time|oras)\b/.test(t)))
       return `It's ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}.`;
-    if (/\b(what day|what's the date|what is the date|date today|today's date)\b/.test(t))
+    if (/\b(what day|what's the date|what is the date|date today|today's date)\b/.test(t) || (short && /\b(date|day today|petsa)\b/.test(t)))
       return `Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}.`;
-    if (/\b(thank you|thanks|salamat)\b/.test(t)) return "You're welcome! Happy to help.";
+    if (/\b(thank you|thanks|thank u|thankyou|salamat)\b/.test(t)) return "You're welcome! Happy to help.";
     if (/\b(i love you|love you)\b/.test(t)) return 'Aww, I love you too! Saranghae!';
     return null;
   }
@@ -1813,7 +1816,7 @@ Rules:
     if (!wakeOn) { startWake(); return; }
     if (lastHeardStart && performance.now() - lastHeardStart > 60000) { stopWake(); startWake(); }
   }, 5000);
-  const NAME = '(?:lumi|lumie|lumee|lumy|lummy|lummi|loomy|loomie|loomi|lumia|lumis|lu mi|lu-mi|lou me|loo me|lumen|jeg|jiggy)';
+  const NAME = '(?:lumi|lumie|lumee|lumy|lummy|lummi|loomy|loomie|loomi|lumia|lumis|lu mi|lu-mi|lou me|loo me|lumen|yumi|yumie|yummy|yumee|youmi|you me|rumi|ruumi|lume|luma|jeg|jiggy)';
   const PLAY_MUSIC = new RegExp(`\\b${NAME}\\b.*\\b(?:play\\s+(?:some\\s+)?(?:soft\\s+)?music|music|musika|patugtog|tugtog|kanta)\\b`, 'i');
   const WAKE = new RegExp(`\\b(?:hey|hi|hello|helo|uy|oy|hoy)[\\s,]*${NAME}\\b`, 'i');
   const NAME_ONLY = new RegExp(`^\\W*${NAME}\\W*$`, 'i');
@@ -1851,8 +1854,8 @@ Rules:
         if (STOP_MUSIC.test(txt) && music) { lastCmdAt = now; stopMusic(); tone([[700, 500]], 0.15); try { rec.abort(); } catch (x) {} break; }
         if (PLAY_MUSIC.test(txt) && !STOP_MUSIC.test(txt)) { lastCmdAt = now; startMusic(); try { rec.abort(); } catch (x) {} break; }
         if (SLEEP_CMD.test(txt) && state !== 'sleep') { lastCmdAt = now; goDeepSleep(); try { rec.abort(); } catch (x) {} break; }
-        if (WAKE_CMD.test(txt) && state === 'sleep') { lastCmdAt = now; setState('idle', { line: "I'm awake! Good morning!" }); try { rec.abort(); } catch (x) {} break; }
-        if (WAKE.test(txt) && state === 'sleep') { lastCmdAt = now; setState('idle', { silent: true }); greet("Hello! I'm awake!"); try { rec.abort(); } catch (x) {} break; }
+        if (WAKE_CMD.test(txt) && state === 'sleep') { lastCmdAt = now; setState('idle', { line: `I'm awake! Good ${partOfDay()}!` }); try { rec.abort(); } catch (x) {} break; }
+        if (WAKE.test(txt) && state === 'sleep') { lastCmdAt = now; setState('idle', { silent: true }); greet(`Good ${partOfDay()}! I'm awake!`); try { rec.abort(); } catch (x) {} break; }
         if (TALK_CMD.test(txt) && performance.now() < quietUntil) { lastCmdAt = now; try { rec.abort(); } catch (x) {} unquiet('Yay! I can talk again!'); break; }
         if (SMILE_CMD.test(txt)) { lastCmdAt = now; try { rec.abort(); } catch (x) {} doSmile(); break; }
         if (SPIN_CMD.test(txt)) { lastCmdAt = now; try { rec.abort(); } catch (x) {} doSpin(); break; }
