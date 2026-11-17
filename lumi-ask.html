@@ -655,7 +655,7 @@
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">Lumi · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v19</span></h2>
+    <h2 id="ptitle">Lumi · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v22</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -667,8 +667,14 @@
     <p class="note" id="brainStatus" style="color:#D9C8FF">Brain: hindi pa nasusubukan</p>
     <p class="note" id="heardStatus" style="color:#FFE9A8">Narinig ni Lumi: —</p>
     <p class="note" id="wakeStatus">"Hey Lumi": hindi pa naka-on</p>
-    <label>Sensitivity
-      <input type="range" id="sens" min="6" max="30" step="1" value="16" aria-label="Sensitivity">
+    <label>Ingay na kaya ni Lumi
+      <span style="font-size:13px;color:#8A97AD">sensitive</span>
+      <input type="range" id="sens" min="8" max="45" step="1" value="26" aria-label="How much noise Lumi tolerates">
+      <span style="font-size:13px;color:#8A97AD">kalmado</span>
+    </label>
+    <label>Gaano katagal bago mag-alala
+      <input type="range" id="loudHold" min="5" max="50" step="5" value="15" aria-label="Seconds times ten of loud noise before Lumi worries">
+      <span id="loudHoldVal" style="font-size:13px;color:#8A97AD;min-width:40px">1.5 s</span>
     </label>
     <div class="row">
       <label><input type="checkbox" id="chkSound" checked> Tunog (chirps)</label>
@@ -676,6 +682,7 @@
       <label><input type="checkbox" id="chkWave" checked> Kaway (camera)</label>
       <label><input type="checkbox" id="chkWake" checked> "Hey Lumi"</label>
       <label><input type="checkbox" id="chkLite"> Lite mode (mabagal na phone)</label>
+      <label><input type="checkbox" id="chkLoud" checked> Mag-react sa ingay</label>
     </div>
     <div class="row">
       <button class="btn ghost" id="soundTest">Test sound</button>
@@ -722,7 +729,7 @@
    For the free version: deploy the Supabase function "jeg-ask" (it talks to Groq),
    then paste its URL and your Supabase *anon* key here. Never put the Groq key in this file. */
 const JEG_CONFIG = {
-  brainUrl: 'https://adragnnngictwxtslosy.supabase.co/functions/v1/jeg-ask',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
+   brainUrl: 'https://adragnnngictwxtslosy.supabase.co/functions/v1/jeg-ask',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
   supabaseAnonKey: 'sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd',   // Supabase > Project Settings > API > anon public key
 };
 (() => {
@@ -754,28 +761,36 @@ const JEG_CONFIG = {
     constructor() { this._on = false; this.lang = 'en-US'; this.continuous = true; this.interimResults = true; }
     start() {
       this._on = true; nativeSR = this;
-      if (!nativeListening) { nativeListening = true; JegSpeech.start({ language: this.lang }).catch(() => { nativeListening = false; }); }
+      if (!nativeListening && !earsClosed) { nativeListening = true; JegSpeech.start({ language: this.lang }).catch(() => { nativeListening = false; }); }
     }
     abort() { this._on = false; setTimeout(() => { if (this.onend) this.onend(); }, 0); }
     stop() { this.abort(); }
   }
   function nativeSpeak(text, done, pitch) {
     body.classList.add('talking'); muteUntil = performance.now() + 30000;
+    let finished = false;
+    const end = () => { if (!finished) { finished = true; done(); } };
+    setTimeout(end, Math.max(4000, text.split(/\s+/).length * 600)); // never stay "talking" forever
     JegSpeech.speak({ text, language: 'en-US', pitch: pitch || 1.5, rate: 1.0 })
-      .catch(() => {}).then(done);
+      .catch(() => {}).then(end);
   }
   const $ = (id) => document.getElementById(id);
 
   // ---------- settings ----------
-  const prefs = { sens: 16, sound: true, voice: true, wave: true, wake: true, lite: false };
-  try { Object.assign(prefs, JSON.parse(localStorage.getItem('jeg-prefs-v11') || '{}')); } catch (e) {}
-  const savePrefs = () => { try { localStorage.setItem('jeg-prefs-v11', JSON.stringify(prefs)); } catch (e) {} };
+  const prefs = { sens: 26, loudHold: 15, loudOn: true, sound: true, voice: true, wave: true, wake: true, lite: false };
+  try { Object.assign(prefs, JSON.parse(localStorage.getItem('lumi-prefs-v22') || '{}')); } catch (e) {}
+  const savePrefs = () => { try { localStorage.setItem('lumi-prefs-v22', JSON.stringify(prefs)); } catch (e) {} };
   $('sens').value = prefs.sens; $('chkSound').checked = prefs.sound; $('chkVoice').checked = prefs.voice;
   $('chkWave').checked = prefs.wave; $('chkWake').checked = prefs.wake;
   $('sens').oninput = (e) => { prefs.sens = +e.target.value; savePrefs(); };
   $('chkSound').onchange = (e) => { prefs.sound = e.target.checked; savePrefs(); };
   $('chkVoice').onchange = (e) => { prefs.voice = e.target.checked; savePrefs(); };
   $('chkWave').onchange = (e) => { prefs.wave = e.target.checked; savePrefs(); if (prefs.wave) startHands(); else stopHands(); };
+  $('loudHold').value = prefs.loudHold; $('chkLoud').checked = prefs.loudOn;
+  const showHold = () => { $('loudHoldVal').textContent = (prefs.loudHold / 10).toFixed(1) + ' s'; };
+  showHold();
+  $('loudHold').oninput = (e) => { prefs.loudHold = +e.target.value; savePrefs(); showHold(); };
+  $('chkLoud').onchange = (e) => { prefs.loudOn = e.target.checked; savePrefs(); };
   $('chkLite').checked = prefs.lite;
   body.classList.toggle('lite', prefs.lite);
   $('chkLite').onchange = (e) => { prefs.lite = e.target.checked; savePrefs(); body.classList.toggle('lite', prefs.lite); if (handsOn) { stopHands(); startHands(); } };
@@ -865,6 +880,7 @@ const JEG_CONFIG = {
   // ---------- state machine ----------
   let state = 'idle', stateAt = performance.now(), lastActivity = performance.now();
   let hearing = false;
+  let calmRestUntil = 0; // after a breathing exercise, Lumi rests before reacting to noise again
   let exited = false; // true after "Lumi, exit": nothing restarts until Lumi is woken again
   let quietUntil = 0; // after a "shhh", JEG keeps his sounds and voice off for a while
   const BREATHE_MS = 24000, WORRIED_MS = 3500, HAPPY_MS = 4500, HELLO_MS = 3500, SHH_MS = 3800,
@@ -1317,9 +1333,32 @@ Rules:
   // iPhone can pause the camera when JEG talks, the phone rotates, or another sound plays.
   // Every 2 seconds JEG checks that the camera is still sending pictures and restarts it if not.
   let lastVideoTime = -1, lastFrameAt = performance.now(), visionErrors = 0, restarting = false, mutedSince = 0;
+  // gentle auto-repair: at most once every 20 s, and it pauses itself if it keeps happening
+  let lastRestartAt = 0, restartTimes = [], camRestarts = 0, repairPausedUntil = 0, lastTalkAt = 0;
+  function mayRestart() {
+    const now = performance.now();
+    if (now < repairPausedUntil || now - lastRestartAt < 20000) return false;
+    if (body.classList.contains('talking') || now - lastTalkAt < 4000) return false; // phones pause the camera while Lumi talks; it comes back by itself
+    restartTimes = restartTimes.filter(t => now - t < 180000);
+    if (restartTimes.length >= 3) {
+      repairPausedUntil = now + 300000; // too many: stop repairing for 5 minutes
+      $('camStatus').textContent = 'Camera: madalas mag-restart, auto-repair naka-pause ng 5 minuto.';
+      return false;
+    }
+    return true;
+  }
+  // a reliable "new picture arrived" signal on phones (falls back to the video clock)
+  let hasFrameSignal = false;
+  function watchFrames(v) {
+    if (v._lumiWatching || !v.requestVideoFrameCallback) return;
+    v._lumiWatching = true; hasFrameSignal = true;
+    const cb = () => { lastFrameAt = performance.now(); v.requestVideoFrameCallback(cb); };
+    v.requestVideoFrameCallback(cb);
+  }
   async function restartCamera(why) {
-    if (restarting) return;
+    if (restarting || !mayRestart()) return;
     restarting = true;
+    lastRestartAt = performance.now(); restartTimes.push(lastRestartAt); camRestarts++;
     try {
       stopCamera();
       await new Promise(r => setTimeout(r, 400));
@@ -1344,10 +1383,15 @@ Rules:
       const v = $('cam');
       const vt = stream.getVideoTracks()[0];
       if (!vt || vt.readyState === 'ended') { restartCamera('ended'); }
-      else if (vt.muted) { mutedSince = mutedSince || performance.now(); if (performance.now() - mutedSince > 2500) { mutedSince = 0; restartCamera('muted'); } }
+      watchFrames(v);
+      if (body.classList.contains('talking')) lastTalkAt = performance.now();
+      const frozenAfter = hasFrameSignal ? 6000 : 9000;
+      if (!vt || vt.readyState === 'ended') { restartCamera('ended'); }
+      else if (vt.muted) { mutedSince = mutedSince || performance.now(); if (performance.now() - mutedSince > 5000) { mutedSince = 0; restartCamera('muted'); } }
       else if (v.paused) { mutedSince = 0; v.play().catch(() => {}); }
-      else if (handsOn && performance.now() - lastFrameAt > 3000) { restartCamera('frozen'); }
-      else if (visionErrors > 15) { visionErrors = 0; restartCamera('errors'); }
+      else if (handsOn && performance.now() - lastFrameAt > frozenAfter) { mutedSince = 0; restartCamera('frozen'); }
+      else if (visionErrors > 30) { visionErrors = 0; restartCamera('errors'); }
+      else mutedSince = 0;
     }
     // mic
     const at = stream.getAudioTracks()[0];
@@ -1590,7 +1634,7 @@ Rules:
       const g = !h0 ? '—'
         : isFingerHeart(h0) ? 'finger heart' : isPeace(h0) ? 'peace' : isFist(h0) ? 'kamao (fist)'
         : (p && isShh(h0, p)) ? 'shhh' : isRock(h0) ? 'sungay (rock)' : isThumbsUp(h0) ? 'thumbs up' : openPalm(h0) ? 'bukas na palad' : 'kamay';
-      $('seeStatus').textContent = `Nakikita ni Lumi: mukha ${p ? '✓' : '✗'} · kamay ${hands.length} · ${g} · nakatiklop ${h0 ? foldedCount(h0) : 0}/4`;
+      $('seeStatus').textContent = `Nakikita ni Lumi: mukha ${p ? '✓' : '✗'} · kamay ${hands.length} · ${g} · nakatiklop ${h0 ? foldedCount(h0) : 0}/4 · camera restarts ${camRestarts}`;
     }
     if (!hands.length) { xs = xs.filter(q => now - q.t < 1200); flaps = []; sizes = []; holds.shh = holds.fist = holds.horns = holds.heart = holds.peace = holds.thumbs = 0; return; }
     lastActivity = now;
@@ -1717,14 +1761,38 @@ Rules:
 
   // ---------- "Hey Lumi" (browser speech recognition) ----------
   const SR = JegSpeech ? NativeSR : (window.SpeechRecognition || window.webkitSpeechRecognition);
-  let rec = null, wakeOn = false, lastCmdAt = 0, lastHeardStart = 0;
+  let rec = null, wakeOn = false, lastCmdAt = 0, lastHeardStart = 0, heardAt = 0;
+  // ---- close Lumi's ears while Lumi talks, so Lumi doesn't hear (and type out) its own voice ----
+  let earsClosed = false, earsTimer = null;
+  function closeEars() {
+    if (earsClosed) return;
+    earsClosed = true; clearTimeout(earsTimer);
+    if (JegSpeech) { if (nativeListening) { JegSpeech.stop().catch(() => {}); nativeListening = false; } }
+    else if (rec && wakeOn) { try { rec.abort(); } catch (e) {} }
+    $('heardStatus').textContent = 'Narinig ni Lumi: (sarado ang tenga habang nagsasalita si Lumi)';
+  }
+  function openEars() {
+    clearTimeout(earsTimer);
+    earsTimer = setTimeout(() => {                // small pause so the last echo of Lumi's voice fades
+      earsClosed = false;
+      if (hearing || exited) return;
+      if (JegSpeech) { if (!nativeListening && micReady) { nativeListening = true; JegSpeech.start({ language: 'en-US' }).catch(() => { nativeListening = false; }); } }
+      else if (rec && wakeOn) { try { rec.start(); } catch (e) {} }
+      $('heardStatus').textContent = 'Narinig ni Lumi: (nakikinig…)';
+    }, 450);
+  }
+  new MutationObserver(() => {
+    if (body.classList.contains('talking')) closeEars(); else if (earsClosed) openEars();
+  }).observe(body, { attributes: true, attributeFilter: ['class'] });
+  // old words disappear after 4 seconds so the readout never looks stuck
+  setInterval(() => { if (heardAt && performance.now() - heardAt > 4000 && !earsClosed) { heardAt = 0; $('heardStatus').textContent = 'Narinig ni Lumi: (nakikinig…)'; } }, 1000);
   // listening watchdog: if the browser silently stopped listening, start again
   setInterval(() => {
-    if (!prefs.wake || hearing || exited || NATIVE || !SR) return;
+    if (!prefs.wake || hearing || exited || NATIVE || !SR || earsClosed) return;
     if (!wakeOn) { startWake(); return; }
     if (lastHeardStart && performance.now() - lastHeardStart > 60000) { stopWake(); startWake(); }
   }, 5000);
-  const NAME = '(?:lumi|lumie|lumee|lumy|lummy|lummi|loomy|loomie|loomi|lu mi|lou me|lumen|jeg|jiggy)';
+  const NAME = '(?:lumi|lumie|lumee|lumy|lummy|lummi|loomy|loomie|loomi|lumia|lumis|lu mi|lu-mi|lou me|loo me|lumen|jeg|jiggy)';
   const PLAY_MUSIC = new RegExp(`\\b${NAME}\\b.*\\b(?:play\\s+(?:some\\s+)?(?:soft\\s+)?music|music|musika|patugtog|tugtog|kanta)\\b`, 'i');
   const WAKE = new RegExp(`\\b(?:hey|hi|hello|helo|uy|oy|hoy)[\\s,]*${NAME}\\b`, 'i');
   const NAME_ONLY = new RegExp(`^\\W*${NAME}\\W*$`, 'i');
@@ -1750,7 +1818,7 @@ Rules:
         if (body.classList.contains('talking')) continue;           // that's JEG's own voice
         if (music && !STOP_MUSIC.test(txt)) continue;               // that's JEG's own music
         const now = performance.now();
-        $('heardStatus').textContent = `Narinig ni Lumi: "${txt.trim().slice(-80)}"`;
+        $('heardStatus').textContent = `Narinig ni Lumi: "${txt.trim().slice(-80)}"`; heardAt = performance.now();
         if (e.results[i].isFinal && NAME_ONLY.test(txt) && now - lastCmdAt > 2500) {
           lastCmdAt = now;
           if (state === 'sleep') setState('idle', { silent: true });
@@ -1783,7 +1851,7 @@ Rules:
         document.addEventListener('pointerdown', () => { if (prefs.wake && !hearing) startWake(); }, { once: true });
       }
     };
-    rec.onend = () => { if (wakeOn && !hearing) setTimeout(() => { try { rec.start(); } catch (x) {} }, 300); };
+    rec.onend = () => { if (wakeOn && !hearing && !earsClosed) setTimeout(() => { if (!earsClosed) { try { rec.start(); } catch (x) {} } }, 300); };
     try { rec.start(); $('wakeStatus').textContent = '"Hey Lumi": nakikinig sa pangalan lang. Gumagamit ng speech service ng phone.'; }
     catch (e) { wakeOn = false; setTimeout(() => { if (prefs.wake && !hearing) startWake(); }, 1500); }
   }
@@ -1819,19 +1887,19 @@ Rules:
       if (warm) floor = floor * 0.9 + db * 0.1;
       else if (db < floor + 4) floor = floor * 0.995 + db * 0.005;
       const margin = prefs.sens + (music ? 10 : 0); // JEG's own music shouldn't count as shouting
-      loud = !warm && now > muteUntil && db > floor + margin && db > -50;
+      loud = prefs.loudOn && !warm && now > muteUntil && now > calmRestUntil && db > floor + margin && db > -42;
       const pct = Math.max(0, Math.min(100, ((db - floor) / (margin * 1.6)) * 100));
       const bar = $('meterBar'); bar.style.width = pct + '%'; bar.classList.toggle('loud', loud);
     }
     body.classList.toggle('quietmode', now < quietUntil && !hearing);
     if (loud) { if (!loudSince) loudSince = now; lastActivity = now; } else loudSince = 0;
-    const sustainedLoud = loudSince && now - loudSince > 700;
+    const sustainedLoud = loudSince && now - loudSince > prefs.loudHold * 100;
     const inState = now - stateAt;
 
     if (!hearing) {
       if ((state === 'idle' || state === 'sleep' || state === 'hello' || state === 'happy') && sustainedLoud) setState('worried');
       else if (state === 'worried' && inState > WORRIED_MS) setState('breathe');
-      else if (state === 'breathe' && inState > BREATHE_MS) setState('idle', { silent: true });
+      else if (state === 'breathe' && inState > BREATHE_MS) { setState('idle', { silent: true }); calmRestUntil = now + 30000; } // no new worry for 30 s
       else if (state === 'happy' && inState > HAPPY_MS) setState('idle', { silent: true });
       else if (state === 'hello' && inState > HELLO_MS) setState('idle', { silent: true });
       else if (state === 'shh' && inState > SHH_MS) setState('idle', { silent: true });
