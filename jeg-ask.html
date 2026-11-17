@@ -84,6 +84,13 @@
   @keyframes whoosh{0%{opacity:0;transform:translateX(30px)}40%{opacity:1}100%{opacity:0;transform:translateX(-30px)}}
   .whoosh{animation:whoosh .8s ease-out infinite}
 
+  /* quiet badge after shhh */
+  #quietBadge{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
+    background:rgba(20,23,31,.9);color:#9FB0C8;font-size:14px;padding:6px 14px;border-radius:999px;display:none;z-index:2;white-space:nowrap}
+  body.quietmode #quietBadge{display:block}
+  /* lite mode: no glow (cheaper to draw) */
+  body.lite .eye-glow{filter:none}
+
   /* thinking + answer */
   @keyframes dot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-10px);opacity:1}}
   .d1{animation:dot 1s ease-in-out infinite}
@@ -643,11 +650,12 @@
   </button>
 </form>
 
+<div id="quietBadge" aria-live="polite">Quiet mode · thumbs up, tap me, or say "JEG, talk"</div>
 <div id="bubble" role="status" aria-live="polite"><span id="bubbleText"></span></div>
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">JEG · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v12</span></h2>
+    <h2 id="ptitle">JEG · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v15</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -716,6 +724,43 @@ const JEG_CONFIG = {
 };
 (() => {
   const body = document.body;
+  // ---------- Android app (APK) bridge ----------
+  // In the APK, listening, voice and loudness come from Android itself (plugin "JegSpeech").
+  // In a browser this is all skipped and JEG works like before.
+  const CAP = window.Capacitor;
+  const NATIVE = !!(CAP && ((CAP.isNativePlatform && CAP.isNativePlatform()) ||
+    (CAP.getPlatform && CAP.getPlatform() !== 'web') || window.androidBridge));
+  let JegSpeech = null;
+  if (NATIVE) {
+    try { JegSpeech = (CAP.registerPlugin && CAP.registerPlugin('JegSpeech')) || (CAP.Plugins && CAP.Plugins.JegSpeech) || null; }
+    catch (e) { JegSpeech = (CAP.Plugins && CAP.Plugins.JegSpeech) || null; }
+  }
+  let nativeDb = -90, nativeSR = null, nativeListening = false;
+  if (JegSpeech) {
+    JegSpeech.addListener('rms', (d) => { nativeDb = (Number(d.rms) || 0) * 3 - 60; });
+    JegSpeech.addListener('result', (d) => {
+      if (body.classList.contains('talking')) return;          // don't listen to JEG's own voice
+      if (nativeSR && nativeSR._on && nativeSR.onresult) {
+        const r = [{ transcript: String(d.text || '') }]; r.isFinal = !!d.final;
+        nativeSR.onresult({ resultIndex: 0, results: [r] });
+      }
+    });
+  }
+  // a stand-in for the browser's SpeechRecognition, fed by Android
+  class NativeSR {
+    constructor() { this._on = false; this.lang = 'en-US'; this.continuous = true; this.interimResults = true; }
+    start() {
+      this._on = true; nativeSR = this;
+      if (!nativeListening) { nativeListening = true; JegSpeech.start({ language: this.lang }).catch(() => { nativeListening = false; }); }
+    }
+    abort() { this._on = false; setTimeout(() => { if (this.onend) this.onend(); }, 0); }
+    stop() { this.abort(); }
+  }
+  function nativeSpeak(text, done, pitch) {
+    body.classList.add('talking'); muteUntil = performance.now() + 30000;
+    JegSpeech.speak({ text, language: 'en-US', pitch: pitch || 1.5, rate: 1.0 })
+      .catch(() => {}).then(done);
+  }
   const $ = (id) => document.getElementById(id);
 
   // ---------- settings ----------
@@ -729,7 +774,8 @@ const JEG_CONFIG = {
   $('chkVoice').onchange = (e) => { prefs.voice = e.target.checked; savePrefs(); };
   $('chkWave').onchange = (e) => { prefs.wave = e.target.checked; savePrefs(); if (prefs.wave) startHands(); else stopHands(); };
   $('chkLite').checked = prefs.lite;
-  $('chkLite').onchange = (e) => { prefs.lite = e.target.checked; savePrefs(); if (handsOn) { stopHands(); startHands(); } };
+  body.classList.toggle('lite', prefs.lite);
+  $('chkLite').onchange = (e) => { prefs.lite = e.target.checked; savePrefs(); body.classList.toggle('lite', prefs.lite); if (handsOn) { stopHands(); startHands(); } };
   $('chkWake').onchange = (e) => { prefs.wake = e.target.checked; savePrefs(); if (prefs.wake) startWake(); else stopWake(); };
 
   // ---------- sounds ----------
@@ -927,6 +973,7 @@ Rules:
       muteUntil = performance.now() + 800;
       answerUntil = Math.max(answerUntil, performance.now() + 5000);
     };
+    if (JegSpeech) { speaking = true; nativeSpeak(text, done, 1.4); return; }
     const tts = await claudeCap('tts');
     if (tts) {
       speaking = true; body.classList.add('talking'); muteUntil = performance.now() + 90000;
@@ -945,7 +992,8 @@ Rules:
     } catch (e) { done(); }
   }
   function stopTalking() {
-    try { speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
+    if (JegSpeech) JegSpeech.stopSpeaking().catch(() => {});
+    try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
     claudeCap('tts').then(t => { try { t && t.stop(); } catch (e) {} });
     speaking = false; body.classList.remove('talking');
   }
@@ -1055,6 +1103,7 @@ Rules:
   function speakNow(text) {
     if (!prefs.voice || performance.now() < quietUntil || hearing) return;
     const done = () => { body.classList.remove('talking'); muteUntil = performance.now() + 800; };
+    if (JegSpeech) { nativeSpeak(text, done, 1.6); return; }
     claudeCap('tts').then(async (tts) => {
       if (tts) {
         body.classList.add('talking'); muteUntil = performance.now() + 15000;
@@ -1135,6 +1184,20 @@ Rules:
   // Nothing is recorded, saved or sent. Frames and sound are analysed in memory and thrown away.
   let stream = null, analyser = null, buf = null, floor = -60, loudSince = 0, micReady = false, startedAt = 0;
   async function startSensors() {
+    if (NATIVE && JegSpeech) {
+      // loudness + listening from Android (one mic user, no conflicts)
+      micReady = true; startedAt = performance.now(); floor = -60;
+      if (!nativeListening) { nativeListening = true; JegSpeech.start({ language: 'en-US' }).catch(() => { nativeListening = false; }); }
+      $('micStatus').textContent = 'Mic: naka-on (Android). Volume at mga command lang.';
+      if (prefs.wave) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 15 } } });
+          const v = $('cam'); v.srcObject = stream; try { await v.play(); } catch (e) {}
+          startHands();
+        } catch (e) { $('camStatus').textContent = 'Camera: hindi pinayagan o wala.'; }
+      }
+      return;
+    }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no media api');
     const wantVideo = prefs.wave;
     try {
@@ -1227,12 +1290,13 @@ Rules:
     }
     // mic
     const at = stream.getAudioTracks()[0];
-    if (micReady && (!at || at.readyState === 'ended')) restartMic();
+    if (!NATIVE && micReady && (!at || at.readyState === 'ended')) restartMic();
   }, 2000);
   window.addEventListener('orientationchange', () => { const v = $('cam'); setTimeout(() => v.play().catch(() => {}), 300); lastFrameAt = performance.now(); });
   window.addEventListener('resize', () => { lastFrameAt = performance.now(); });
 
   function stopSensors() {
+    if (JegSpeech) { JegSpeech.stop().catch(() => {}); nativeListening = false; }
     if (stream) stream.getTracks().forEach(t => t.stop());
     stream = null; micReady = false; analyser = null;
     $('cam').srcObject = null;
@@ -1241,6 +1305,7 @@ Rules:
     $('camStatus').textContent = 'Camera (kaway): naka-off (Hearing Mode).';
   }
   function level() {
+    if (NATIVE && JegSpeech) return nativeDb;
     analyser.getFloatTimeDomainData(buf);
     let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i];
     return 20 * Math.log10(Math.sqrt(s / buf.length) + 1e-8);
@@ -1270,7 +1335,7 @@ Rules:
             modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
             delegate,
           },
-          runningMode: 'VIDEO', numHands: 2,
+          runningMode: 'VIDEO', numHands: 1, // one hand = less lag
         });
         try { hand = await vision.HandLandmarker.createFromOptions(files, hopts('GPU')); }
         catch (e) { hand = await vision.HandLandmarker.createFromOptions(files, hopts('CPU')); }
@@ -1379,7 +1444,17 @@ Rules:
     return pinch && othersFolded && indexOut && thumbOut;
   }
 
-  // "sungay": both hands up on the head with fingers pointing up
+  // one-hand horns (rock sign): index + pinky up, middle + ring folded
+  function isRock(lm) {
+    return extended(lm, 'index') && extended(lm, 'pinky') && folded(lm, 'middle') && folded(lm, 'ring');
+  }
+  // thumbs up: all four fingers folded, thumb pointing up
+  function isThumbsUp(lm) {
+    return foldedCount(lm) === 4 && dist(lm[4], lm[0]) > dist(lm[3], lm[0]) * 1.02 &&
+      lm[4].y < lm[5].y - palm(lm) * 0.35;
+  }
+
+  // "sungay": both hands up on the head (not used now: one hand only) with fingers pointing up
   function isHorns(hands, p) {
     if (hands.length < 2 || !p) return false;
     const eyeDist = dist(p.rEye, p.lEye) || 0.1;
@@ -1453,18 +1528,18 @@ Rules:
       const h0 = hands[0];
       const g = !h0 ? '—'
         : isFingerHeart(h0) ? 'finger heart' : isPeace(h0) ? 'peace' : isFist(h0) ? 'kamao (fist)'
-        : (p && isShh(h0, p)) ? 'shhh' : isHorns(hands, p) ? 'sungay' : openPalm(h0) ? 'bukas na palad' : 'kamay';
+        : (p && isShh(h0, p)) ? 'shhh' : isRock(h0) ? 'sungay (rock)' : isThumbsUp(h0) ? 'thumbs up' : openPalm(h0) ? 'bukas na palad' : 'kamay';
       $('seeStatus').textContent = `Nakikita ni JEG: mukha ${p ? '✓' : '✗'} · kamay ${hands.length} · ${g} · nakatiklop ${h0 ? foldedCount(h0) : 0}/4`;
     }
-    if (!hands.length) { xs = xs.filter(q => now - q.t < 1200); flaps = []; sizes = []; holds.shh = holds.fist = holds.horns = holds.heart = holds.peace = 0; return; }
+    if (!hands.length) { xs = xs.filter(q => now - q.t < 1200); flaps = []; sizes = []; holds.shh = holds.fist = holds.horns = holds.heart = holds.peace = holds.thumbs = 0; return; }
     lastActivity = now;
     if (state === 'sleep') setState('idle');
     const lm = hands[0];
     const cx = (lm[0].x + lm[9].x) / 2, cy = (lm[0].y + lm[9].y) / 2;
     if (!p) { lookUntil = now + 1500; look((cx - 0.5) * -24, (cy - 0.5) * 14); }
 
-    // two hands on the head = horns
-    if (held('horns', isHorns(hands, p), now, 500)) {
+    // horns: one-hand rock sign
+    if (held('horns', isRock(lm), now, 500)) {
       react('horns', 'Rawr! I have horns too! Hehe!', () => tone([[300, 200], [900, 1300]], 0.14, 'sawtooth', 0.05));
       return;
     }
@@ -1491,6 +1566,10 @@ Rules:
       return;
     }
     if (holds.heart || holds.peace) return; // still holding one of them
+
+    // thumbs up: "okay!" and JEG can talk again after a shhh
+    if (held('thumbs', isThumbsUp(lm), now, 450)) { xs = []; flaps = []; if (now < quietUntil || canReact()) unquiet(now < quietUntil ? 'Yay! I can talk again!' : 'Thumbs up! Okay!'); return; }
+    if (holds.thumbs) return;
 
     // fist: a fast push toward the camera = punch (JEG dodges); held still = fist bump
     const size = palm(lm);
@@ -1546,6 +1625,15 @@ Rules:
     fistbump: ['fistbump', "Fist bump! We're friends!"],
     dodge: ['dodge', "Whoa! No punching here. Let's fist bump instead!"],
   };
+  // after "shhh", JEG stays quiet for a minute. This brings his voice back early.
+  function unquiet(msg) {
+    if (hearing) return;
+    quietUntil = 0; reactCooldownUntil = 0;
+    $('helloText').textContent = msg;
+    setState('hello', { silent: true });
+    tone([[600, 1000], [1000, 1400]], 0.1);
+    speakNow(msg);
+  }
   function doSmile() {
     if (hearing) return;
     stopMusic({ keepState: true }); quietUntil = 0;
@@ -1567,7 +1655,7 @@ Rules:
   }
 
   // ---------- "Hey JEG" (browser speech recognition) ----------
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SR = JegSpeech ? NativeSR : (window.SpeechRecognition || window.webkitSpeechRecognition);
   let rec = null, wakeOn = false, lastCmdAt = 0;
   const NAME = '(?:jeg|jegg|jeggy|jag|jig|jigs|jiggy|jek|jeck|jack|jake|jed|jedd|jet|jess|jeff|greg|chegg|jay g|j e g|j\\.e\\.g\\.?)';
   const PLAY_MUSIC = new RegExp(`\\b${NAME}\\b.*\\b(?:play\\s+(?:some\\s+)?(?:soft\\s+)?music|music|musika|patugtog|tugtog|kanta)\\b`, 'i');
@@ -1576,6 +1664,7 @@ Rules:
   const SLEEP_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:sleep|go to sleep|tulog|matulog|pahinga)\\b`, 'i');
   const WAKE_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:wake|wake up|gising|gumising|bangon)\\b`, 'i');
   const ASK_CMD = new RegExp(`\\b${NAME}\\b[\\s,]+(.*\\b(?:what|what's|who|where|when|why|how|explain|define|tell me|can you|could you|do you know|is|are|does|ano|anong|sino|saan|kailan|bakit|paano|ilan|magkano|ipaliwanag)\\b.*)`, 'i');
+  const TALK_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:you can talk|you can speak|talk|speak|sound on|unmute|ok na|pwede na)\\b`, 'i');
   const SMILE_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:smile|smiles|ngiti|ngumiti|say cheese)\\b`, 'i');
   const SPIN_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:spin|spins|spinning|turn around|roll|ikot|umikot)\\b`, 'i');
   const STOP_MUSIC = new RegExp(`\\b${NAME}\\b.*\\b(?:stop|tama na|hinto|tigil|patayin|off)\\b`, 'i');
@@ -1603,6 +1692,7 @@ Rules:
         if (SLEEP_CMD.test(txt) && state !== 'sleep') { lastCmdAt = now; goDeepSleep(); try { rec.abort(); } catch (x) {} break; }
         if (WAKE_CMD.test(txt) && state === 'sleep') { lastCmdAt = now; setState('idle', { line: "I'm awake! Good morning!" }); try { rec.abort(); } catch (x) {} break; }
         if (WAKE.test(txt) && state === 'sleep') { lastCmdAt = now; setState('idle', { silent: true }); greet("Hello! I'm awake!"); try { rec.abort(); } catch (x) {} break; }
+        if (TALK_CMD.test(txt) && performance.now() < quietUntil) { lastCmdAt = now; try { rec.abort(); } catch (x) {} unquiet('Yay! I can talk again!'); break; }
         if (SMILE_CMD.test(txt)) { lastCmdAt = now; try { rec.abort(); } catch (x) {} doSmile(); break; }
         if (SPIN_CMD.test(txt)) { lastCmdAt = now; try { rec.abort(); } catch (x) {} doSpin(); break; }
         const askM = e.results[i].isFinal && txt.match(ASK_CMD);
@@ -1655,6 +1745,7 @@ Rules:
       const pct = Math.max(0, Math.min(100, ((db - floor) / (margin * 1.6)) * 100));
       const bar = $('meterBar'); bar.style.width = pct + '%'; bar.classList.toggle('loud', loud);
     }
+    body.classList.toggle('quietmode', now < quietUntil && !hearing);
     if (loud) { if (!loudSince) loudSince = now; lastActivity = now; } else loudSince = 0;
     const sustainedLoud = loudSince && now - loudSince > 700;
     const inState = now - stateAt;
@@ -1687,6 +1778,7 @@ Rules:
   // ---------- taps (optional, for the staff) ----------
   $('face').addEventListener('click', () => {
     if (hearing || music) return;
+    if (performance.now() < quietUntil) { unquiet('Yay! I can talk again!'); return; }
     if (state === 'sleep') { setState('idle'); return; }
     if (state === 'breathe') return;
     setState('happy');
