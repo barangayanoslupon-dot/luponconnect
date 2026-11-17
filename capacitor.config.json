@@ -1,9 +1,0 @@
-{
-  "appId": "com.adasoft.jeg",
-  "appName": "JEG",
-  "webDir": "www",
-  "backgroundColor": "#0B0B0F",
-  "android": {
-    "backgroundColor": "#0B0B0F"
-  }
-}
