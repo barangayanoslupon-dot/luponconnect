@@ -655,7 +655,7 @@
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">Lumi · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v22</span></h2>
+    <h2 id="ptitle">Lumi · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v25</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -683,6 +683,7 @@
       <label><input type="checkbox" id="chkWake" checked> "Hey Lumi"</label>
       <label><input type="checkbox" id="chkLite"> Lite mode (mabagal na phone)</label>
       <label><input type="checkbox" id="chkLoud" checked> Mag-react sa ingay</label>
+      <label id="iosRow" hidden><input type="checkbox" id="chkIosNoise"> iPhone: ingay sa halip na voice commands</label>
     </div>
     <div class="row">
       <button class="btn ghost" id="soundTest">Test sound</button>
@@ -729,7 +730,7 @@
    For the free version: deploy the Supabase function "jeg-ask" (it talks to Groq),
    then paste its URL and your Supabase *anon* key here. Never put the Groq key in this file. */
 const JEG_CONFIG = {
-   brainUrl: 'https://adragnnngictwxtslosy.supabase.co/functions/v1/jeg-ask',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
+  brainUrl: 'https://adragnnngictwxtslosy.supabase.co/functions/v1/jeg-ask',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
   supabaseAnonKey: 'sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd',   // Supabase > Project Settings > API > anon public key
 };
 (() => {
@@ -737,6 +738,8 @@ const JEG_CONFIG = {
   // ---------- Android app (APK) bridge ----------
   // In the APK, listening, voice and loudness come from Android itself (plugin "JegSpeech").
   // In a browser this is all skipped and JEG works like before.
+  // iPhones/iPads let only ONE feature use the microphone at a time
+  const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const CAP = window.Capacitor;
   const NATIVE = !!(CAP && ((CAP.isNativePlatform && CAP.isNativePlatform()) ||
     (CAP.getPlatform && CAP.getPlatform() !== 'web') || window.androidBridge));
@@ -777,7 +780,7 @@ const JEG_CONFIG = {
   const $ = (id) => document.getElementById(id);
 
   // ---------- settings ----------
-  const prefs = { sens: 26, loudHold: 15, loudOn: true, sound: true, voice: true, wave: true, wake: true, lite: false };
+  const prefs = { iosNoise: false, sens: 26, loudHold: 15, loudOn: true, sound: true, voice: true, wave: true, wake: true, lite: false };
   try { Object.assign(prefs, JSON.parse(localStorage.getItem('lumi-prefs-v22') || '{}')); } catch (e) {}
   const savePrefs = () => { try { localStorage.setItem('lumi-prefs-v22', JSON.stringify(prefs)); } catch (e) {} };
   $('sens').value = prefs.sens; $('chkSound').checked = prefs.sound; $('chkVoice').checked = prefs.voice;
@@ -786,6 +789,16 @@ const JEG_CONFIG = {
   $('chkSound').onchange = (e) => { prefs.sound = e.target.checked; savePrefs(); };
   $('chkVoice').onchange = (e) => { prefs.voice = e.target.checked; savePrefs(); };
   $('chkWave').onchange = (e) => { prefs.wave = e.target.checked; savePrefs(); if (prefs.wave) startHands(); else stopHands(); };
+  if (IS_IOS && !NATIVE) {
+    $('iosRow').hidden = false;
+    $('chkIosNoise').checked = prefs.iosNoise;
+    $('chkIosNoise').onchange = (e) => {
+      prefs.iosNoise = e.target.checked; savePrefs();
+      // switch which feature owns the mic
+      stopWake(); stopSensors();
+      startSensors().then(() => { if (prefs.wake && !prefs.iosNoise) startWake(); }).catch(() => {});
+    };
+  }
   $('loudHold').value = prefs.loudHold; $('chkLoud').checked = prefs.loudOn;
   const showHold = () => { $('loudHoldVal').textContent = (prefs.loudHold / 10).toFixed(1) + ' s'; };
   showHold();
@@ -970,7 +983,7 @@ Rules:
     if (/\b(status|are you ok|are you okay|are you working|system check|check yourself)\b/.test(t)) {
       const parts = [];
       parts.push(handsOn ? 'camera on' : 'camera off');
-      parts.push(micReady ? 'ears on' : 'mic off');
+      parts.push(micReady || wakeOn ? 'ears on' : 'mic off');
       parts.push(JEG_CONFIG.brainUrl ? 'brain connected' : 'brain not connected yet');
       if (batteryPct !== null) parts.push(`battery ${batteryPct} percent`);
       return `I'm feeling great! ${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}.`;
@@ -1260,6 +1273,7 @@ Rules:
   // ---------- one stream: mic (volume only) + front camera (hand only) ----------
   // Nothing is recorded, saved or sent. Frames and sound are analysed in memory and thrown away.
   let stream = null, analyser = null, buf = null, floor = -60, loudSince = 0, micReady = false, startedAt = 0;
+  function iosVoiceMode() { return IS_IOS && !NATIVE && prefs.wake && !prefs.iosNoise && !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
   async function startSensors() {
     if (NATIVE && JegSpeech) {
       // loudness + listening from Android (one mic user, no conflicts)
@@ -1277,14 +1291,21 @@ Rules:
     }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no media api');
     const wantVideo = prefs.wave;
+    // iPhone: voice commands get the mic by default; noise detection only if chosen in settings
+    const wantAudio = !(IS_IOS && iosVoiceMode());
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false },
+        audio: wantAudio ? { echoCancellation: true, noiseSuppression: true, autoGainControl: false } : false,
         video: wantVideo ? { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 15 } } : false,
       });
     } catch (e) {
       // camera refused? try mic alone
+      if (!wantAudio) throw e;
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+    if (!wantAudio) {
+      micReady = false;
+      $('micStatus').textContent = 'iPhone: mic para sa voice commands. Naka-off ang noise detection (isang mic user lang ang pinapayagan ng iPhone).';
     }
     const audioTracks = stream.getAudioTracks();
     if (audioTracks.length && ac) {
@@ -1806,6 +1827,7 @@ Rules:
   const STOP_MUSIC = new RegExp(`\\b${NAME}\\b.*\\b(?:stop|tama na|hinto|tigil|patayin|off)\\b`, 'i');
   function startWake() {
     if (hearing || exited || !prefs.wake || wakeOn) return;
+    if (IS_IOS && !NATIVE && prefs.iosNoise) { $('wakeStatus').textContent = '"Hey Lumi": naka-off (iPhone: noise detection ang napili).'; return; }
     if (!SR) { $('wakeStatus').textContent = '"Hey Lumi": hindi suportado ng browser na ito.'; return; }
     wakeOn = true;
     rec = new SR();
@@ -1851,7 +1873,7 @@ Rules:
         document.addEventListener('pointerdown', () => { if (prefs.wake && !hearing) startWake(); }, { once: true });
       }
     };
-    rec.onend = () => { if (wakeOn && !hearing && !earsClosed) setTimeout(() => { if (!earsClosed) { try { rec.start(); } catch (x) {} } }, 300); };
+    rec.onend = () => { if (wakeOn && !hearing && !earsClosed) setTimeout(() => { if (!earsClosed) { try { rec.start(); } catch (x) {} } }, IS_IOS ? 900 : 300); };
     try { rec.start(); $('wakeStatus').textContent = '"Hey Lumi": nakikinig sa pangalan lang. Gumagamit ng speech service ng phone.'; }
     catch (e) { wakeOn = false; setTimeout(() => { if (prefs.wake && !hearing) startWake(); }, 1500); }
   }
