@@ -566,8 +566,8 @@
       <ellipse cx="616" cy="205" rx="38" ry="16" fill="#FF7FA8" opacity=".6"/>
       <path d="M396 214 Q422 242 448 214" stroke="#FFB3C7" stroke-width="7" stroke-linecap="round" fill="none"/>
     </g>
-    <text class="cap" x="422" y="346" font-size="28" font-weight="700" fill="#DDF5FF">Soft music time…</text>
-    <text class="cap" x="422" y="376" font-size="17" font-weight="500" fill="#9FB0C8">say "Lumi, stop music" to stop</text>
+    <text class="cap" x="422" y="346" font-size="28" font-weight="700" fill="#DDF5FF">Soft music time… <tspan id="songName" fill="#BFF0FF">Calm Piano</tspan></text>
+    <text class="cap" x="422" y="376" font-size="17" font-weight="500" fill="#9FB0C8">OK sign = stop · point up = next song</text>
   </g>
 
   <!-- SHHH (reply to the "quiet" gesture) -->
@@ -658,7 +658,7 @@
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">Lumi · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v29</span></h2>
+    <h2 id="ptitle">Lumi · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v30</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -702,6 +702,7 @@
       <button class="btn ghost" data-go="happy">Bati na!</button>
       <button class="btn ghost" data-go="shh">Shhh</button>
       <button class="btn ghost" data-go="music">Music</button>
+      <button class="btn ghost" data-go="nextsong">Next song</button>
       <button class="btn ghost" data-go="bye">Bye</button>
       <button class="btn ghost" data-go="bigsmile">Smile</button>
       <button class="btn ghost" data-go="spin">Spin</button>
@@ -1125,72 +1126,130 @@ Rules:
     dict.start().catch(() => {});
   };
 
-  // ---------- soft music (made live by JEG, original, no files or internet needed) ----------
-  let music = null;
+  // ---------- soft music: 4 original songs Lumi plays live (no files, no internet, no copyright) ----------
+  let music = null, songIndex = 0;
   const MUSIC_MAX_MS = 5 * 60 * 1000; // plays up to 5 minutes, then fades out by itself
   const hz = (midi) => 440 * Math.pow(2, (midi - 69) / 12);
   const CHORDS = [[48, 55, 64, 71], [45, 52, 60, 67], [41, 48, 57, 64], [43, 50, 59, 64]]; // Cmaj7 Am7 Fmaj7 G6
   const SCALE = [72, 74, 76, 79, 81, 84, 86, 88];                                          // C pentatonic
-  function startMusic() {
-    if (!ac || hearing) return;
+  const SONGS = [
+    { id: 'piano', name: 'Calm Piano' },
+    { id: 'musicbox', name: 'Music Box Lullaby' },
+    { id: 'rain', name: 'Rain & Chimes' },
+    { id: 'ocean', name: 'Ocean Waves' },
+  ];
+  let noiseBuf = null;
+  function getNoise() {
+    if (noiseBuf) return noiseBuf;
+    const len = ac.sampleRate * 3;
+    noiseBuf = ac.createBuffer(1, len, ac.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++) { last = 0.97 * last + 0.03 * (Math.random() * 2 - 1); d[i] = last * 6; } // soft "brown" noise
+    return noiseBuf;
+  }
+  function startMusic(index) {
+    if (!ac || hearing || exited) return;
+    if (typeof index === 'number') songIndex = ((index % SONGS.length) + SONGS.length) % SONGS.length;
     if (music) { setState('music', { silent: true }); return; }
     try { speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
     quietUntil = 0;
+    const song = SONGS[songIndex];
     const master = ac.createGain(), lp = ac.createBiquadFilter(), delay = ac.createDelay(1), fb = ac.createGain();
-    lp.type = 'lowpass'; lp.frequency.value = 2200;
-    delay.delayTime.value = 0.42; fb.gain.value = 0.32;
+    lp.type = 'lowpass'; lp.frequency.value = song.id === 'musicbox' ? 4000 : 2200;
+    delay.delayTime.value = song.id === 'musicbox' ? 0.33 : 0.42; fb.gain.value = 0.32;
     master.gain.setValueAtTime(0.0001, ac.currentTime);
     master.gain.exponentialRampToValueAtTime(0.5, ac.currentTime + 2.5);
     lp.connect(master); lp.connect(delay); delay.connect(fb).connect(delay); delay.connect(master);
     master.connect(ac.destination);
-    music = { master, lp, startedAt: performance.now(), nextChord: ac.currentTime + 0.1, chord: 0, nextNote: ac.currentTime + 1.2, timer: null };
+    music = { song: song.id, master, lp, nodes: [], startedAt: performance.now(),
+      nextChord: ac.currentTime + 0.1, chord: 0, nextNote: ac.currentTime + 1.2, timer: null };
+    // background sound for rain and ocean
+    if (song.id === 'rain' || song.id === 'ocean') {
+      const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+      src.buffer = getNoise(); src.loop = true;
+      f.type = 'lowpass'; f.frequency.value = song.id === 'rain' ? 1400 : 520;
+      g.gain.value = song.id === 'rain' ? 0.05 : 0.07;
+      src.connect(f).connect(g).connect(master);
+      if (song.id === 'ocean') { // waves: the sound swells and fades every ~9 seconds
+        const lfo = ac.createOscillator(), depth = ac.createGain();
+        lfo.frequency.value = 0.11; depth.gain.value = 0.06;
+        lfo.connect(depth).connect(g.gain); lfo.start(); music.nodes.push(lfo);
+      }
+      src.start(); music.nodes.push(src);
+    }
     music.timer = setInterval(scheduleMusic, 200);
     scheduleMusic();
+    $('songName').textContent = song.name;
     setState('music', { silent: true });
   }
-  function pad(midiNotes, t, dur) {
+  function nextSong() {
+    const wasPlaying = !!music;
+    stopMusic({ keepState: true, quick: true });
+    songIndex = (songIndex + 1) % SONGS.length;
+    setTimeout(() => startMusic(), wasPlaying ? 500 : 0);
+  }
+  function pad(midiNotes, t, dur, vol = 0.022) {
     midiNotes.forEach((m) => {
       [-4, 4].forEach((cents) => {
         const o = ac.createOscillator(), g = ac.createGain();
         o.type = 'triangle'; o.frequency.value = hz(m); o.detune.value = cents;
         g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.022, t + 1.8);
-        g.gain.setValueAtTime(0.022, t + dur - 1.6);
+        g.gain.exponentialRampToValueAtTime(vol, t + 1.8);
+        g.gain.setValueAtTime(vol, t + dur - 1.6);
         g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.6);
         o.connect(g).connect(music.lp); o.start(t); o.stop(t + dur + 0.7);
       });
     });
   }
-  function pluck(m, t) {
+  function pluck(m, t, type = 'sine', vol = 0.07, decay = 1.8) {
     const o = ac.createOscillator(), g = ac.createGain();
-    o.type = 'sine'; o.frequency.value = hz(m);
+    o.type = type; o.frequency.value = hz(m);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.07, t + 0.04);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
-    o.connect(g).connect(music.lp); o.start(t); o.stop(t + 1.9);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+    o.connect(g).connect(music.lp); o.start(t); o.stop(t + decay + 0.1);
   }
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   function scheduleMusic() {
     if (!music) return;
     if (performance.now() - music.startedAt > MUSIC_MAX_MS) { stopMusic(); return; }
-    const ahead = ac.currentTime + 0.6;
+    const ahead = ac.currentTime + 0.6, id = music.song;
+    const chordLen = id === 'ocean' ? 12 : 8;
     while (music.nextChord < ahead) {
-      pad(CHORDS[music.chord % CHORDS.length], music.nextChord, 8);
-      music.chord++; music.nextChord += 8;
+      if (id !== 'musicbox') pad(CHORDS[music.chord % CHORDS.length], music.nextChord, chordLen, id === 'piano' ? 0.022 : 0.014);
+      music.chord++; music.nextChord += chordLen;
     }
     while (music.nextNote < ahead) {
-      if (Math.random() < 0.7) pluck(SCALE[Math.floor(Math.random() * SCALE.length)], music.nextNote);
-      music.nextNote += [0.5, 0.75, 1, 1, 1.5][Math.floor(Math.random() * 5)];
+      const t = music.nextNote;
+      if (id === 'piano') {
+        if (Math.random() < 0.7) pluck(pick(SCALE), t);
+        music.nextNote += pick([0.5, 0.75, 1, 1, 1.5]);
+      } else if (id === 'musicbox') {          // tinkly, higher, gentle rhythm
+        if (Math.random() < 0.85) pluck(pick(SCALE) + 12, t, 'triangle', 0.06, 1.3);
+        if (Math.random() < 0.2) pluck(pick([60, 64, 67]), t, 'sine', 0.04, 1.6);
+        music.nextNote += pick([0.4, 0.4, 0.6, 0.8]);
+      } else if (id === 'rain') {              // soft chimes now and then
+        pluck(pick(SCALE) + 12, t, 'sine', 0.035, 3.2);
+        music.nextNote += pick([1.5, 2, 2.5, 3.5]);
+      } else {                                  // ocean: rare deep notes
+        if (Math.random() < 0.6) pluck(pick(SCALE) - 12, t, 'sine', 0.05, 3);
+        music.nextNote += pick([2.5, 3, 4]);
+      }
     }
   }
   function stopMusic(opts = {}) {
     if (!music) return;
     const m = music; music = null;
     clearInterval(m.timer);
-    const t = ac.currentTime;
+    const t = ac.currentTime, fade = opts.quick ? 0.4 : 2;
     m.master.gain.cancelScheduledValues(t);
     m.master.gain.setValueAtTime(Math.max(m.master.gain.value, 0.0001), t);
-    m.master.gain.exponentialRampToValueAtTime(0.0001, t + 2);
-    setTimeout(() => { try { m.master.disconnect(); } catch (e) {} }, 2600);
+    m.master.gain.exponentialRampToValueAtTime(0.0001, t + fade);
+    setTimeout(() => {
+      m.nodes.forEach(n => { try { n.stop(); } catch (e) {} });
+      try { m.master.disconnect(); } catch (e) {}
+    }, fade * 1000 + 600);
     muteUntil = performance.now() + 2500;
     if (!opts.keepState && state === 'music') setState('idle', { silent: true });
   }
@@ -1588,6 +1647,42 @@ Rules:
     return pinch && othersFolded && indexOut && thumbOut;
   }
 
+  // OK sign 👌: thumb and index tips touching, the other three fingers up
+  function isOkSign(lm) {
+    return dist(lm[4], lm[8]) < palm(lm) * 0.4 && extended(lm, 'middle') && extended(lm, 'ring') && extended(lm, 'pinky');
+  }
+  // pointing finger: index out, middle + ring + pinky folded
+  function isPointing(lm) {
+    return extended(lm, 'index') && folded(lm, 'middle') && folded(lm, 'ring') && folded(lm, 'pinky');
+  }
+  function isPointUp(lm) { return isPointing(lm) && lm[8].y < lm[5].y - palm(lm) * 0.4; }
+  // drawing in the air with the fingertip: a circle (spin) or a smile curve (smile)
+  function airShape(pts) {
+    if (pts.length < 8) return null;
+    const xs2 = pts.map(q => q.x * ASP), ys2 = pts.map(q => q.y);
+    const minX = Math.min(...xs2), maxX = Math.max(...xs2), minY = Math.min(...ys2), maxY = Math.max(...ys2);
+    const w = maxX - minX, h = maxY - minY;
+    if (w < 0.08 && h < 0.08) return null;                   // too small: just holding still
+    // circle: the fingertip goes (almost) all the way around its center
+    const cxm = xs2.reduce((a, b) => a + b) / xs2.length, cym = ys2.reduce((a, b) => a + b) / ys2.length;
+    let turn = 0, prev = Math.atan2(ys2[0] - cym, xs2[0] - cxm);
+    for (let i = 1; i < pts.length; i++) {
+      const a = Math.atan2(ys2[i] - cym, xs2[i] - cxm);
+      let d = a - prev; if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI;
+      turn += d; prev = a;
+    }
+    if (Math.abs(turn) > Math.PI * 1.6 && w > 0.06 && h > 0.06 && w / h < 2.5 && h / w < 2.5) return 'circle';
+    // smile: moves left-to-right (or right-to-left), dipping down in the middle like a U
+    const first = 0, last = pts.length - 1;
+    const low = ys2.indexOf(maxY);                           // lowest point (y grows downward)
+    const endsLevel = Math.abs(ys2[last] - ys2[first]) < Math.max(0.06, w * 0.35);
+    const dips = maxY - Math.max(ys2[first], ys2[last]) > 0.04;
+    const middle = low > pts.length * 0.2 && low < pts.length * 0.8;
+    const wide = w > 0.14 && w > h * 1.4;
+    if (wide && endsLevel && dips && middle) return 'smile';
+    return null;
+  }
+
   // one-hand horns (rock sign): index + pinky up, middle + ring folded
   function isRock(lm) {
     return extended(lm, 'index') && extended(lm, 'pinky') && folded(lm, 'middle') && folded(lm, 'ring');
@@ -1634,7 +1729,7 @@ Rules:
     quietUntil = performance.now() + SHH_QUIET_MS;
   }
 
-  let tick = 0, flaps = [], sizes = [];
+  let tick = 0, flaps = [], sizes = [], trail = [], musicGestureUntil = 0;
   let lastHandAt = 0, lastPersonAt = 0; // for "smart tracking": work hard only when someone is there
   function detectHand() {
     const v = $('cam');
@@ -1679,16 +1774,51 @@ Rules:
     if ($('panel').classList.contains('open')) {
       const h0 = hands[0];
       const g = !h0 ? '—'
+        : isOkSign(h0) ? 'OK sign' : isPointUp(h0) ? 'point up' : isPointing(h0) ? 'pointing (draw!)'
         : isFingerHeart(h0) ? 'finger heart' : isPeace(h0) ? 'peace' : isFist(h0) ? 'kamao (fist)'
         : (p && isShh(h0, p)) ? 'shhh' : isRock(h0) ? 'sungay (rock)' : isThumbsUp(h0) ? 'thumbs up' : openPalm(h0) ? 'bukas na palad' : 'kamay';
       $('seeStatus').textContent = `${resting ? '[pahinga] ' : '[aktibo] '}Nakikita ni Lumi: mukha ${p ? '✓' : '✗'} · kamay ${hands.length} · ${g} · nakatiklop ${h0 ? foldedCount(h0) : 0}/4 · camera restarts ${camRestarts}`;
     }
-    if (!hands.length) { xs = xs.filter(q => now - q.t < 1200); flaps = []; sizes = []; holds.shh = holds.fist = holds.horns = holds.heart = holds.peace = holds.thumbs = 0; return; }
+    if (!hands.length) { xs = xs.filter(q => now - q.t < 1200); flaps = []; sizes = []; holds.shh = holds.fist = holds.horns = holds.heart = holds.peace = holds.thumbs = holds.ok = holds.pointup = 0; trail = []; return; }
     lastActivity = now;
     if (state === 'sleep') setState('idle');
     const lm = hands[0];
     const cx = (lm[0].x + lm[9].x) / 2, cy = (lm[0].y + lm[9].y) / 2;
     if (!p) { lookUntil = now + 1500; look((cx - 0.5) * -24, (cy - 0.5) * 14); }
+
+    // ---- music + movement gestures (these also work while music plays) ----
+    // OK sign: stop the music
+    if (held('ok', isOkSign(lm), now, 450)) {
+      xs = []; flaps = []; trail = [];
+      if (music && now > musicGestureUntil) {
+        musicGestureUntil = now + 2500; stopMusic(); tone([[700, 500]], 0.15);
+        $('helloText').textContent = 'Okay! Music off.'; setState('hello', { silent: true }); speakNow('Okay! Music off.');
+      }
+      return;
+    }
+    if (holds.ok) return;
+    // pointing finger: draw a circle = spin, draw a smile = smile, hold up still = music
+    if (isPointing(lm)) {
+      xs = []; flaps = [];
+      trail.push({ x: lm[8].x, y: lm[8].y, t: now }); trail = trail.filter(q => now - q.t < 1600);
+      const shape = airShape(trail);
+      if (shape && now > musicGestureUntil && !music && canReact()) {
+        trail = []; musicGestureUntil = now + 2500; holds.pointup = 0;
+        if (shape === 'circle') doSpin(); else doSmile();
+        return;
+      }
+      const recent = trail.filter(q => now - q.t < 600);
+      const still = recent.length > 2 &&
+        Math.max(...recent.map(q => q.x)) - Math.min(...recent.map(q => q.x)) < 0.04 &&
+        Math.max(...recent.map(q => q.y)) - Math.min(...recent.map(q => q.y)) < 0.04;
+      if (held('pointup', isPointUp(lm) && still && !(p && isShh(lm, p)), now, 700) && now > musicGestureUntil) {
+        musicGestureUntil = now + 2500; trail = [];
+        if (music) { nextSong(); tone([[900, 1300]], 0.1); }
+        else if (!hearing && !exited) { startMusic(); }
+        return;
+      }
+      if (!(p && isShh(lm, p))) return; // pointing but not at the lips: nothing else to check
+    } else { trail = []; holds.pointup = 0; }
 
     // horns: one-hand rock sign
     if (held('horns', isRock(lm), now, 500)) {
@@ -1850,6 +1980,7 @@ Rules:
   const EXIT_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:exit|shut ?down|turn off|power off|close the app|close app|close yourself|goodbye)\\b|\\bgoodbye,? ${NAME}\\b`, 'i');
   const SMILE_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:smile|smiles|ngiti|ngumiti|say cheese)\\b`, 'i');
   const SPIN_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:spin|spins|spinning|turn around|roll|ikot|umikot)\\b`, 'i');
+  const NEXT_SONG = new RegExp(`\\b${NAME}\\b.*\\b(?:next song|next music|change (?:the )?(?:music|song)|another song|other song|different song|ibang kanta|next)\\b`, 'i');
   const STOP_MUSIC = new RegExp(`\\b${NAME}\\b.*\\b(?:stop|tama na|hinto|tigil|patayin|off)\\b`, 'i');
   function startWake() {
     if (hearing || exited || !prefs.wake || wakeOn) return;
@@ -1864,7 +1995,7 @@ Rules:
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const txt = e.results[i][0].transcript || '';
         if (body.classList.contains('talking')) continue;           // that's JEG's own voice
-        if (music && !STOP_MUSIC.test(txt)) continue;               // that's JEG's own music
+        if (music && !STOP_MUSIC.test(txt) && !NEXT_SONG.test(txt) && !EXIT_CMD.test(txt)) continue; // that's Lumi's own music
         const now = performance.now();
         $('heardStatus').textContent = `Narinig ni Lumi: "${txt.trim().slice(-80)}"`; heardAt = performance.now();
         if (e.results[i].isFinal && NAME_ONLY.test(txt) && now - lastCmdAt > 2500) {
@@ -1874,6 +2005,7 @@ Rules:
         }
         if (now - lastCmdAt < 2500) break;              // one command at a time
         if (EXIT_CMD.test(txt) && !/\bmusic\b/i.test(txt)) { lastCmdAt = now; try { rec.abort(); } catch (x) {} exitLumi(); break; }
+        if (NEXT_SONG.test(txt) && music) { lastCmdAt = now; try { rec.abort(); } catch (x) {} nextSong(); break; }
         if (STOP_MUSIC.test(txt) && music) { lastCmdAt = now; stopMusic(); tone([[700, 500]], 0.15); try { rec.abort(); } catch (x) {} break; }
         if (PLAY_MUSIC.test(txt) && !STOP_MUSIC.test(txt)) { lastCmdAt = now; startMusic(); try { rec.abort(); } catch (x) {} break; }
         if (SLEEP_CMD.test(txt) && state !== 'sleep') { lastCmdAt = now; goDeepSleep(); try { rec.abort(); } catch (x) {} break; }
@@ -2024,6 +2156,7 @@ Rules:
     const go = b.dataset.go;
     if (go === 'shh') doShh();
     else if (go === 'music') { if (music) stopMusic(); else startMusic(); }
+    else if (go === 'nextsong') nextSong();
     else if (go === 'sleep') goDeepSleep();
     else if (go === 'exit') exitLumi();
     else if (go === 'bigsmile') doSmile();
