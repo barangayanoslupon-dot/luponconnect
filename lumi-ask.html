@@ -20,7 +20,10 @@
   html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;
     font-family:'Baloo 2',system-ui,sans-serif;color:var(--ink);
     -webkit-user-select:none;user-select:none;touch-action:manipulation}
-  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    transition:transform .5s cubic-bezier(.3,.8,.3,1.2);transform-origin:50% 45%}
+  body.small #stage{transform:scale(var(--idle-scale,.65))}   /* resting Lumi is small */
+  body.small .eye-glow{filter:drop-shadow(0 0 8px rgba(150,220,255,.35))} /* lighter glow when small */
   #face{width:100vw;height:100vh;height:100dvh;display:block;cursor:pointer}
 
   /* show only the active expression */
@@ -222,7 +225,7 @@
   .note{font-size:14px;color:#9FB0C8;margin:0}
 </style>
 </head>
-<body data-state="idle">
+<body data-state="idle" class="small">
 
 <div id="stage">
 <svg id="face" viewBox="0 0 844 390" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Lumi, ang cute na kasama ng Lupon">
@@ -655,7 +658,7 @@
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">Lumi · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v27</span></h2>
+    <h2 id="ptitle">Lumi · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v29</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -671,6 +674,10 @@
       <span style="font-size:13px;color:#8A97AD">sensitive</span>
       <input type="range" id="sens" min="8" max="45" step="1" value="26" aria-label="How much noise Lumi tolerates">
       <span style="font-size:13px;color:#8A97AD">kalmado</span>
+    </label>
+    <label>Laki ni Lumi kapag nagpapahinga
+      <input type="range" id="idleSize" min="40" max="100" step="5" value="65" aria-label="Lumi's size at rest">
+      <span id="idleSizeVal" style="font-size:13px;color:#8A97AD;min-width:40px">65%</span>
     </label>
     <label>Gaano katagal bago mag-alala
       <input type="range" id="loudHold" min="5" max="50" step="5" value="15" aria-label="Seconds times ten of loud noise before Lumi worries">
@@ -730,8 +737,8 @@
    For the free version: deploy the Supabase function "jeg-ask" (it talks to Groq),
    then paste its URL and your Supabase *anon* key here. Never put the Groq key in this file. */
 const JEG_CONFIG = {
-  brainUrl: 'https://adragnnngictwxtslosy.supabase.co/functions/v1/jeg-ask',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
-  supabaseAnonKey: 'sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd',   // Supabase > Project Settings > API > anon public key
+  brainUrl: '',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
+  supabaseAnonKey: '',   // Supabase > Project Settings > API > anon public key
 };
 (() => {
   const body = document.body;
@@ -780,7 +787,7 @@ const JEG_CONFIG = {
   const $ = (id) => document.getElementById(id);
 
   // ---------- settings ----------
-  const prefs = { iosNoise: false, sens: 26, loudHold: 15, loudOn: true, sound: true, voice: true, wave: true, wake: true, lite: false };
+  const prefs = { idleSize: 65, iosNoise: false, sens: 26, loudHold: 15, loudOn: true, sound: true, voice: true, wave: true, wake: true, lite: false };
   try { Object.assign(prefs, JSON.parse(localStorage.getItem('lumi-prefs-v22') || '{}')); } catch (e) {}
   const savePrefs = () => { try { localStorage.setItem('lumi-prefs-v22', JSON.stringify(prefs)); } catch (e) {} };
   $('sens').value = prefs.sens; $('chkSound').checked = prefs.sound; $('chkVoice').checked = prefs.voice;
@@ -799,6 +806,12 @@ const JEG_CONFIG = {
       startSensors().then(() => { if (prefs.wake && !prefs.iosNoise) startWake(); }).catch(() => {});
     };
   }
+  const applySize = () => {
+    document.documentElement.style.setProperty('--idle-scale', prefs.idleSize / 100);
+    $('idleSizeVal').textContent = prefs.idleSize + '%';
+  };
+  $('idleSize').value = prefs.idleSize; applySize();
+  $('idleSize').oninput = (e) => { prefs.idleSize = +e.target.value; savePrefs(); applySize(); };
   $('loudHold').value = prefs.loudHold; $('chkLoud').checked = prefs.loudOn;
   const showHold = () => { $('loudHoldVal').textContent = (prefs.loudHold / 10).toFixed(1) + ' s'; };
   showHold();
@@ -875,6 +888,7 @@ const JEG_CONFIG = {
 
   // ---------- voice ----------
   // morning until 12 noon, afternoon until 6 PM, then evening
+  const SMALL_STATES = ['idle', 'sleep', 'quiet'];
   function partOfDay() { const h = new Date().getHours(); return h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening'; }
   const lines = {
     idle: () => `Good ${partOfDay()}! Please have a seat.`,
@@ -905,6 +919,7 @@ const JEG_CONFIG = {
     if (hearing && s !== 'quiet') return;      // nothing reacts during a hearing
     state = s; stateAt = performance.now();
     body.dataset.state = s;
+    body.classList.toggle('small', SMALL_STATES.includes(s)); // grows for reactions, shrinks back at rest
     if (s !== 'sleep' && deepSleep) wakeCamera();
     if (s !== 'sleep') lastActivity = performance.now();
     if (!opts.silent) { chirps[s] && chirps[s](); say(opts.line || (typeof lines[s] === 'function' ? lines[s]() : lines[s])); }
@@ -1620,20 +1635,26 @@ Rules:
   }
 
   let tick = 0, flaps = [], sizes = [];
+  let lastHandAt = 0, lastPersonAt = 0; // for "smart tracking": work hard only when someone is there
   function detectHand() {
     const v = $('cam');
     if (!hand || !handsOn || v.readyState < 2) return;
     tick++;
-    if (state === 'sleep' && (tick % 4)) return; // dozing: ~2 checks per second
     const now = performance.now();
+    if (state === 'sleep' && (tick % 4)) return; // dozing: ~2 checks per second
+    // smart tracking: nobody in view for 3 s -> check only every 3rd time (4th in Lite mode)
+    const resting = now - lastPersonAt > 3000;
+    if (resting && tick % (prefs.lite ? 4 : 3)) return;
     let res;
     if (v.videoWidth && v.videoHeight) ASP = v.videoWidth / v.videoHeight;
     if (v.currentTime !== lastVideoTime) { lastVideoTime = v.currentTime; lastFrameAt = now; }
     try { res = hand.detectForVideo(v, now); visionErrors = 0; } catch (e) { visionErrors++; return; }
 
-    // face every other check (saves battery)
+    // face: often while a hand is up (for "shhh"), otherwise only now and then (to look at you)
     let shapes = null;
-    if (face && tick % (prefs.lite ? 3 : 2) === 0) {
+    const handNear = now - lastHandAt < 1500;
+    const faceEvery = handNear ? (prefs.lite ? 3 : 2) : (prefs.lite ? 8 : 6);
+    if (face && (resting || tick % faceEvery === 0)) {
       try {
         const fr = face.detectForVideo(v, now + 0.5);
         if (fr && fr.faceLandmarks && fr.faceLandmarks[0]) {
@@ -1642,7 +1663,8 @@ Rules:
         }
       } catch (e) {}
     }
-    const p = (lastFace && now - lastFaceAt < 500) ? lastFace : null;
+    const p = (lastFace && now - lastFaceAt < 1000) ? lastFace : null;
+    if (p) lastPersonAt = now;
     if (p) {
       lookUntil = now + 1500;
       look((p.nose.x - 0.5) * -24, (p.nose.y - 0.5) * 14);
@@ -1653,12 +1675,13 @@ Rules:
     }
 
     const hands = (res && res.landmarks) || [];
+    if (hands.length) { lastHandAt = now; lastPersonAt = now; }
     if ($('panel').classList.contains('open')) {
       const h0 = hands[0];
       const g = !h0 ? '—'
         : isFingerHeart(h0) ? 'finger heart' : isPeace(h0) ? 'peace' : isFist(h0) ? 'kamao (fist)'
         : (p && isShh(h0, p)) ? 'shhh' : isRock(h0) ? 'sungay (rock)' : isThumbsUp(h0) ? 'thumbs up' : openPalm(h0) ? 'bukas na palad' : 'kamay';
-      $('seeStatus').textContent = `Nakikita ni Lumi: mukha ${p ? '✓' : '✗'} · kamay ${hands.length} · ${g} · nakatiklop ${h0 ? foldedCount(h0) : 0}/4 · camera restarts ${camRestarts}`;
+      $('seeStatus').textContent = `${resting ? '[pahinga] ' : '[aktibo] '}Nakikita ni Lumi: mukha ${p ? '✓' : '✗'} · kamay ${hands.length} · ${g} · nakatiklop ${h0 ? foldedCount(h0) : 0}/4 · camera restarts ${camRestarts}`;
     }
     if (!hands.length) { xs = xs.filter(q => now - q.t < 1200); flaps = []; sizes = []; holds.shh = holds.fist = holds.horns = holds.heart = holds.peace = holds.thumbs = 0; return; }
     lastActivity = now;
@@ -1892,7 +1915,7 @@ Rules:
     hearing = on;
     $('hearingBtn').classList.toggle('on', on);
     $('hearingBtn').textContent = on ? 'Hearing Mode: ON (tapusin)' : 'Hearing Mode: OFF';
-    if (on) { stopMusic({ keepState: true }); stopTalking(); closeAskBar(); deepSleep = false; body.classList.remove('deep'); stopSensors(); body.dataset.state = 'quiet'; state = 'quiet'; chirps.quiet(); }
+    if (on) { stopMusic({ keepState: true }); stopTalking(); closeAskBar(); deepSleep = false; body.classList.remove('deep'); stopSensors(); body.dataset.state = 'quiet'; state = 'quiet'; body.classList.add('small'); chirps.quiet(); }
     else {
       state = 'idle'; setState('idle', { silent: true });
       startSensors().then(() => { if (prefs.wake) startWake(); }).catch(() => {
