@@ -87,6 +87,23 @@
   @keyframes whoosh{0%{opacity:0;transform:translateX(30px)}40%{opacity:1}100%{opacity:0;transform:translateX(-30px)}}
   .whoosh{animation:whoosh .8s ease-out infinite}
 
+  /* attention: Lumi heard his name */
+  body[data-state="listen"] .xp-listen{display:inline}
+  @keyframes wave1{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.08)}}
+  .sw1{animation:wave1 1s ease-in-out infinite;transform-origin:center}
+  .sw2{animation:wave1 1s ease-in-out .2s infinite;transform-origin:center}
+  .sw3{animation:wave1 1s ease-in-out .4s infinite;transform-origin:center}
+  @keyframes perk{0%{transform:translateY(8px) scale(.94)}60%{transform:translateY(-6px) scale(1.04)}100%{transform:translateY(0) scale(1)}}
+  .perk{animation:perk .45s ease-out both;transform-origin:center}
+  /* ear icon: is Lumi listening right now? */
+  #earDot{position:fixed;top:calc(12px + env(safe-area-inset-top));left:calc(14px + env(safe-area-inset-left));
+    display:none;align-items:center;gap:6px;font-size:13px;color:#7FD6F5;z-index:3;pointer-events:none}
+  body.ears-on #earDot,body.ears-closed #earDot{display:flex}
+  body.ears-closed #earDot{color:#5D6678}
+  @keyframes earPulse{0%,100%{opacity:.45}50%{opacity:1}}
+  body.ears-on #earDot svg{animation:earPulse 2s ease-in-out infinite}
+  body.ears-on #earDot .closed,body.ears-closed #earDot .open{display:none}
+
   /* quiet badge after shhh */
   #quietBadge{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
     background:rgba(20,23,31,.9);color:#9FB0C8;font-size:14px;padding:6px 14px;border-radius:999px;display:none;z-index:2;white-space:nowrap}
@@ -534,6 +551,38 @@
     <text class="cap" x="422" y="376" font-size="18" font-weight="500" fill="#9FB0C8">let's fist bump instead</text>
   </g>
 
+  <!-- LISTEN (heard "Lumi") -->
+  <g class="xp xp-listen">
+    <g class="perk">
+      <rect x="240" y="70" width="88" height="11" rx="5.5" fill="#F2FBFF" transform="rotate(-6 284 75)"/>
+      <rect x="516" y="70" width="88" height="11" rx="5.5" fill="#F2FBFF" transform="rotate(6 560 75)"/>
+      <g class="eye-glow">
+        <rect class="eye-shape" x="226" y="94" width="132" height="150" rx="66"/>
+        <rect class="eye-shape" x="486" y="94" width="132" height="150" rx="66"/>
+      </g>
+      <rect x="250" y="122" width="84" height="100" rx="42" fill="#1C2A4D"/>
+      <rect x="510" y="122" width="84" height="100" rx="42" fill="#1C2A4D"/>
+      <circle cx="306" cy="146" r="15" fill="#fff"/>
+      <circle cx="566" cy="146" r="15" fill="#fff"/>
+      <circle cx="282" cy="200" r="6" fill="#fff"/>
+      <circle cx="542" cy="200" r="6" fill="#fff"/>
+      <ellipse cx="216" cy="268" rx="34" ry="14" fill="#FF7FA8" opacity=".55"/>
+      <ellipse cx="628" cy="268" rx="34" ry="14" fill="#FF7FA8" opacity=".55"/>
+      <ellipse cx="422" cy="266" rx="12" ry="13" fill="#2A1420" stroke="#FFB3C7" stroke-width="6"/>
+    </g>
+    <!-- sound waves going into Lumi's "ears" -->
+    <g fill="none" stroke="#7FD6F5" stroke-width="6" stroke-linecap="round">
+      <path class="sw1" d="M178 150 Q160 170 178 190"/>
+      <path class="sw2" d="M154 134 Q128 170 154 206"/>
+      <path class="sw3" d="M130 118 Q96 170 130 222"/>
+      <path class="sw1" d="M666 150 Q684 170 666 190"/>
+      <path class="sw2" d="M690 134 Q716 170 690 206"/>
+      <path class="sw3" d="M714 118 Q748 170 714 222"/>
+    </g>
+    <text class="cap" x="422" y="340" font-size="28" font-weight="700" fill="#BFF0FF">Yes? I'm listening…</text>
+    <text class="cap" id="listenText" x="422" y="374" font-size="19" font-weight="500" fill="#FFE9A8"></text>
+  </g>
+
   <!-- THINKING -->
   <g class="xp xp-think">
     <g class="eye-glow">
@@ -653,12 +702,17 @@
   </button>
 </form>
 
+<div id="earDot" aria-hidden="true">
+  <svg class="open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 1 1 12 0c0 3.5-3 4.5-3 7.5a3.5 3.5 0 0 1-6.5 1.8"/><path d="M9 9a3 3 0 0 1 6 0c0 1.5-1.5 2-1.5 3.5"/></svg>
+  <svg class="closed" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 1 1 12 0c0 3.5-3 4.5-3 7.5a3.5 3.5 0 0 1-6.5 1.8"/><path d="M3 3l18 18"/></svg>
+  <span class="open">listening</span><span class="closed">ears closed</span>
+</div>
 <div id="quietBadge" aria-live="polite">Quiet mode · thumbs up, tap me, or say "Lumi, talk"</div>
 <div id="bubble" role="status" aria-live="polite"><span id="bubbleText"></span><small id="bubbleNote" style="display:block;color:#8A97AD;font-size:13px;margin-top:4px"></small></div>
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">Lumi · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v30</span></h2>
+    <h2 id="ptitle">Lumi · Settings <span style="font-size:14px;color:#8A97AD;font-weight:500">v32</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -704,6 +758,7 @@
       <button class="btn ghost" data-go="music">Music</button>
       <button class="btn ghost" data-go="nextsong">Next song</button>
       <button class="btn ghost" data-go="bye">Bye</button>
+      <button class="btn ghost" data-go="listen">Listening</button>
       <button class="btn ghost" data-go="bigsmile">Smile</button>
       <button class="btn ghost" data-go="spin">Spin</button>
       <button class="btn ghost" data-go="peace">Peace</button>
@@ -738,7 +793,7 @@
    For the free version: deploy the Supabase function "jeg-ask" (it talks to Groq),
    then paste its URL and your Supabase *anon* key here. Never put the Groq key in this file. */
 const JEG_CONFIG = {
-  brainUrl: 'https://adragnnngictwxtslosy.supabase.co/functions/v1/jeg-ask',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
+   brainUrl: 'https://adragnnngictwxtslosy.supabase.co/functions/v1/jeg-ask',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
   supabaseAnonKey: 'sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd',   // Supabase > Project Settings > API > anon public key
 };
 (() => {
@@ -948,7 +1003,10 @@ Rules:
 - Never give legal advice on a specific case and never take sides in a dispute. Say "Let's ask the Lupon."
 - If you are not sure, say so. Do not guess numbers or dates.
 - No markdown, lists or emoji. Plain text only, because it will be read aloud.
-- Never ask for or repeat personal information.`;
+- Never ask for or repeat personal information.
+- You may also chat about everyday life, kindness, feelings and general knowledge. For simple questions about good values (like whether it is nice to be good or kind), give a warm, thoughtful answer with your gentle opinion.
+- Stay neutral on politics, religion and anyone's dispute.
+- You cannot browse the internet. For very recent news or live information, say you are not sure and suggest checking a trusted source.`;
 
   const caps = {};
   function claudeCap(name) {
@@ -961,6 +1019,10 @@ Rules:
   }
   const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout' }), ms))]);
 
+  // questions that need fresh, real-world info -> the brain may search the web
+  function needsSearch(q) {
+    return /\b(search|look up|lookup|google|latest|news|today'?s|current|currently|right now|this week|this month|this year|weather|price|cost|score|who won|schedule|update)\b/i.test(q);
+  }
   async function askBrain(q) {
     if (JEG_CONFIG.brainUrl) {
       const r = await fetch(JEG_CONFIG.brainUrl.trim(), {
@@ -970,7 +1032,7 @@ Rules:
           Authorization: 'Bearer ' + JEG_CONFIG.supabaseAnonKey,
           apikey: JEG_CONFIG.supabaseAnonKey,
         },
-        body: JSON.stringify({ question: q }),
+        body: JSON.stringify({ question: q, search: false }), // web search off: free answers only
       });
       if (r.status === 429) throw { code: 'rate_limited' };
       if (!r.ok) {
@@ -1938,7 +2000,25 @@ Rules:
 
   // ---------- "Hey Lumi" (browser speech recognition) ----------
   const SR = JegSpeech ? NativeSR : (window.SpeechRecognition || window.webkitSpeechRecognition);
-  let rec = null, wakeOn = false, lastCmdAt = 0, lastHeardStart = 0, heardAt = 0;
+  let rec = null, wakeOn = false, lastCmdAt = 0, lastHeardStart = 0, heardAt = 0, lastListenAt = 0;
+  const NO_ATTEND = ['think', 'answer', 'breathe', 'worried', 'lying', 'spin', 'dizzy', 'quiet', 'music', 'shh'];
+  function attend(txt) {
+    if (hearing || exited || NO_ATTEND.includes(state)) return;
+    lastListenAt = performance.now();
+    const after = String(txt).replace(new RegExp(`^.*?\\b${NAME}\\b[\\s,.!?]*`, 'i'), '').trim();
+    $('listenText').textContent = after ? `"${after.slice(0, 60)}"` : '';
+    if (state !== 'listen') {
+      if (deepSleep) wakeCamera();
+      setState('listen', { silent: true });
+      tone([[880, 1320]], 0.12, 'sine', 0.1);          // a soft "ding": I heard you
+    }
+  }
+  // ear icon: shows if Lumi is listening right now
+  setInterval(() => {
+    const listening = !hearing && !exited && !earsClosed && (JegSpeech ? nativeListening : wakeOn);
+    body.classList.toggle('ears-on', listening);
+    body.classList.toggle('ears-closed', !hearing && !exited && earsClosed && (JegSpeech ? true : wakeOn));
+  }, 400);
   // ---- close Lumi's ears while Lumi talks, so Lumi doesn't hear (and type out) its own voice ----
   let earsClosed = false, earsTimer = null;
   function closeEars() {
@@ -1972,10 +2052,11 @@ Rules:
   const NAME = '(?:lumi|lumie|lumee|lumy|lummy|lummi|loomy|loomie|loomi|lumia|lumis|lu mi|lu-mi|lou me|loo me|lumen|yumi|yumie|yummy|yumee|youmi|you me|rumi|ruumi|lume|luma|jeg|jiggy)';
   const PLAY_MUSIC = new RegExp(`\\b${NAME}\\b.*\\b(?:play\\s+(?:some\\s+)?(?:soft\\s+)?music|music|musika|patugtog|tugtog|kanta)\\b`, 'i');
   const WAKE = new RegExp(`\\b(?:hey|hi|hello|helo|uy|oy|hoy)[\\s,]*${NAME}\\b`, 'i');
+  const NAME_ANY = new RegExp(`\\b${NAME}\\b`, 'i');
   const NAME_ONLY = new RegExp(`^\\W*${NAME}\\W*$`, 'i');
   const SLEEP_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:sleep|go to sleep|tulog|matulog|pahinga)\\b`, 'i');
   const WAKE_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:wake|wake up|gising|gumising|bangon)\\b`, 'i');
-  const ASK_CMD = new RegExp(`\\b${NAME}\\b[\\s,]+(.*\\b(?:what|what's|who|where|when|why|how|explain|define|tell me|can you|could you|do you know|is|are|does|ano|anong|sino|saan|kailan|bakit|paano|ilan|magkano|ipaliwanag)\\b.*)`, 'i');
+  const ASK_CMD = new RegExp(`\\b${NAME}\\b[\\s,]+(.*\\b(?:what|what's|who|where|when|why|how|which|explain|define|tell me|search|look up|can you|could you|would you|should|do you|is|are|does|ano|anong|sino|saan|kailan|bakit|paano|ilan|magkano|ipaliwanag)\\b.*)`, 'i');
   const TALK_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:you can talk|you can speak|talk|speak|sound on|unmute|ok na|pwede na)\\b`, 'i');
   const EXIT_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:exit|shut ?down|turn off|power off|close the app|close app|close yourself|goodbye)\\b|\\bgoodbye,? ${NAME}\\b`, 'i');
   const SMILE_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:smile|smiles|ngiti|ngumiti|say cheese)\\b`, 'i');
@@ -1998,10 +2079,10 @@ Rules:
         if (music && !STOP_MUSIC.test(txt) && !NEXT_SONG.test(txt) && !EXIT_CMD.test(txt)) continue; // that's Lumi's own music
         const now = performance.now();
         $('heardStatus').textContent = `Narinig ni Lumi: "${txt.trim().slice(-80)}"`; heardAt = performance.now();
+        // heard "Lumi": show attention right away (even before the sentence is finished)
+        if (NAME_ANY.test(txt)) attend(txt);
         if (e.results[i].isFinal && NAME_ONLY.test(txt) && now - lastCmdAt > 2500) {
-          lastCmdAt = now;
-          if (state === 'sleep') setState('idle', { silent: true });
-          greet("Yes? I'm listening!"); break;
+          lastCmdAt = now; attend(txt); break;   // just the name: Lumi waits for your command
         }
         if (now - lastCmdAt < 2500) break;              // one command at a time
         if (EXIT_CMD.test(txt) && !/\bmusic\b/i.test(txt)) { lastCmdAt = now; try { rec.abort(); } catch (x) {} exitLumi(); break; }
@@ -2020,6 +2101,11 @@ Rules:
         }
         const askM = e.results[i].isFinal && txt.match(ASK_CMD);
         if (askM) { lastCmdAt = now; try { rec.abort(); } catch (x) {} askQuestion(askM[1]); break; }
+        // anything else said to Lumi with 3+ words is a question for the brain ("Lumi, do you think it's nice to be good?")
+        if (e.results[i].isFinal) {
+          const free = txt.match(new RegExp(`\\b${NAME}\\b[\\s,]+(.+)$`, 'i'));
+          if (free && free[1].trim().split(/\s+/).length >= 3) { lastCmdAt = now; try { rec.abort(); } catch (x) {} askQuestion(free[1]); break; }
+        }
         if (WAKE.test(txt) && e.results[i].isFinal) { lastCmdAt = now; greet("Hello! I'm Lumi!"); try { rec.abort(); } catch (x) {} break; }
       }
     };
@@ -2087,6 +2173,7 @@ Rules:
       else if (['bleh', 'horns', 'fistbump', 'dodge', 'peace', 'heart', 'bigsmile'].includes(state) && inState > 4000) setState('idle', { silent: true });
       else if (state === 'spin' && inState > 1850) { setState('dizzy', { silent: true }); speakNow("Whee! I'm so dizzy!"); tone([[900, 500], [700, 900], [900, 500]], 0.12, 'triangle', 0.08); }
       else if (state === 'dizzy' && inState > 2800) setState('idle', { silent: true });
+      else if (state === 'listen' && now - lastListenAt > 6000) setState('idle', { silent: true });
       else if (state === 'answer' && !speaking && now > answerUntil) setState('idle', { silent: true });
       else if (state === 'idle' && now - lastActivity > SLEEP_AFTER) setState('sleep');
     }
@@ -2157,6 +2244,7 @@ Rules:
     if (go === 'shh') doShh();
     else if (go === 'music') { if (music) stopMusic(); else startMusic(); }
     else if (go === 'nextsong') nextSong();
+    else if (go === 'listen') { stopMusic({ keepState: true }); attend('Lumi'); }
     else if (go === 'sleep') goDeepSleep();
     else if (go === 'exit') exitLumi();
     else if (go === 'bigsmile') doSmile();
