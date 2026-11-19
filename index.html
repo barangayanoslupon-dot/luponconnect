@@ -72,7 +72,7 @@ main{padding:32px 0 72px;min-height:70vh}
 .hero-logo{height:100px;width:auto;display:block;filter:drop-shadow(0 6px 16px rgba(0,0,0,.35))}
 .hero h1{margin:.35em 0 0;font-size:clamp(1.85rem,4.6vw,3rem);line-height:1.1;letter-spacing:-.03em;color:#fff}
 .hero p{max-width:680px;margin:.9em auto 0;font-size:1.06rem;opacity:.9}
-.hero p i{display:inline-block;font-size:.88rem;padding:5px 16px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2)}
+.hero p i{font-family:Georgia,"Times New Roman",serif;font-size:1.05rem;letter-spacing:.01em;color:#f2d9a8}
 .vc-pill{display:inline-block;margin-top:18px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:6px 16px;font-size:.86rem;font-weight:600}
 .vc-pill:empty{display:none}
 .qban{display:block;max-width:580px;margin:18px auto 0;padding:16px 20px;border-radius:18px;background:var(--gold);color:#fff;text-decoration:none;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.18);box-shadow:0 10px 26px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .2s,box-shadow .2s}
@@ -405,13 +405,13 @@ const newsFeat=n=>{
   return `<article class="newsfeat"><h2 class="sec" style="margin-top:0">📢 Latest News</h2>${img(n.image,"hero-img")}<span class="tag">${esc(n.category||"Update")}</span><h2 class="nf-t">${esc(n.title)}</h2><div class="date">${fmt(n.created_at)}</div><div class="body">${rich(out.join("\n\n"))}</div><p><a class="btn" href="#/news/${esc(n.id)}">${clipped?"Basahin ang buong balita →":"Buksan ang balita →"}</a></p></article>`};
 const V={
 home(){
-  let f=DB.articles.filter(a=>a.featured).slice(0,3);if(!f.length)f=DB.articles.slice(0,3);
+  const f=DB.articles.filter(a=>a.featured).concat(DB.articles.filter(a=>!a.featured)).slice(0,4);
  return `<div class="hero"><div class="hero-logos"><img class="hero-logo" src="logo-anos.png" alt="Barangay Anos seal" onerror="this.remove()"><img class="hero-logo" src="logo-lupon.png" alt="Lupong Tagapamayapa seal" onerror="this.remove()"></div>
   <p><i>"Maka-Diyos, Maka-Tao, at Pantay na Hustisya"</i></p>
   <h1>Maligayang pagdating sa LuponConnect</h1>
   <p>A digital knowledge portal of the Lupong Tagapamayapa of Barangay Anos—reliable information on Katarungang Pambarangay, dispute resolution and relevant laws.</p><div class="vc-pill">${visitText()}</div>${appBanner()}${quizBanner()}</div>
   ${newsFeat(DB.news[0])}
-  <h2 class="sec">Latest Updates</h2><div class="grid">${DB.news.slice(0,3).map(newsCard).join("")}</div>
+  <h2 class="sec">Latest Updates</h2><div class="grid">${DB.news.slice(0,4).map(newsCard).join("")}</div>
   <h2 class="sec">Featured Ating Alamin</h2>${f.length?`<div class="grid">${f.map(artCard).join("")}</div>`:""}
   ${quizHome()}<h2 class="sec">Quick Links</h2><div class="grid">
    ${NAV.slice(1).map(([h,l])=>`<a class="card" href="${h}"><h3>${l}</h3></a>`).join("")}</div>`;
