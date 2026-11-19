@@ -66,6 +66,30 @@
   /* big smile / spin */
   @keyframes jegSpin{0%{transform:rotate(0)}100%{transform:rotate(720deg)}}
   body[data-state="spin"] #face{animation:jegSpin 1.8s cubic-bezier(.45,.05,.4,1) 1}
+  /* fun moves (silent): the whole Lumi moves */
+  body[data-state="dance"] .xp-fun,body[data-state="bounce"] .xp-fun,body[data-state="jiggle"] .xp-fun,
+  body[data-state="hooray"] .xp-fun,body[data-state="confetti"] .xp-fun{display:inline}
+  body[data-state="hooray"] .fun-arms{display:inline}
+  .fun-arms{display:none}
+  @keyframes dance{0%,100%{transform:translateX(0) rotate(0)}12%{transform:translateX(-50px) translateY(-14px) rotate(-10deg)}
+    25%{transform:translateX(0) translateY(0) rotate(0)}37%{transform:translateX(50px) translateY(-14px) rotate(10deg)}
+    50%{transform:translateX(0) rotate(0)}62%{transform:translateX(-30px) translateY(-24px) rotate(-6deg) scale(1.05)}
+    75%{transform:translateX(0) rotate(0)}87%{transform:translateX(30px) translateY(-24px) rotate(6deg) scale(1.05)}}
+  body[data-state="dance"] #face{animation:dance 1.6s ease-in-out infinite;transform-origin:50% 80%}
+  @keyframes bounce{0%,100%{transform:translateY(0) scale(1.08,.9)}35%{transform:translateY(-70px) scale(.94,1.08)}
+    55%{transform:translateY(-80px) scale(1,1)}80%{transform:translateY(0) scale(1.1,.88)}}
+  body[data-state="bounce"] #face{animation:bounce .75s cubic-bezier(.3,.6,.4,1) infinite;transform-origin:50% 100%}
+  @keyframes jiggle{0%,100%{transform:scale(1,1)}15%{transform:scale(1.14,.86)}30%{transform:scale(.88,1.12)}
+    45%{transform:scale(1.08,.93)}60%{transform:scale(.95,1.05)}75%{transform:scale(1.03,.98)}}
+  body[data-state="jiggle"] #face{animation:jiggle .7s ease-in-out infinite;transform-origin:50% 70%}
+  @keyframes hooray{0%,100%{transform:translateY(0)}30%{transform:translateY(-40px) scale(1.06)}60%{transform:translateY(0)}}
+  body[data-state="hooray"] #face{animation:hooray .9s ease-out infinite;transform-origin:50% 100%}
+  @keyframes armWave{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(14deg)}}
+  .fun-arms .arm{animation:armWave .45s ease-in-out infinite;transform-origin:50% 100%}
+  body[data-state="confetti"] #face{animation:bounce .9s cubic-bezier(.3,.6,.4,1) infinite;transform-origin:50% 100%}
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+  #confetti i{position:absolute;top:-20px;display:block;border-radius:2px;animation:fall linear forwards}
+  @keyframes fall{0%{transform:translate(0,-20px) rotate(0)}100%{transform:translate(var(--dx),110vh) rotate(var(--rot))}}
   @keyframes grin{0%{transform:scale(.6)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
   .grin{animation:grin .6s ease-out both;transform-origin:center}
 
@@ -563,6 +587,24 @@
     <text class="cap" x="422" y="376" font-size="18" font-weight="500" fill="#9FB0C8">let's fist bump instead</text>
   </g>
 
+  <!-- FUN MOVES (dance, bounce, jiggle, hooray, confetti) -->
+  <g class="xp xp-fun">
+    <g class="fun-arms">
+      <g transform="translate(176 130) rotate(-38 13 110)"><g class="arm"><rect x="0" y="20" width="26" height="90" rx="13" fill="#FFD3E0" stroke="#FF8FB1" stroke-width="4"/><circle cx="13" cy="16" r="18" fill="#FFD3E0" stroke="#FF8FB1" stroke-width="4"/></g></g>
+      <g transform="translate(642 130) rotate(38 13 110)"><g class="arm"><rect x="0" y="20" width="26" height="90" rx="13" fill="#FFD3E0" stroke="#FF8FB1" stroke-width="4"/><circle cx="13" cy="16" r="18" fill="#FFD3E0" stroke="#FF8FB1" stroke-width="4"/></g></g>
+    </g>
+    <path d="M246 160 Q295 94 344 160" stroke="#F2FBFF" stroke-width="14" stroke-linecap="round" fill="none"/>
+    <path d="M500 160 Q549 94 598 160" stroke="#F2FBFF" stroke-width="14" stroke-linecap="round" fill="none"/>
+    <ellipse cx="226" cy="203" rx="40" ry="17" fill="#FF7FA8" opacity=".75"/>
+    <ellipse cx="618" cy="203" rx="40" ry="17" fill="#FF7FA8" opacity=".75"/>
+    <path d="M372 196 H472 Q472 252 422 252 Q372 252 372 196Z" fill="#2A1420" stroke="#FFB3C7" stroke-width="5" stroke-linejoin="round"/>
+    <ellipse cx="422" cy="240" rx="24" ry="12" fill="#FF8FB1"/>
+    <path class="sp1" d="M150 70 l6 16 16 6 -16 6 -6 16 -6 -16 -16 -6 16 -6z" fill="#FFE9A8"/>
+    <path class="sp2" d="M690 60 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5z" fill="#BFF0FF"/>
+    <path class="sp3" d="M706 268 l6 16 16 6 -16 6 -6 16 -6 -16 -16 -6 16 -6z" fill="#FFE9A8"/>
+    <text class="cap" id="funText" x="422" y="352" font-size="32" font-weight="800" fill="#FFE9A8">Let's dance!</text>
+  </g>
+
   <!-- LISTEN (heard "Lumi") -->
   <g class="xp xp-listen">
     <g class="perk">
@@ -714,12 +756,13 @@
   </button>
 </form>
 
+<div id="confetti" aria-hidden="true"></div>
 <div id="credits">
   <p class="credit-line">Developed by: Daniel "Jigs" L. Garcia (Lupon Clerk)</p>
   <p class="credit-line">LuponConnect · For general information only; not legal advice.</p>
   <p class="credit-line">Sangguniang Barangay ng Anos · 2026 · All Rights Reserved.</p>
 </div>
-<div id="verTag" class="lumiVer" aria-hidden="true">v35</div>
+<div id="verTag" class="lumiVer" aria-hidden="true">v36</div>
 <div id="earDot" aria-hidden="true">
   <svg class="open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 1 1 12 0c0 3.5-3 4.5-3 7.5a3.5 3.5 0 0 1-6.5 1.8"/><path d="M9 9a3 3 0 0 1 6 0c0 1.5-1.5 2-1.5 3.5"/></svg>
   <svg class="closed" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 1 1 12 0c0 3.5-3 4.5-3 7.5a3.5 3.5 0 0 1-6.5 1.8"/><path d="M3 3l18 18"/></svg>
@@ -730,7 +773,7 @@
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">Lumi · Settings <span class="lumiVer" style="font-size:14px;color:#8A97AD;font-weight:500">v35</span></h2>
+    <h2 id="ptitle">Lumi · Settings <span class="lumiVer" style="font-size:14px;color:#8A97AD;font-weight:500">v36</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -779,6 +822,11 @@
       <button class="btn ghost" data-go="listen">Listening</button>
       <button class="btn ghost" data-go="bigsmile">Smile</button>
       <button class="btn ghost" data-go="spin">Spin</button>
+      <button class="btn ghost" data-go="fun-dance">Dance</button>
+      <button class="btn ghost" data-go="fun-bounce">Bounce</button>
+      <button class="btn ghost" data-go="fun-jiggle">Jiggle</button>
+      <button class="btn ghost" data-go="fun-hooray">Hooray</button>
+      <button class="btn ghost" data-go="fun-confetti">Confetti</button>
       <button class="btn ghost" data-go="peace">Peace</button>
       <button class="btn ghost" data-go="heart">Finger heart</button>
       <button class="btn ghost" data-go="bleh">Bleh</button>
@@ -805,7 +853,7 @@
   <p>Lupon's Unit for Mindful Interaction</p>
   <p style="font-size:15px;color:#8A97AD">a little light for peaceful talks</p>
   <button class="btn" id="wake">Gisingin si Lumi</button>
-  <p class="lumiVer" style="font-size:14px;color:#5D6678;margin-top:6px">v35</p>
+  <p class="lumiVer" style="font-size:14px;color:#5D6678;margin-top:6px">v36</p>
   <div class="credits-block">
   <p class="credit-line">Developed by: Daniel "Jigs" L. Garcia (Lupon Clerk)</p>
   <p class="credit-line">LuponConnect · For general information only; not legal advice.</p>
@@ -822,8 +870,8 @@
    For the free version: deploy the Supabase function "jeg-ask" (it talks to Groq),
    then paste its URL and your Supabase *anon* key here. Never put the Groq key in this file. */
 const JEG_CONFIG = {
-  brainUrl: 'https://adragnnngictwxtslosy.supabase.co/functions/v1/jeg-ask',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
-  supabaseAnonKey: 'sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd',   // Supabase > Project Settings > API > anon public key
+  brainUrl: '',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
+  supabaseAnonKey: '',   // Supabase > Project Settings > API > anon public key
 };
 (() => {
   const body = document.body;
@@ -2024,6 +2072,39 @@ Rules:
     tone([[700, 1100], [1100, 1500]], 0.1);
     speakNow('Like this? Big smile! Hehe!');
   }
+  // fun moves: silent on purpose, so Lumi's ears stay open the whole time
+  const FUN = {
+    dance:    { text: "Let's dance!",          ms: 5000 },
+    bounce:   { text: 'Boing! Boing!',          ms: 4000 },
+    jiggle:   { text: 'Jiggle jiggle!',         ms: 3500 },
+    hooray:   { text: 'Hooray!',                ms: 4000 },
+    confetti: { text: "Yay! Let's celebrate!", ms: 4500 },
+  };
+  function doFun(kind) {
+    if (hearing || exited || !FUN[kind]) return;
+    stopMusic({ keepState: true });
+    $('funText').textContent = FUN[kind].text;
+    setState(kind, { silent: true });                       // no sound, no voice
+    if (kind === 'confetti' || kind === 'hooray') throwConfetti(kind === 'hooray' ? 40 : 80);
+  }
+  function throwConfetti(n) {
+    const box = $('confetti'); if (!box) return;
+    const colors = ['#FF8FB1', '#FFE9A8', '#BFF0FF', '#D9C8FF', '#7FD6F5', '#FFB3C7', '#5BE49B'];
+    const count = prefs.lite ? Math.round(n / 2) : n;
+    for (let i = 0; i < count; i++) {
+      const c = document.createElement('i');
+      const w = 6 + Math.random() * 7;
+      c.style.left = (Math.random() * 100) + 'vw';
+      c.style.width = w + 'px'; c.style.height = (w * (0.4 + Math.random() * 0.8)) + 'px';
+      c.style.background = colors[i % colors.length];
+      c.style.animationDuration = (2.2 + Math.random() * 1.6) + 's';
+      c.style.animationDelay = (Math.random() * 0.6) + 's';
+      c.style.setProperty('--dx', ((Math.random() - 0.5) * 160) + 'px');
+      c.style.setProperty('--rot', ((Math.random() - 0.5) * 1080) + 'deg');
+      box.appendChild(c);
+    }
+    setTimeout(() => { box.innerHTML = ''; }, 4600);
+  }
   function doSpin() {
     if (hearing) return;
     stopMusic({ keepState: true }); quietUntil = 0;
@@ -2101,6 +2182,16 @@ Rules:
   const TALK_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:you can talk|you can speak|talk|speak|sound on|unmute|ok na|pwede na)\\b`, 'i');
   const EXIT_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:exit|shut ?down|turn off|power off|close the app|close app|close yourself|goodbye)\\b|\\bgoodbye,? ${NAME}\\b`, 'i');
   const SMILE_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:smile|smiles|ngiti|ngumiti|say cheese)\\b`, 'i');
+  const FUN_CMD = new RegExp(`\\b${NAME}\\b.*\\b(dance|dancing|sayaw|sumayaw|bounce|bouncing|talon|jiggle|wiggle|jelly|kembot|hooray|hurray|yay|celebrate|celebration|confetti|party|cheer (?:us |me )?up|make (?:us|me) happy|happy dance)\\b`, 'i');
+  function funKind(word) {
+    word = word.toLowerCase();
+    if (/danc|sayaw/.test(word)) return 'dance';
+    if (/bounc|talon/.test(word)) return 'bounce';
+    if (/jiggl|wiggl|jelly|kembot/.test(word)) return 'jiggle';
+    if (/hooray|hurray|yay/.test(word)) return 'hooray';
+    if (/confetti|party|celebrat/.test(word)) return 'confetti';
+    return pick(['dance', 'bounce', 'jiggle', 'hooray', 'confetti']); // "cheer us up": a surprise
+  }
   const SPIN_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:spin|spins|spinning|turn around|roll|ikot|umikot)\\b`, 'i');
   const NEXT_SONG = new RegExp(`\\b${NAME}\\b.*\\b(?:next song|next music|change (?:the )?(?:music|song)|another song|other song|different song|ibang kanta|next)\\b`, 'i');
   const STOP_MUSIC = new RegExp(`\\b${NAME}\\b.*\\b(?:stop|tama na|hinto|tigil|patayin|off)\\b`, 'i');
@@ -2145,6 +2236,8 @@ Rules:
         if (TALK_CMD.test(txt) && performance.now() < quietUntil) { lastCmdAt = now; try { rec.abort(); } catch (x) {} unquiet('Yay! I can talk again!'); break; }
         if (SMILE_CMD.test(txt)) { lastCmdAt = now; try { rec.abort(); } catch (x) {} doSmile(); break; }
         if (SPIN_CMD.test(txt)) { lastCmdAt = now; try { rec.abort(); } catch (x) {} doSpin(); break; }
+        const funM = txt.match(FUN_CMD);
+        if (funM) { lastCmdAt = now; doFun(funKind(funM[1])); break; }   // ears stay open (no abort, no sound)
         if (e.results[i].isFinal && new RegExp(`\\b${NAME}\\b`, 'i').test(txt)) {
           const quick = localAnswer(txt.replace(new RegExp(`^.*?\\b${NAME}\\b[\\s,]*`, 'i'), '')) || localAnswer(txt);
           if (quick) { lastCmdAt = now; try { rec.abort(); } catch (x) {} stopMusic({ keepState: true }); showAnswer(quick); break; }
@@ -2221,6 +2314,7 @@ Rules:
       else if (state === 'shh' && inState > SHH_MS) setState('idle', { silent: true });
       else if (state === 'refreshed' && inState > 4200) setState('idle', { silent: true });
       else if (['bleh', 'horns', 'fistbump', 'dodge', 'peace', 'heart', 'bigsmile'].includes(state) && inState > 4000) setState('idle', { silent: true });
+      else if (FUN[state] && inState > FUN[state].ms) setState('idle', { silent: true });
       else if (state === 'spin' && inState > 1850) { setState('dizzy', { silent: true }); speakNow("Whee! I'm so dizzy!"); tone([[900, 500], [700, 900], [900, 500]], 0.12, 'triangle', 0.08); }
       else if (state === 'dizzy' && inState > 2800) setState('idle', { silent: true });
       else if (state === 'listen' && now - lastListenAt > 6000) setState('idle', { silent: true });
@@ -2299,6 +2393,7 @@ Rules:
     else if (go === 'exit') exitLumi();
     else if (go === 'bigsmile') doSmile();
     else if (go === 'spin') doSpin();
+    else if (go.startsWith('fun-')) doFun(go.slice(4));
     else if (TEST_REACTIONS[go]) {
       stopMusic({ keepState: true }); quietUntil = 0;
       const [st, text] = TEST_REACTIONS[go];
