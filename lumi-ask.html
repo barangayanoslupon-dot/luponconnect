@@ -20,11 +20,11 @@
   html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;
     font-family:'Baloo 2',system-ui,sans-serif;color:var(--ink);
     -webkit-user-select:none;user-select:none;touch-action:manipulation}
-  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  #stage{position:fixed;inset:0 0 46px 0;display:flex;align-items:center;justify-content:center;
     transition:transform .5s cubic-bezier(.3,.8,.3,1.2);transform-origin:50% 45%}
   body.small #stage{transform:scale(var(--idle-scale,.65))}   /* resting Lumi is small */
   body.small .eye-glow{filter:drop-shadow(0 0 8px rgba(150,220,255,.35))} /* lighter glow when small */
-  #face{width:100vw;height:100vh;height:100dvh;display:block;cursor:pointer}
+  #face{width:100%;height:100%;display:block;cursor:pointer}
 
   /* show only the active expression */
   .xp{display:none}
@@ -104,6 +104,14 @@
   body.ears-on #earDot svg{animation:earPulse 2s ease-in-out infinite}
   body.ears-on #earDot .closed,body.ears-closed #earDot .open{display:none}
 
+  /* credits */
+  .credit-line{margin:0;line-height:1.45}
+  #credits{position:fixed;left:0;right:0;bottom:calc(6px + env(safe-area-inset-bottom));text-align:center;
+    font-size:11px;color:#4A5163;z-index:1;pointer-events:none;padding:0 70px}
+  body[data-state="answer"] #credits{display:none}
+  .credits-block{font-size:12px;color:#6B7488;text-align:center;margin-top:6px}
+  #start .credit-line{font-size:13px;color:#6B7488}
+  .card .credits-block{text-align:left}
   /* version label, top right */
   #verTag{position:fixed;top:calc(10px + env(safe-area-inset-top));right:calc(14px + env(safe-area-inset-right));
     font-size:12px;color:#4A5163;z-index:2;pointer-events:none}
@@ -706,7 +714,12 @@
   </button>
 </form>
 
-<div id="verTag" class="lumiVer" aria-hidden="true">v34</div>
+<div id="credits">
+  <p class="credit-line">Developed by: Daniel "Jigs" L. Garcia (Lupon Clerk)</p>
+  <p class="credit-line">LuponConnect · For general information only; not legal advice.</p>
+  <p class="credit-line">Sangguniang Barangay ng Anos · 2026 · All Rights Reserved.</p>
+</div>
+<div id="verTag" class="lumiVer" aria-hidden="true">v35</div>
 <div id="earDot" aria-hidden="true">
   <svg class="open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 1 1 12 0c0 3.5-3 4.5-3 7.5a3.5 3.5 0 0 1-6.5 1.8"/><path d="M9 9a3 3 0 0 1 6 0c0 1.5-1.5 2-1.5 3.5"/></svg>
   <svg class="closed" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 1 1 12 0c0 3.5-3 4.5-3 7.5a3.5 3.5 0 0 1-6.5 1.8"/><path d="M3 3l18 18"/></svg>
@@ -717,7 +730,7 @@
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">Lumi · Settings <span class="lumiVer" style="font-size:14px;color:#8A97AD;font-weight:500">v34</span></h2>
+    <h2 id="ptitle">Lumi · Settings <span class="lumiVer" style="font-size:14px;color:#8A97AD;font-weight:500">v35</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -778,6 +791,11 @@
       <button class="btn ghost" data-go="exit" style="color:#FFB3C7">Exit Lumi</button>
     </div>
     <p class="note">Walang nire-record o sine-save. Ang camera ay kamay lang ang hinahanap, at ang mic ay volume at "Hey Lumi" lang. Gamitin ang Hearing Mode tuwing may pagdinig.</p>
+    <div class="credits-block" style="border-top:1px solid #252A36;padding-top:10px">
+  <p class="credit-line">Developed by: Daniel "Jigs" L. Garcia (Lupon Clerk)</p>
+  <p class="credit-line">LuponConnect · For general information only; not legal advice.</p>
+  <p class="credit-line">Sangguniang Barangay ng Anos · 2026 · All Rights Reserved.</p>
+    </div>
     <button class="btn" id="closePanel">Sige, balik kay Lumi</button>
   </div>
 </div>
@@ -787,7 +805,12 @@
   <p>Lupon's Unit for Mindful Interaction</p>
   <p style="font-size:15px;color:#8A97AD">a little light for peaceful talks</p>
   <button class="btn" id="wake">Gisingin si Lumi</button>
-  <p class="lumiVer" style="font-size:14px;color:#5D6678;margin-top:6px">v34</p>
+  <p class="lumiVer" style="font-size:14px;color:#5D6678;margin-top:6px">v35</p>
+  <div class="credits-block">
+  <p class="credit-line">Developed by: Daniel "Jigs" L. Garcia (Lupon Clerk)</p>
+  <p class="credit-line">LuponConnect · For general information only; not legal advice.</p>
+  <p class="credit-line">Sangguniang Barangay ng Anos · 2026 · All Rights Reserved.</p>
+  </div>
   <small id="startNote">Ilagay ang phone nang pahiga (landscape). Hihingi ng mic at camera: para marinig kung lumalakas ang boses, makita ang kaway, at marinig ang "Hey Lumi". Walang nire-record o sine-save.</small>
 </div>
 
@@ -799,8 +822,8 @@
    For the free version: deploy the Supabase function "jeg-ask" (it talks to Groq),
    then paste its URL and your Supabase *anon* key here. Never put the Groq key in this file. */
 const JEG_CONFIG = {
-  brainUrl: 'https://adragnnngictwxtslosy.supabase.co/functions/v1/jeg-ask',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
-  supabaseAnonKey: 'sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd',   // Supabase > Project Settings > API > anon public key
+  brainUrl: '',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
+  supabaseAnonKey: '',   // Supabase > Project Settings > API > anon public key
 };
 (() => {
   const body = document.body;
@@ -1065,7 +1088,7 @@ Rules:
   function localAnswer(q) {
     const t = ' ' + String(q || '').toLowerCase() + ' ';
     if (/\b(who|what company|which company)\b.*\b(made|make|created|create|developed|develop|built|build|programmed|designed)\b.*\byou\b|\byour (developer|creator|maker|programmer)\b/.test(t))
-      return 'I was made by Adasoft CSDS, for the barangay and the Lupon Tagapamayapa.';
+      return 'I was developed by Daniel "Jigs" L. Garcia, our Lupon Clerk, for the Sangguniang Barangay ng Anos.';
     if (/\b(status|are you ok|are you okay|are you working|system check|check yourself)\b/.test(t)) {
       const parts = [];
       parts.push(handsOn ? 'camera on' : 'camera off');
@@ -1125,6 +1148,7 @@ Rules:
     if (hearing) return;
     if (!ans) ans = "I'm not sure about that. Let's ask the Lupon.";
     showAnswer(ans);
+    $('bubbleNote').textContent = 'LuponConnect · For general information only; not legal advice.';
   }
   function showAnswer(text, note) {
     $('bubbleText').textContent = text;
@@ -2091,16 +2115,24 @@ Rules:
     rec.interimResults = true;
     rec.onresult = (e) => {
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        const txt = e.results[i][0].transcript || '';
+        let txt = e.results[i][0].transcript || '';
         if (body.classList.contains('talking')) continue;           // that's JEG's own voice
         if (music && !STOP_MUSIC.test(txt) && !NEXT_SONG.test(txt) && !EXIT_CMD.test(txt)) continue; // that's Lumi's own music
         const now = performance.now();
         $('heardStatus').textContent = `Narinig ni Lumi: "${txt.trim().slice(-80)}"`; heardAt = performance.now();
         if (state === 'listen' || now < voiceBusyUntil) voiceBusyUntil = now + 2000; // still speaking: keep gestures paused
+        // Lumi is already listening (was called a moment ago): what you say now is for Lumi,
+        // so you don't have to say "Lumi" again. ("Lumi" ... "who are you?")
+        const followUp = state === 'listen' && now - lastListenAt < 8000 && !NAME_ANY.test(txt) && txt.trim().length > 0;
+        if (followUp) {
+          lastListenAt = now;                                   // keep listening while you talk
+          $('listenText').textContent = `"${txt.trim().slice(0, 60)}"`;
+          txt = 'Lumi ' + txt.trim();                           // treat it exactly like "Lumi, ..."
+        }
         // heard "Lumi": show attention right away (even before the sentence is finished)
-        if (NAME_ANY.test(txt)) attend(txt);
-        if (e.results[i].isFinal && NAME_ONLY.test(txt) && now - lastCmdAt > 2500) {
-          lastCmdAt = now; attend(txt); break;   // just the name: Lumi waits for your command
+        if (!followUp && NAME_ANY.test(txt)) attend(txt);
+        if (e.results[i].isFinal && NAME_ONLY.test(txt)) {
+          attend(txt); break;                    // just the name: Lumi waits for your next words
         }
         if (now - lastCmdAt < 2500) break;              // one command at a time
         if (EXIT_CMD.test(txt) && !/\bmusic\b/i.test(txt)) { lastCmdAt = now; try { rec.abort(); } catch (x) {} exitLumi(); break; }
