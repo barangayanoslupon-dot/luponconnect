@@ -723,7 +723,7 @@
     <circle class="d1" cx="392" cy="330" r="9" fill="#7FD6F5"/>
     <circle class="d2" cx="422" cy="330" r="9" fill="#7FD6F5"/>
     <circle class="d3" cx="452" cy="330" r="9" fill="#7FD6F5"/>
-    <text class="cap" x="422" y="376" font-size="18" font-weight="500" fill="#9FB0C8">Lumi is thinking…</text>
+    <text class="cap" x="422" y="376" font-size="18" font-weight="500" fill="#9FB0C8">Lumi is thinking… (call "Lumi" to change)</text>
   </g>
 
   <!-- MUSIC -->
@@ -832,7 +832,7 @@
   <p class="credit-line">LuponConnect · For general information only; not legal advice.</p>
   <p class="credit-line">Sangguniang Barangay ng Anos · 2026 · All Rights Reserved.</p>
 </div>
-<div id="verTag" class="lumiVer" aria-hidden="true">v37</div>
+<div id="verTag" class="lumiVer" aria-hidden="true">v39</div>
 <div id="earDot" aria-hidden="true">
   <svg class="open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 1 1 12 0c0 3.5-3 4.5-3 7.5a3.5 3.5 0 0 1-6.5 1.8"/><path d="M9 9a3 3 0 0 1 6 0c0 1.5-1.5 2-1.5 3.5"/></svg>
   <svg class="closed" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 1 1 12 0c0 3.5-3 4.5-3 7.5a3.5 3.5 0 0 1-6.5 1.8"/><path d="M3 3l18 18"/></svg>
@@ -843,7 +843,7 @@
 
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="card">
-    <h2 id="ptitle">Lumi · Settings <span class="lumiVer" style="font-size:14px;color:#8A97AD;font-weight:500">v37</span></h2>
+    <h2 id="ptitle">Lumi · Settings <span class="lumiVer" style="font-size:14px;color:#8A97AD;font-weight:500">v39</span></h2>
     <div class="row">
       <span style="font-size:15px;min-width:64px">Ingay</span>
       <div class="meter" aria-hidden="true"><i id="meterBar"></i></div>
@@ -925,7 +925,7 @@
   <p>Lupon's Unit for Mindful Interaction</p>
   <p style="font-size:15px;color:#8A97AD">a little light for peaceful talks</p>
   <button class="btn" id="wake">Gisingin si Lumi</button>
-  <p class="lumiVer" style="font-size:14px;color:#5D6678;margin-top:6px">v37</p>
+  <p class="lumiVer" style="font-size:14px;color:#5D6678;margin-top:6px">v39</p>
   <div class="credits-block">
   <p class="credit-line">Developed by: Daniel "Jigs" L. Garcia (Lupon Clerk)</p>
   <p class="credit-line">LuponConnect · For general information only; not legal advice.</p>
@@ -942,8 +942,8 @@
    For the free version: deploy the Supabase function "jeg-ask" (it talks to Groq),
    then paste its URL and your Supabase *anon* key here. Never put the Groq key in this file. */
 const JEG_CONFIG = {
-   brainUrl: 'https://adragnnngictwxtslosy.supabase.co/functions/v1/jeg-ask',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
-   supabaseAnonKey: 'sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd',   // Supabase > Project Settings > API > anon public key
+  brainUrl: '',          // e.g. 'https://YOUR-PROJECT.supabase.co/functions/v1/jeg-ask'
+  supabaseAnonKey: '',   // Supabase > Project Settings > API > anon public key
 };
 (() => {
   const body = document.body;
@@ -964,7 +964,7 @@ const JEG_CONFIG = {
   if (JegSpeech) {
     JegSpeech.addListener('rms', (d) => { nativeDb = (Number(d.rms) || 0) * 3 - 60; });
     JegSpeech.addListener('result', (d) => {
-      if (body.classList.contains('talking')) return;          // don't listen to JEG's own voice
+      if (body.classList.contains('talking')) return;          // don't listen to Lumi's own voice
       if (nativeSR && nativeSR._on && nativeSR.onresult) {
         const r = [{ transcript: String(d.text || '') }]; r.isFinal = !!d.final;
         nativeSR.onresult({ resultIndex: 0, results: [r] });
@@ -1216,7 +1216,7 @@ Rules:
     return String((res && res.text) || '').trim();
   }
 
-  let asking = false, speaking = false, answerUntil = 0;
+  let asking = false, speaking = false, answerUntil = 0, askToken = 0;
   let batteryPct = null;
   try { navigator.getBattery && navigator.getBattery().then(b => { const u = () => { batteryPct = Math.round(b.level * 100); }; u(); b.addEventListener('levelchange', u); }); } catch (e) {}
   // quick answers JEG knows by heart (instant, work even without internet)
@@ -1259,6 +1259,7 @@ Rules:
     const quick = localAnswer(q);
     if (quick) { closeAskBar(); stopMusic({ keepState: true }); showAnswer(quick); return; }
     asking = true;
+    const myAsk = ++askToken;
     closeAskBar();
     stopMusic({ keepState: true });
     try { speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
@@ -1267,6 +1268,7 @@ Rules:
     let ans;
     try { ans = await withTimeout(askBrain(q), 25000); }
     catch (e) {
+      if (myAsk !== askToken) return;            // cancelled with "listen Lumi"
       const c = e && e.code;
       ans = c === 'no_brain' ? "Sorry, my brain isn't connected yet. Please add the brain URL to Lumi."
           : c === 'rate_limited' ? "I'm a little tired. Let's try again later."
@@ -1281,12 +1283,13 @@ Rules:
       asking = false;
       return;
     }
+    if (myAsk !== askToken) return;              // cancelled with "listen Lumi"
     $('brainStatus').textContent = 'Brain: OK';
     asking = false;
     if (hearing) return;
     if (!ans) ans = "I'm not sure about that. Let's ask the Lupon.";
     showAnswer(ans);
-    $('bubbleNote').textContent = 'LuponConnect · For general information only; not legal advice.';
+    $('bubbleNote').textContent = 'LuponConnect · For general information only; not legal advice. · Say "Lumi…" anytime to ask something new.';
   }
   function showAnswer(text, note) {
     $('bubbleText').textContent = text;
@@ -2211,6 +2214,19 @@ Rules:
   // ---------- "Hey Lumi" (browser speech recognition) ----------
   const SR = JegSpeech ? NativeSR : (window.SpeechRecognition || window.webkitSpeechRecognition);
   let rec = null, wakeOn = false, lastCmdAt = 0, lastHeardStart = 0, heardAt = 0, lastListenAt = 0;
+  // ---- interrupting a presentation: "Listen Lumi, I need information about ..." ----
+  function presenting() {
+    return asking || state === 'think' || state === 'answer' || body.classList.contains('talking');
+  }
+  function cancelPresentation() {
+    askToken++; asking = false;                     // forget the answer that is still coming
+    stopTalking();
+    quietUntil = 0;
+    lastListenAt = performance.now();
+    voiceBusyUntil = performance.now() + 2500;
+    setState('listen', { silent: true });
+    $('listenText').textContent = "Okay, I'm listening…";
+  }
   const NO_ATTEND = ['think', 'answer', 'breathe', 'worried', 'lying', 'spin', 'dizzy', 'quiet', 'music', 'shh'];
   function attend(txt) {
     if (hearing || exited) return;
@@ -2273,6 +2289,7 @@ Rules:
   const EXIT_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:exit|shut ?down|turn off|power off|close the app|close app|close yourself|goodbye)\\b|\\bgoodbye,? ${NAME}\\b`, 'i');
   const SMILE_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:smile|smiles|ngiti|ngumiti|say cheese)\\b`, 'i');
   const PLAY_TOY = new RegExp(`\\b${NAME}\\b.*\\b(?:play|playtime|play time|laro|maglaro|let'?s play|play with (?:a |your )?toy|play ball)\\b`, 'i');
+  const INTERRUPT = new RegExp(`\\b(?:listen|wait|hold on|excuse me)[\\s,]+${NAME}\\b[\\s,.!?]*(.*)$|\\b${NAME}[\\s,]+(?:listen|wait|hold on)\\b[\\s,.!?]*(.*)$`, 'i');
   const REST_CMD = new RegExp(`\\b${NAME}\\b.*\\b(?:rest|stop playing|stop play|enough playing|tama na ang laro|tama na laro|break time)\\b`, 'i');
   const FUN_CMD = new RegExp(`\\b${NAME}\\b.*\\b(dance|dancing|sayaw|sumayaw|bounce|bouncing|talon|jiggle|wiggle|jelly|kembot|hooray|hurray|yay|celebrate|celebration|confetti|party|cheer (?:us |me )?up|make (?:us|me) happy|happy dance)\\b`, 'i');
   function funKind(word) {
@@ -2299,7 +2316,15 @@ Rules:
     rec.onresult = (e) => {
       for (let i = e.resultIndex; i < e.results.length; i++) {
         let txt = e.results[i][0].transcript || '';
-        if (body.classList.contains('talking')) continue;           // that's JEG's own voice
+        // "Listen Lumi, ..." breaks in, even while Lumi is presenting or talking
+        const intr = txt.match(INTERRUPT);
+        if (intr) {
+          if (presenting()) cancelPresentation();
+          const rest = (intr[1] || intr[2] || '').trim();
+          txt = rest ? 'Lumi ' + rest : 'Lumi';          // keep only what you said after "listen Lumi"
+        } else if (body.classList.contains('talking') || earsClosed) continue; // that's Lumi's own voice
+        // answer on screen (Lumi not talking) and you call "Lumi ...": stop presenting, listen to you now
+        if (!intr && (state === 'answer' || state === 'think') && NAME_ANY.test(txt)) cancelPresentation();
         if (music && !STOP_MUSIC.test(txt) && !NEXT_SONG.test(txt) && !EXIT_CMD.test(txt)) continue; // that's Lumi's own music
         const now = performance.now();
         $('heardStatus').textContent = `Narinig ni Lumi: "${txt.trim().slice(-80)}"`; heardAt = performance.now();
