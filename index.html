@@ -1033,7 +1033,7 @@ function initApp(){
 const gP=(x,skin,hair,shirt)=>`<g><circle cx="${x}" cy="118" r="24" fill="${skin}"/><path d="M${x-24} 114 Q${x-22} 90 ${x} 92 Q${x+22} 90 ${x+24} 114 Q${x} 102 ${x-24} 114Z" fill="${hair}"/><rect x="${x-26}" y="144" width="52" height="64" rx="18" fill="${shirt}"/></g>`;
 const gB=(x,y,t)=>`<g><rect x="${x-28}" y="${y-24}" width="56" height="36" rx="16" fill="#fff" stroke="#143f3c" stroke-width="2"/><text x="${x}" y="${y+3}" font-size="22" text-anchor="middle">${t}</text></g>`;
 const gHouse=(x,roof)=>`<g><rect x="${x}" y="142" width="92" height="62" fill="#fff"/><polygon points="${x-8},142 ${x+46},98 ${x+100},142" fill="${roof}"/><rect x="${x+34}" y="166" width="22" height="38" rx="4" fill="#3b4f8f"/></g>`;
-const SCENE_ICON={fence:"🧱",debt:"💰",map:"🗺️",home:"🏠",noise:"🔊",phone:"📱"};
+const SCENE_ICON={fence:"🧱",debt:"💰",map:"🗺️",home:"🏠",noise:"🔊",phone:"📱",null: ""};
 function gScene(t){
   let s=`<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Eksena"><defs><linearGradient id="gsk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe3f5"/><stop offset="1" stop-color="#f1f8fb"/></linearGradient></defs><rect width="600" height="240" fill="url(#gsk)"/><rect y="204" width="600" height="36" fill="#a9b35a"/>`;
   if(t==="fence"){
