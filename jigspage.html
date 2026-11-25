@@ -27,7 +27,7 @@ textarea{min-height:110px;resize:vertical}.hint{font-weight:400;color:#6a777b;fo
 <div class="w" id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
-const SUPABASE_URL="https://adragnnngictwxtslosy.supabase.co", SUPABASE_ANON_KEY="sb_publishable__Nae_5wWm0np3RAe9boPTg_y0s-hcLd";   // same values as index.html (anon key only)
+const SUPABASE_URL="", SUPABASE_ANON_KEY="";   // same values as index.html (anon key only)
 if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!window.supabase){document.getElementById("app").innerHTML='<div class="box" style="margin-top:30px"><h3 style="margin-top:0">Setup needed</h3><p>'+(window.supabase?'Open <b>admin.html</b> and fill in <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> at the top of the script, then upload it again.':'The Supabase library could not load. Check your internet connection or any ad-blocker.')+'</p></div>';throw new Error("Missing Supabase config")}
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -174,7 +174,7 @@ async function quizForm(row,mk){
   ${isPriv?`<label>Passkey <span class="hint">(ibigay lang sa mga miyembro; hindi bababa sa 6 na karakter; hindi mahalaga ang laki ng titik)</span></label><input type="text" id="qkey" value="${esc(row&&row.passkey||"")}">`:""}
 ${isCase?`<label>Maikling paglalarawan <span class="hint">(lalabas sa listahan)</span></label><input type="text" id="qteaser" value="${esc(row&&row.teaser||"")}">
   <label>Ang kaso (kuwento)</label><textarea id="qintro" style="min-height:90px">${esc(row&&row.intro||"")}</textarea>
-  <label>Eksena (larawan)</label><select id="qscene">${[["fence","Bakod ng magkapitbahay"],["debt","Utang"],["map","Magkaibang lungsod"],["home","Tahanan"],["noise","Ingay"]].map(([v,l])=>`<option value="${v}" ${row&&row.scene===v?"selected":""}>${l}</option>`).join("")}</select>
+  <label>Eksena (larawan)</label><select id="qscene">${[["fence","Bakod ng magkapitbahay"],["debt","Utang"],["map","Magkaibang lungsod"],["home","Tahanan"],["noise","Ingay"],["phone","Cellphone / deepfake"]].map(([v,l])=>`<option value="${v}" ${row&&row.scene===v?"selected":""}>${l}</option>`).join("")}</select>
   <label>Kailangan para makapasa (%) <span class="hint">(bahagdan ng tamang sagot)</span></label><input type="number" id="qpass" min="1" max="100" value="${row?esc(row.pass_percent||60):60}">
   <p class="hint">3 hanggang 6 na hakbang. Iwanang blangko ang mga hindi gagamitin (magkakasunod dapat ang mga ginamit).</p>`:""}
   <label>Simula (petsa)</label><input type="date" id="qstart" value="${row?esc(row.start_date):ymd(d0)}">
